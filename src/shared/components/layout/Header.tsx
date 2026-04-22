@@ -1,46 +1,66 @@
-import { Link, NavLink } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
+import { Header as HeaderRoot, type HeaderNavItemData, HomeIcon } from '../header';
 import { ROUTES } from '../../constants/routes';
 
-const navigationItems = [
-  { label: 'Documentation', to: ROUTES.about },
-  { label: 'Calendar', to: ROUTES.calendar },
-  { label: 'Report', to: ROUTES.report },
-  { label: 'Profile', to: ROUTES.profile },
+const logo = {
+  label: 'BANGCHELIN GUIDE',
+  to: ROUTES.home,
+  ariaLabel: 'Bangchelin Guide home',
+  imageSrc: '/logo.png',
+  imageAlt: 'Bangchelin Guide logo',
+} as const;
+
+const navigationItems: HeaderNavItemData[] = [
+  { key: 'home', label: '홈', to: ROUTES.home, icon: <HomeIcon />, end: true },
+  { key: 'guide', label: '가이드', to: ROUTES.about },
+  { key: 'calendar', label: '캘린더', to: ROUTES.calendar },
+  { key: 'report', label: '문의/제보', to: ROUTES.report },
 ];
 
+function getActiveNavKey(pathname: string) {
+  if (pathname === ROUTES.home) {
+    return 'home';
+  }
+
+  if (pathname.startsWith(ROUTES.about)) {
+    return 'guide';
+  }
+
+  if (pathname.startsWith(ROUTES.calendar)) {
+    return 'calendar';
+  }
+
+  if (pathname.startsWith(ROUTES.report)) {
+    return 'report';
+  }
+
+  return undefined;
+}
+
 export function Header() {
+  const { pathname } = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[rgba(15,13,10,0.84)] backdrop-blur-md">
-      <div className="mx-auto flex w-[var(--space-content)] items-center justify-between gap-6 py-4">
-        <Link to={ROUTES.home} className="flex flex-col">
-          <span className="font-[var(--font-display)] text-2xl tracking-[0.16em] text-[var(--color-accent-strong)] uppercase">
-            Bangchelin
-          </span>
-          <span className="text-xs tracking-[0.3em] text-[var(--color-text-muted)] uppercase">
-            Escape Community Guide
-          </span>
-        </Link>
-        <nav className="hidden items-center gap-6 text-sm text-[var(--color-text-muted)] md:flex">
-          {navigationItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                isActive ? 'text-[var(--color-text)]' : 'hover:text-[var(--color-text)]'
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
-          <Link
-            to={ROUTES.login}
-            className="rounded-full border border-[var(--color-border)] px-4 py-2 text-[var(--color-text)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent-strong)]"
-          >
-            Login
-          </Link>
-        </nav>
-      </div>
-    </header>
+    <HeaderRoot
+      logo={logo}
+      navItems={navigationItems}
+      actionType="loginIcon"
+      navAriaLabel="Global navigation"
+      activeNavKey={getActiveNavKey(pathname)}
+      mobileMenu={{
+        isOpen: isMobileMenuOpen,
+        onToggle: () => setIsMobileMenuOpen((open) => !open),
+        onClose: () => setIsMobileMenuOpen(false),
+        navAriaLabel: 'Mobile navigation',
+      }}
+      showBottomBorder
+    />
   );
 }

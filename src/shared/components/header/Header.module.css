@@ -1,0 +1,265 @@
+.header {
+  --header-max-width: 1200px;
+  --header-background: var(--color-bg);
+  --header-border: var(--color-border);
+  --header-brand: var(--color-accent);
+  --header-text: var(--color-text);
+  --header-text-hover: var(--color-text);
+  --header-profile-background: var(--color-accent);
+  --header-profile-text: var(--color-text);
+  --header-focus-ring: var(--color-accent);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  background: var(--header-background);
+}
+
+.withBorder {
+  border-bottom: 1px solid var(--header-border);
+}
+
+.container {
+  width: min(var(--header-max-width), calc(100vw - 40px));
+  margin: 0 auto;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 80px;
+  gap: 24px;
+}
+
+.compactRow {
+  min-height: 76px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  min-width: 0;
+}
+
+.desktopActions {
+  display: flex;
+  align-items: center;
+}
+
+.mobileMenuTrigger {
+  display: none;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  color: var(--header-brand);
+}
+
+.logoMark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+}
+
+.logoImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.logoText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(1.875rem, 1.15rem + 1.55vw, 2.25rem);
+  line-height: 1;
+  letter-spacing: 0.01em;
+  font-weight: 500;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.navList {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.navItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  color: var(--header-text);
+  font-size: 0.875rem;
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.navItemActive {
+  color: var(--header-text-hover);
+}
+
+.mobileNavItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 0;
+  color: var(--header-text);
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.navIcon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--header-text);
+  cursor: pointer;
+}
+
+.iconButton svg {
+  width: 100%;
+  height: 100%;
+}
+
+.profileBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--header-profile-background);
+  color: var(--header-profile-text);
+  font-size: 1.125rem;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.actionSlot {
+  display: inline-flex;
+  align-items: center;
+}
+
+.mobilePanel {
+  display: none;
+}
+
+.mobilePanelOpen {
+  display: none;
+}
+
+.mobileNav {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobilePanelFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(233, 222, 205, 0.14);
+}
+
+.logo:focus-visible,
+.navItem:focus-visible,
+.iconButton:focus-visible,
+.profileBadge:focus-visible {
+  outline: 2px solid var(--header-focus-ring);
+  outline-offset: 3px;
+}
+
+.logo:hover,
+.navItem:hover,
+.iconButton:hover {
+  color: var(--header-text-hover);
+}
+
+.logo:hover {
+  color: var(--header-brand);
+}
+
+.compact .nav {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .container {
+    width: min(var(--header-max-width), calc(100vw - 40px));
+  }
+
+  .row {
+    min-height: 76px;
+    gap: 16px;
+  }
+
+  .nav {
+    display: none;
+  }
+
+  .desktopActions {
+    display: none;
+  }
+
+  .mobileMenuTrigger {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .mobilePanel {
+    padding: 0 0 20px;
+  }
+
+  .mobilePanelOpen {
+    display: block;
+  }
+
+  .mobileNav {
+    gap: 2px;
+  }
+
+  .logoText {
+    font-size: clamp(1.625rem, 1.1rem + 2.2vw, 2rem);
+  }
+}
