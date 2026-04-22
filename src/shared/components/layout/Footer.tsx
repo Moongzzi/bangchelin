@@ -1,32 +1,61 @@
+import {
+  Footer as FooterRoot,
+  type FooterMetaItem,
+  type FooterNoticeItem,
+  type FooterPolicyLink,
+  type FooterSocialLink,
+} from '../footer';
+
+const policyLinks: FooterPolicyLink[] = [
+  { key: 'terms', label: '서비스 이용약관', href: '#' },
+  { key: 'privacy', label: '개인정보 처리방침', href: '#' },
+  { key: 'cookies', label: '쿠키 설정', href: '#' },
+];
+
+const notices: FooterNoticeItem[] = [
+  {
+    key: 'community',
+    text: '카카오톡 오픈채팅 <방탈출 미식 협회> 운영 커뮤니티',
+  },
+  {
+    key: 'support',
+    text: '※ 카카오톡 오픈채팅방 운영을 위한 안내 및 관리 지원 사이트입니다.',
+  },
+];
+
+const metaItems: FooterMetaItem[] = [
+  { key: 'copyright', label: '© 2026 옥. All rights reserved.' },
+  { key: 'contact', label: '개발자 문의 바로가기', href: '#' },
+];
+
+const socialLinks: FooterSocialLink[] = [
+  {
+    key: 'kakao',
+    label: '카카오톡 채널',
+    href: '#',
+    ariaLabel: '카카오톡 채널 바로가기',
+    imageSrc: '/assets/icons/social/kakao.png',
+    imageAlt: '카카오톡 아이콘',
+  },
+  {
+    key: 'discord',
+    label: '디스코드',
+    href: '#',
+    ariaLabel: '디스코드 바로가기',
+    imageSrc: '/assets/icons/social/discord.png',
+    imageAlt: '디스코드 아이콘',
+  },
+];
+
 export function Footer() {
   return (
-    <footer className="border-t border-[var(--color-border)] bg-[rgba(10,9,7,0.78)]">
-      <div className="mx-auto grid w-[var(--space-content)] gap-8 py-12 md:grid-cols-3">
-        <div>
-          <p className="font-[var(--font-display)] text-2xl text-[var(--color-accent-strong)]">
-            Bangchelin Guide
-          </p>
-          <p className="mt-3 text-sm leading-6 text-[var(--color-text-muted)]">
-            방탈출 미식 협회 커뮤니티를 위한 프리미엄 정보 허브.
-          </p>
-        </div>
-        <div>
-          <p className="text-sm uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
-            Community
-          </p>
-          <p className="mt-3 text-sm leading-6 text-[var(--color-text-muted)]">
-            문서, 일정, 문의 흐름을 같은 정보 구조 안에서 연결합니다.
-          </p>
-        </div>
-        <div>
-          <p className="text-sm uppercase tracking-[0.22em] text-[var(--color-text-muted)]">
-            Status
-          </p>
-          <p className="mt-3 text-sm leading-6 text-[var(--color-text-muted)]">
-            현재는 mock data 기반 UI 설계 단계입니다.
-          </p>
-        </div>
-      </div>
-    </footer>
+    <FooterRoot
+      policyLinks={policyLinks}
+      notices={notices}
+      metaItems={metaItems}
+      socialLinks={socialLinks}
+      emphasizedPolicyKey="privacy"
+      socialTitle="<방탈출 미식 협회> SNS 바로가기"
+    />
   );
 }

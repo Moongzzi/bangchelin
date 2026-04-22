@@ -1,0 +1,153 @@
+.footer {
+  --footer-max-width: 1200px;
+  --footer-background: #e9decd;
+  --footer-text: #6c645c;
+  --footer-text-strong: #201c19;
+  --footer-divider: transparent;
+  --footer-social-background: #8b1e2d;
+  --footer-social-icon: #fffaf3;
+  --footer-focus-ring: #c07b84;
+  width: 100%;
+  background: var(--footer-background);
+  color: var(--footer-text);
+}
+
+.withTopDivider {
+  border-top: 1px solid var(--footer-divider);
+}
+
+.withBottomDivider {
+  border-bottom: 1px solid var(--footer-divider);
+}
+
+.container {
+  width: min(var(--footer-max-width), calc(100vw - 48px));
+  margin: 0 auto;
+}
+
+.inner {
+  max-width: 680px;
+  padding: 32px 0 36px;
+}
+
+.policyList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.policyLink {
+  color: var(--footer-text);
+  font-size: 1rem;
+  line-height: 1.35;
+  font-weight: 400;
+}
+
+.policyLinkEmphasized {
+  color: var(--footer-text-strong);
+  font-weight: 700;
+}
+
+.section {
+  margin-top: 34px;
+}
+
+.noticeList,
+.metaList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.noticeItem,
+.metaItem,
+.socialTitle {
+  color: var(--footer-text);
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.metaLink {
+  color: inherit;
+}
+
+.socialTitle {
+  margin: 0 0 12px;
+}
+
+.socialList {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.socialButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  border: 0;
+  color: var(--footer-social-icon);
+  background: var(--footer-social-background);
+}
+
+.socialIcon {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+}
+
+.socialImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.socialIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.policyLink:focus-visible,
+.metaLink:focus-visible,
+.socialButton:focus-visible {
+  outline: 2px solid var(--footer-focus-ring);
+  outline-offset: 3px;
+}
+
+.policyLink:hover,
+.metaLink:hover {
+  color: var(--footer-text-strong);
+}
+
+@media (min-width: 768px) {
+  .container {
+    width: min(var(--footer-max-width), calc(100vw - 80px));
+  }
+
+  .inner {
+    padding: 40px 0 48px;
+  }
+
+  .policyLink,
+  .noticeItem,
+  .metaItem,
+  .socialTitle {
+    font-size: 1.0625rem;
+  }
+
+  .section {
+    margin-top: 36px;
+  }
+}
