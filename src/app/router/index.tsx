@@ -2,7 +2,9 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { AboutPage } from '../../pages/about/AboutPage';
 import { CalendarPage } from '../../pages/calendar/CalendarPage';
+import { DropdownPreviewPage } from '../../pages/dropdown-preview/DropdownPreviewPage';
 import { HomePage } from '../../pages/home/HomePage';
+import { InputPreviewPage } from '../../pages/input-preview/InputPreviewPage';
 import { LoginPage } from '../../pages/login/LoginPage';
 import { ProfilePage } from '../../pages/profile/ProfilePage';
 import { RegisterPage } from '../../pages/register/RegisterPage';
@@ -17,6 +19,8 @@ export function AppRouter() {
       <Route path={ROUTES.register} element={<RegisterPage />} />
       <Route path={ROUTES.about} element={<AboutPage />} />
       <Route path={ROUTES.calendar} element={<CalendarPage />} />
+      <Route path={ROUTES.dropdownPreview} element={<DropdownPreviewPage />} />
+      <Route path={ROUTES.inputPreview} element={<InputPreviewPage />} />
       <Route path={ROUTES.report} element={<ReportPage />} />
       <Route path={ROUTES.profile} element={<ProfilePage />} />
       <Route path="*" element={<Navigate replace to={ROUTES.home} />} />

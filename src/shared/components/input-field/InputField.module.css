@@ -1,0 +1,196 @@
+.root {
+  --input-label: #201c19;
+  --input-text: #201c19;
+  --input-placeholder: rgba(32, 28, 25, 0.4);
+  --input-border: #223041;
+  --input-border-active: #1a2634;
+  --input-clear-background: #223041;
+  --input-clear-icon: #fdf8f1;
+  --input-disabled-border: #b8aa96;
+  --input-disabled-background: #cfc2af;
+  --input-message-error: #9b3442;
+  --input-message-success: #4d6a57;
+  --input-focus-ring: rgba(34, 48, 65, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.label {
+  color: var(--input-label);
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.hiddenLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.underline {
+  min-height: 56px;
+  border-bottom: 1px solid var(--input-border);
+  background: transparent;
+}
+
+.outlined {
+  min-height: 76px;
+  padding: 0 12px;
+  border: 1px solid var(--input-border);
+  background: transparent;
+}
+
+.minimal {
+  min-height: 56px;
+  border-bottom: 1px solid var(--input-border);
+  background: transparent;
+}
+
+.focused {
+  border-color: var(--input-border-active);
+}
+
+.disabled {
+  border-color: var(--input-disabled-border);
+  background: var(--input-disabled-background);
+}
+
+.error {
+  border-color: var(--input-border);
+}
+
+.success {
+  border-color: var(--input-border);
+}
+
+.input {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--input-text);
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 500;
+  outline: none;
+}
+
+.underline .input,
+.minimal .input {
+  padding: 16px 0 14px;
+}
+
+.outlined .input {
+  padding: 18px 0;
+}
+
+.withClear .input {
+  padding-right: 44px;
+}
+
+.input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.input::selection {
+  background: transparent;
+  color: var(--input-text);
+}
+
+.input::-moz-selection {
+  background: transparent;
+  color: var(--input-text);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+}
+
+.message {
+  color: var(--input-placeholder);
+  font-size: 0.875rem;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.messageError {
+  color: var(--input-message-error);
+}
+
+.messageSuccess {
+  color: var(--input-message-success);
+}
+
+.clearButton {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-top: -16px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--input-clear-background);
+  color: var(--input-clear-icon);
+  cursor: pointer;
+}
+
+.clearButtonIcon {
+  width: 14px;
+  height: 14px;
+}
+
+.clearButtonIcon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.control:focus-within {
+  border-color: var(--input-border-active);
+}
+
+.clearButton:focus-visible,
+.input:focus-visible,
+.outlined:focus-within,
+.underline:focus-within,
+.minimal:focus-within {
+  outline: none;
+}
+
+.clearButton:focus-visible {
+  box-shadow: 0 0 0 2px rgba(253, 248, 241, 0.5);
+}
+
+@media (max-width: 767px) {
+  .label {
+    font-size: 0.875rem;
+  }
+
+  .message {
+    font-size: 0.8125rem;
+  }
+}

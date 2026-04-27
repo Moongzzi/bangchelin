@@ -6,4 +6,6 @@ export const ROUTES = {
   calendar: '/calendar',
   report: '/report',
   profile: '/profile',
+  inputPreview: '/preview/input-field',
+  dropdownPreview: '/preview/dropdown',
 } as const;
