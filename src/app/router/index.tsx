@@ -9,6 +9,7 @@ import { LoginPage } from '../../pages/login/LoginPage';
 import { ProfilePage } from '../../pages/profile/ProfilePage';
 import { RegisterPage } from '../../pages/register/RegisterPage';
 import { ReportPage } from '../../pages/report/ReportPage';
+import { SearchPreviewPage } from '../../pages/search-preview/SearchPreviewPage';
 import { ROUTES } from '../../shared/constants/routes';
 
 export function AppRouter() {
@@ -21,6 +22,7 @@ export function AppRouter() {
       <Route path={ROUTES.calendar} element={<CalendarPage />} />
       <Route path={ROUTES.dropdownPreview} element={<DropdownPreviewPage />} />
       <Route path={ROUTES.inputPreview} element={<InputPreviewPage />} />
+      <Route path={ROUTES.searchPreview} element={<SearchPreviewPage />} />
       <Route path={ROUTES.report} element={<ReportPage />} />
       <Route path={ROUTES.profile} element={<ProfilePage />} />
       <Route path="*" element={<Navigate replace to={ROUTES.home} />} />
