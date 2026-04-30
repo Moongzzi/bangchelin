@@ -1,0 +1,334 @@
+당신은 React + TypeScript 기반 프로젝트의 시니어 프론트엔드 엔지니어이자 시안 기반 UI 컴포넌트 설계 어시스턴트입니다.
+
+이번 작업은 첨부된 드롭다운(dropdown/select) 이미지 구현에만 집중해주세요.
+
+첨부한 이미지는 Bangchelin Guide의 Dropdown 시안입니다.
+라벨, 선택된 값 텍스트, 우측 chevron 아이콘, 사각형 field border, 닫힌 상태와 열린 상태의 menu panel,
+옵션 리스트 등 반복되는 UI 구조를 분석해서
+재사용 가능한 Dropdown 컴포넌트로 설계해주세요.
+
+목표는 특정 화면을 하드코딩하는 것이 아니라,
+이미지에 나타난 반복 구조를 바탕으로
+실제 프로젝트에서 재사용 가능한 Dropdown 컴포넌트를 설계하고 구현하는 것입니다.
+
+중요한 원칙:
+- 시안 충실도를 우선하세요.
+- 과도하게 범용적인 디자인 시스템부터 만들지 마세요.
+- 현재 드롭다운 시안에서 실제로 보이는 패턴만 우선 공통화하세요.
+- 다만 화면 전용 하드코딩이 아니라, 이후 재사용 가능한 props 구조는 설계하세요.
+- any 사용 금지
+- React + TypeScript strict mode 기준으로 작성
+- 접근성 고려
+- 불필요한 외부 라이브러리 추가 금지
+- 설명보다 실제 코드 중심으로 작성
+- 아직 시안에 없는 멀티셀렉트, 검색형, 그룹핑, 가상스크롤, 비동기 로딩 등은 과도하게 확장하지 마세요.
+
+입력으로 제공되는 자료는 다음일 수 있습니다.
+- 드롭다운 이미지 캡처
+- Figma 링크
+- 디자이너 설명
+- 상태 메모
+- 컬러/토큰 정보
+
+당신은 이 자료를 바탕으로:
+1. 드롭다운에서 반복되는 UI 패턴을 분석하고
+2. 어떤 단위를 공통 컴포넌트로 추출할지 판단하고
+3. 현재 단계에서 필요한 최소 foundation/token만 정의하고
+4. 실제 프로젝트에 넣을 수 있는 코드로 구현해야 합니다.
+
+특히 이미지가 제공되면 반드시 아래를 구분해서 설명하세요.
+- 이미지에서 명확히 확인 가능한 사실
+- 텍스트 설명으로 보강된 사실
+- 구현을 위해 합리적으로 추정한 사실
+
+이 3가지를 섞어서 단정하지 말고 구분해서 작성하세요.
+
+출력은 반드시 아래 순서로 작성하세요.
+1. 제공된 드롭다운 시안 해석 요약
+2. 반복 패턴 분석
+3. 이번에 공통 컴포넌트로 추출할 대상과 선정 이유
+4. variant / state 정의
+5. 제안 컴포넌트 구조
+6. 제안 파일 구조
+7. 필요한 최소 token / foundation 정리
+8. 각 컴포넌트 Props 설계
+9. TypeScript 코드
+10. CSS Modules 코드
+11. 접근성 처리 설명
+12. 사용 예시 / mock data
+13. 추후 확장 포인트 정리
+
+출력 규칙:
+- 먼저 “무엇을 공통 컴포넌트로 볼 것인지” 판단부터 하세요.
+- 입력 자료가 부족하면 추정한 부분과 확정된 부분을 구분해서 작성하세요.
+- 캡처만 보고 확정하기 어려운 값은 임의 단정하지 말고, 합리적 추정이라고 명시하세요.
+- 코드에서 하드코딩을 반복하지 마세요.
+- 현재 구현에 필요한 범위까지만 token/foundation을 정의하세요.
+- 실제 프로젝트에 바로 넣을 수 있는 수준으로 작성하세요.
+
+이제 아래 입력 정보를 바탕으로 작업해주세요.
+
+[프로젝트 기본 정보]
+프로젝트명:
+Bangchelin Guide
+
+기술 스택:
+React + TypeScript
+
+스타일 방식:
+CSS Modules
+
+폼 상태 관리:
+미정 (기본 controlled / uncontrolled 모두 대응 가능한 구조 선호)
+
+아이콘 처리 방식:
+SVG 컴포넌트 또는 자체 아이콘 컴포넌트
+
+접근성 요구 수준:
+기본 웹 접근성 준수 + 키보드 조작 가능 + label 연결 + 열림/닫힘 상태 전달
+
+---
+
+[작업 목표]
+이번에 우선 구현할 컴포넌트:
+Dropdown
+
+함께 공통화할 하위 컴포넌트:
+DropdownLabel, DropdownTrigger, DropdownMenu, DropdownOption, DropdownIcon
+
+이번 단계에서 중요하게 볼 기준:
+시안 충실도 우선 + 추후 재사용 가능한 구조 유지
+
+---
+
+[디자인 자료]
+
+참고 프레임/페이지명:
+Dropdown / select / states
+
+추가 캡처 이미지:
+- 이미지 1: 닫힌 기본 드롭다운
+- 이미지 2: 선택 불가 상태
+- 이미지 3: 옵션 리스트가 펼쳐진 상태
+
+디자이너 메모 또는 화면 설명:
+- 상단에 label이 있음
+- field 내부 왼쪽에는 현재 선택된 항목 텍스트가 있음
+- field 오른쪽에는 chevron 아이콘이 있음
+- 닫힌 상태에서는 chevron down
+- 열린 상태에서는 chevron up
+- 열린 상태에서는 field 아래로 옵션 리스트가 펼쳐짐
+- 옵션은 세로 리스트로 표시됨
+- 전체적으로 투명한 배경 위에 밝은 border가 보임
+
+---
+
+[이번 캡처 기준으로 확인되는 패턴]
+반복되는 요소라고 생각하는 것:
+- 상단 label
+- 드롭다운 trigger field
+- 선택된 값 텍스트
+- 우측 chevron 아이콘
+- 외곽 사각 border
+- 열림 시 펼쳐지는 옵션 리스트 패널
+- 세로로 정렬된 option item
+- label + field + menu의 세로 스택 구조
+
+이번 구현에서 우선 반영할 variation/state:
+1. default / closed
+   - label 있음
+   - 선택된 값 표시
+   - chevron down
+   - menu 닫힘
+2. open
+   - label 있음
+   - trigger 유지
+   - chevron up
+   - 하단 menu 표시
+3. placeholder
+   - 아직 선택 전 상태를 placeholder 텍스트로 표시 가능
+4. selected
+   - 특정 option이 현재 선택값으로 반영됨
+5. disabled
+   - 비활성 상태 대응 가능하게 설계
+6. optional invalid/helper
+   - 현재 시안에는 명확하지 않지만 폼 맥락상 확장 가능한 API 여부만 최소 검토
+
+---
+
+[레이아웃/구조 해석]
+이미지에서 명확히 확인 가능한 사실:
+- label이 field 위에 위치함
+- field는 사각형 border를 가진 box 형태임
+- field 내부 왼쪽에 텍스트가 있음
+- field 내부 오른쪽에 chevron 아이콘이 있음
+- 닫힌 상태에서는 아이콘이 아래 방향임
+- 열린 상태에서는 아이콘이 위 방향임
+- 열린 상태에서는 field 아래에 큰 직사각형 menu panel이 연결되어 있음
+- menu panel 내부에 option 텍스트가 세로로 나열되어 있음
+- 전체적으로 투명한 background 위에 light border 조합처럼 보임
+- 동일한 닫힌 구조가 2회 반복되고, 우측에는 열린 구조 예시가 있음
+
+텍스트 설명으로 보강된 사실:
+- 이 컴포넌트는 dropdown/select 계열 컴포넌트임
+- 우측 패널은 열려 있는 상태(open state) 예시로 해석 가능함
+- 옵션은 단일 선택용 리스트로 해석하는 것이 자연스러움
+
+구현을 위해 합리적으로 추정하는 사실:
+- label + trigger + menu + option 구조가 적절함
+- single select 기준 구현이 적절함
+- trigger는 button 역할, menu는 listbox 역할, option은 option 역할을 갖는 구조가 적절함
+- option 선택 시 현재 값이 trigger에 반영되고 menu는 닫히는 구조가 적절함
+- 바깥 클릭 시 닫힘, Esc 키 닫힘, 방향키 이동 정도까지는 기본 인터랙션으로 고려하는 것이 적절함
+- 시안상 option 좌측 아이콘, 체크마크, 섹션 구분선은 보이지 않으므로 이번 단계에서 제외하는 것이 적절함
+
+---
+
+[레이아웃/상태 규칙]
+드롭다운 동작:
+- 기본은 single select
+- trigger 클릭 또는 키보드 조작으로 open/close 가능
+- option 선택 시 현재 값 반영
+- 선택 후 menu 닫힘
+- 바깥 클릭 시 닫힘 처리 가능
+- Esc 키로 닫힘 처리 가능
+- ArrowUp / ArrowDown 으로 option 이동 가능하면 좋음
+- Enter / Space로 열기 및 선택 가능하도록 고려
+
+정렬 규칙:
+- label은 trigger 위에 위치
+- 값 텍스트는 trigger 내부 좌측 정렬
+- chevron 아이콘은 trigger 내부 우측 정렬
+- menu는 trigger 아래에 위치
+- option 텍스트는 좌측 정렬
+
+상태 처리 방향:
+- closed/open 상태를 지원해야 함
+- selected 값 반영이 가능해야 함
+- disabled는 HTML 속성과 시각 스타일이 함께 반영되도록 설계
+- 내부 state와 제어형 props(open, onOpenChange) 모두 대응 가능한 방향이면 좋음
+
+---
+
+[디자인 토큰/스타일 참고]
+확정된 컬러 토큰:
+- text/primary : Label
+- text/tertiary : Text
+- border/default : Outline
+- border/strong : Icon
+- border/subtle : OpenPanel Outline
+
+추가 스타일 해석:
+- trigger는 직사각형 box 스타일
+- menu 역시 trigger와 연결되는 직사각형 box 스타일
+- 열린 상태에서는 trigger와 menu가 하나의 연결된 컴포넌트처럼 보일 수 있음
+- 내부 좌우 패딩이 존재함
+- label과 trigger 사이 간격이 존재함
+- option 간 일정한 세로 간격 또는 row height가 있음
+- icon은 open 상태에서 회전 또는 아이콘 교체 방식 모두 가능하나, 시안에 맞는 최소 구현을 우선
+- disabled 상태에서는 드롭다운 영역 전체(라벨 제외)가 알파값 60도로 조정
+
+---
+
+[콘텐츠 초안]
+label 예시:
+- label
+
+selected value 예시:
+- labelitem
+
+placeholder 예시:
+- 항목을 선택해주세요
+
+options 예시:
+- labelitem
+- labelitem 2
+- labelitem 3
+
+---
+
+[구현 제약]
+반드시 props로 받을 것:
+- label
+- options
+- value
+- onChange
+- placeholder
+- disabled
+- className (선택)
+
+선택적으로 props로 받을 것:
+- id
+- name
+- open
+- defaultOpen
+- onOpenChange
+- required
+- describedBy
+- hideLabel
+- fullWidth
+- invalid
+- helperText
+
+하드코딩해도 되는 것:
+- 임시 옵션 데이터
+- 임시 chevron 아이콘 SVG
+- 임시 placeholder 문구
+
+피해야 할 것:
+- 시안에 없는 멀티셀렉트 확장
+- 검색 입력 포함 combobox 구현
+- 외부 headless UI 라이브러리 의존
+- 과도한 compound component 설계
+- virtualization
+- async option loading까지 한 번에 구현
+
+---
+
+[원하는 컴포넌트 구조]
+구현 희망 구조:
+- Dropdown
+- DropdownLabel
+- DropdownTrigger
+- DropdownMenu
+- DropdownOption
+- DropdownIcon
+
+희망 사용 예시:
+- <Dropdown label="label" value={value} options={options} onChange={setValue} />
+- <Dropdown label="label" placeholder="항목을 선택해주세요" ... />
+- <Dropdown label="label" open value={value} options={options} onChange={setValue} />
+- <Dropdown label="label" disabled ... />
+
+또는 더 단순한 구조로 제안해도 괜찮습니다.
+단, 시안 기준 형태를 가장 자연스럽게 표현할 수 있는 API를 우선해주세요.
+
+---
+
+[원하는 출력 방식]
+원하는 결과물:
+- Dropdown 중심 컴포넌트 설계
+- 필요한 최소 하위 컴포넌트 코드
+- 최소 token/foundation 분리안
+- CSS Modules 예시
+- mock data 예시
+- 사용 예시 5종
+  1) 기본 닫힘형
+  2) placeholder 표시형
+  3) 열린 상태형
+  4) 선택값 반영형
+  5) disabled형
+
+우선 구현 범위:
+- Dropdown UI 렌더링 구조
+- 상태별 스타일 분기
+- 접근성 속성 반영
+- props 기반 데이터 주입 구조
+- open/close 및 option 선택의 기본 인터랙션
+
+이번 단계에서 제외:
+- 멀티셀렉트
+- 검색형 combobox
+- 원격 데이터 로딩
+- 복잡한 포지셔닝 엔진
+- 애니메이션

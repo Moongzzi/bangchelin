@@ -1,0 +1,368 @@
+당신은 React + TypeScript 기반 프로젝트의 시니어 프론트엔드 엔지니어이자 시안 기반 UI 컴포넌트 설계 어시스턴트입니다.
+
+이번 작업은 첨부된 인풋필드 이미지 구현에만 집중해주세요.
+
+첨부한 이미지는 Bangchelin Guide의 InputField 시안입니다.
+라벨, 플레이스홀더, underline/box 스타일, clear 버튼, 상태 메시지, 선택 불가한 필드 상태 등
+반복되는 구조를 공통 패턴으로 보고,
+총 8가지 variation/state를 재사용 가능한 InputField 컴포넌트로 설계해주세요.
+이미지에서 확정 가능한 정보와 구현을 위한 추정 정보를 구분해서 정리해주세요.
+
+목표는 단순히 화면 하나를 하드코딩하는 것이 아니라,
+이미지에 나타난 반복 패턴을 분석해서
+재사용 가능한 InputField 컴포넌트 구조를 설계하고 구현하는 것입니다.
+
+중요한 원칙:
+- 시안 충실도를 우선하세요.
+- 과도하게 범용적인 디자인 시스템을 먼저 만들지 마세요.
+- 현재 인풋필드 시안에서 실제로 반복되는 패턴만 공통화하세요.
+- 다만 화면 전용 하드코딩이 아니라, 이후 재사용 가능한 props 구조는 설계하세요.
+- any 사용 금지
+- React + TypeScript strict mode 기준으로 작성
+- 접근성 고려
+- 불필요한 라이브러리 추가 금지
+- 설명보다 실제 코드 중심으로 작성
+- 아직 시안에 없는 variant는 과도하게 만들지 마세요.
+
+입력으로 제공되는 자료는 다음일 수 있습니다.
+- 인풋필드 이미지 캡처
+- Figma 링크
+- 디자이너 설명
+- 레이아웃/상태 메모
+- 컬러/토큰 정보
+
+당신은 이 자료를 바탕으로:
+1. 인풋필드에서 반복되는 UI 패턴을 분석하고
+2. 어떤 단위를 공통 컴포넌트로 추출할지 판단하고
+3. 현재 단계에서 필요한 최소 foundation/token만 정의하고
+4. 실제 프로젝트에 넣을 수 있는 코드로 구현해야 합니다.
+
+특히 이미지가 제공되면 반드시 아래를 구분해서 설명하세요.
+- 이미지에서 명확히 확인 가능한 사실
+- 텍스트 설명으로 보강된 사실
+- 구현을 위해 합리적으로 추정한 사실
+
+이 3가지를 섞어서 단정하지 말고 구분해서 작성하세요.
+
+출력은 반드시 아래 순서로 작성하세요.
+1. 제공된 인풋필드 시안 해석 요약
+2. 반복 패턴 분석
+3. 이번에 공통 컴포넌트로 추출할 대상과 선정 이유
+4. 8가지 variant/state 정의
+5. 제안 컴포넌트 구조
+6. 제안 파일 구조
+7. 필요한 최소 token / foundation 정리
+8. 각 컴포넌트 Props 설계
+9. TypeScript 코드
+10. CSS Modules 코드
+11. 접근성 처리 설명
+12. 사용 예시 / mock data
+13. 추후 확장 포인트 정리
+
+출력 규칙:
+- 먼저 “무엇을 공통 컴포넌트로 볼 것인지” 판단부터 하세요.
+- 입력 자료가 부족하면 추정한 부분과 확정된 부분을 구분해서 작성하세요.
+- 캡처만 보고 확정하기 어려운 값은 임의 단정하지 말고, 합리적 추정이라고 명시하세요.
+- 코드에서 하드코딩을 반복하지 마세요.
+- 현재 구현에 필요한 범위까지만 token/foundation을 정의하세요.
+- 실제 프로젝트에 바로 넣을 수 있는 수준으로 작성하세요.
+
+이제 아래 입력 정보를 바탕으로 작업해주세요.
+
+[프로젝트 기본 정보]
+프로젝트명:
+Bangchelin Guide
+
+기술 스택:
+React + TypeScript
+
+스타일 방식:
+CSS Modules
+
+폼 상태 관리:
+미정 (기본 uncontrolled/controlled 모두 대응 가능한 구조 선호)
+
+아이콘 처리 방식:
+SVG 컴포넌트 또는 자체 아이콘 컴포넌트
+
+접근성 요구 수준:
+기본 웹 접근성 준수 + 키보드 포커스 고려 + label/description/error 연결
+
+---
+
+[작업 목표]
+이번에 우선 구현할 컴포넌트:
+InputField
+
+함께 공통화할 하위 컴포넌트:
+InputLabel, InputMessage, InputClearButton, InputControl
+
+이번 단계에서 중요하게 볼 기준:
+시안 충실도 우선 + 추후 재사용 가능한 구조 유지
+
+---
+
+[디자인 자료]
+참고 프레임/페이지명:
+Input / text field / states
+
+추가 캡처 이미지:
+- 이미지 1: 기본 underline 인풋
+- 이미지 2: 값 입력 + clear 버튼 인풋
+- 이미지 3: focus 상태 인풋
+- 이미지 4: disabled 상태 인풋
+- 이미지 5: error 상태 인풋
+- 이미지 6: success 상태 인풋
+- 이미지 7: outlined 스타일 인풋
+- 이미지 8: 라벨 없는 최소형 또는 단순 underline 인풋
+
+디자이너 메모 또는 화면 설명:
+- 라벨은 상단에 작게 배치됨
+- 플레이스홀더는 입력값이 없을 때 표시됨
+- 기본형은 underline 중심의 미니멀 스타일
+- 일부 상태에서는 오른쪽에 clear 버튼이 표시됨
+- 에러/성공 상태에서는 하단 상태 메시지가 표시됨
+- 특정 variant는 입력이 불가능한 disabled 스타일임
+- 특정 variant는 사각형 border를 가진 outlined 스타일
+- 전체적으로 어두운 배경 위에 배치된 입력 컴포넌트처럼 보임
+
+---
+
+[이번 캡처 기준으로 확인되는 패턴]
+반복되는 요소라고 생각하는 것:
+- 상단 label
+- input control
+- placeholder/value 텍스트
+- underline 또는 box border
+- 우측 clear icon button
+- 하단 helper/error/success message
+- 상태별 컬러 변화
+- 공통 세로 스택 구조
+
+이번 구현에서 우선 반영할 8가지 variation/state:
+1. default
+   - label 있음
+   - underline 스타일
+   - placeholder 표시
+2. default-with-value
+   - label 있음
+   - 값 존재
+   - clear 버튼 표시
+3. focused
+   - label 있음
+   - 포커스 상태
+   - 커서 표시 또는 active underline 강조
+4. disabled
+   - label 있음
+   - 선택 또는 입력 불가 상태
+   - 일반 입력 상태와 구분되는 비활성 스타일
+   - 배경 또는 텍스트/보더 톤 변화 가능
+5. error
+   - label 있음
+   - 값 존재 가능
+   - clear 버튼 표시 가능
+   - 하단 에러 메시지 표시
+6. success
+   - label 있음
+   - 값 존재 가능
+   - clear 버튼 표시 가능
+   - 하단 성공 메시지 표시
+7. outlined
+   - label 있음
+   - 사각형 border 스타일
+   - 내부에 placeholder 표시
+8. bare / minimal
+   - 최소형 표현
+   - label 없이 input만 보이거나
+   - 혹은 하단 underline만 있는 단순 표현
+
+애매하거나 아직 미정인 부분:
+- exact height / padding / spacing 값
+- clear 버튼 hover/focus 스타일
+- 각 상태별 border 두께 변화
+- 커서 색상
+- disabled 상태에서 배경색/텍스트색 처리 방식의 정확한 수치
+- readOnly 상태를 disabled와 분리할지 여부
+
+---
+
+[레이아웃/구조 해석]
+이미지에서 명확히 확인 가능한 사실:
+- 대부분의 인풋은 상단 라벨 + 하단 입력영역 구조임
+- underline 기반 표현이 여러 번 반복됨
+- 일부 상태에는 오른쪽 원형 clear 버튼이 있음
+- 일부 상태에는 하단에 컬러 메시지가 있음
+- 하나의 상태는 일반 입력형보다 비활성처럼 보이는 필드 표현임
+- 하나의 상태는 외곽선이 있는 outlined 박스 형태임
+- 전체적으로 세로로 나열된 상태 모음 시안임
+
+텍스트 설명으로 보강된 사실:
+- 에러 상태 메시지는 검증 실패를 나타냄
+- 성공 상태 메시지는 검증 성공 또는 사용 가능 상태를 나타냄
+- clear 버튼은 입력값 초기화 역할임
+- bare/minimal 형태는 간단한 입력 문맥에서 사용 가능함
+
+구현을 위해 합리적으로 추정하는 사실:
+- InputField 루트 아래 label, control, message 구조가 적절함
+- clear 버튼은 값이 있을 때만 조건부 렌더링하는 구조가 적절함
+- variant와 validation state를 분리하면 재사용성이 높음
+- visual variant(underline/outlined)와 semantic state(default/focused/disabled/error/success)를 함께 다룰 수 있어야 함
+- 다만 이번 단계에서는 시안 기준 8개 표현을 우선 구현하고, 과도한 상태 조합은 만들지 않는 것이 적절함
+
+---
+
+[레이아웃/상태 규칙]
+인풋 타입:
+우선 text 기준으로 구현하되, input 태그의 기본 type 확장은 가능하게 설계
+
+정렬 규칙:
+- label은 control 위에 위치
+- 메시지는 control 아래에 위치
+- clear 버튼은 control 우측 내부 정렬
+- 메시지는 좌측 정렬
+
+상태 처리 방향:
+- visual variant와 validation/message 상태를 props로 제어 가능하게 설계
+- 단, 사용 예시는 시안 기준 8가지 표현을 중심으로 제공
+- focus는 :focus-visible 및 state class 모두 대응 가능하게 고려
+- disabled는 HTML disabled 속성과 시각 스타일이 함께 반영되도록 설계
+
+---
+
+[디자인 토큰/스타일 참고]
+확정된 컬러 토큰:
+- text/primary : 라벨, 
+- text/primaryAlpha40 : placeholder
+- accent/navy : underline, clear button background color, outlined
+- accent/navyHover : underline selected
+- surface/elevated : clear button icon color
+- border/strong : disabled underline color
+- border/default : disabled background color
+- semantic/error : 에러 상태 메시지 
+- semantic/success : 성공 상태 메시지
+
+추가 스타일 해석:
+- 기본 underline은 얇고 미니멀한 선
+- disabled variant는 입력 불가 상태가 시각적으로 명확해야 함
+- outlined variant는 직사각형 box border를 가짐
+- clear 버튼은 작은 원형 버튼 안에 X 아이콘이 들어가는 구조
+- message 텍스트는 본문보다 작고 상태색을 가짐
+
+---
+
+[콘텐츠 초안]
+label 예시:
+- 아이디
+
+placeholder 예시:
+- 아이디 입력
+
+error message 예시:
+- *확인되지 않은 아이디입니다.
+
+success message 예시:
+- *사용 가능한 아이디입니다.
+
+초기값 예시:
+- user_01
+- bangchelin
+- tester_id
+
+---
+
+[구현 제약]
+반드시 props로 받을 것:
+- label
+- value
+- onChange
+- placeholder
+- variant
+- message
+- messageType
+- showClearButton
+- onClear
+- className (선택)
+
+선택적으로 props로 받을 것:
+- id
+- name
+- type
+- disabled
+- readOnly
+- required
+- autoComplete
+- maxLength
+- describedBy
+- hideLabel
+- fullWidth
+
+하드코딩해도 되는 것:
+- 임시 placeholder 문구
+- 임시 아이콘 placeholder
+- 임시 검증 메시지 예시
+- mock input value
+
+피해야 할 것:
+- 시안에 없는 prefix/suffix 확장까지 한 번에 구현
+- 외부 폼 라이브러리 의존
+- 과도한 compound component 설계
+- textarea/select까지 동시에 확장
+- 실제 유효성 검사 로직까지 과도하게 포함
+
+---
+
+[원하는 컴포넌트 구조]
+구현 희망 구조:
+- InputField
+- InputLabel
+- InputControl
+- InputMessage
+- InputClearButton
+
+희망 사용 예시:
+- <InputField variant="default" ... />
+- <InputField variant="disabled" disabled ... />
+- <InputField variant="outlined" ... />
+- <InputField state="error" ... />
+- <InputField state="success" ... />
+
+또는 variant 대신 아래와 같은 조합도 가능:
+- <InputField appearance="underline" validation="error" ... />
+- <InputField appearance="underline" disabled ... />
+- <InputField appearance="outlined" hideLabel ... />
+
+둘 중 더 적절한 쪽으로 제안해도 괜찮습니다.
+단, 시안 기준 8가지 예시를 쉽게 표현할 수 있는 API를 우선해주세요.
+
+---
+
+[원하는 출력 방식]
+원하는 결과물:
+- InputField 중심 컴포넌트 설계
+- 필요한 최소 하위 컴포넌트 코드
+- 최소 token/foundation 분리안
+- CSS Modules 예시
+- mock data 예시
+- 사용 예시 8종
+  1) 기본형
+  2) 값 있음 + clear
+  3) 포커스형
+  4) disabled형
+  5) error형
+  6) success형
+  7) outlined형
+  8) bare/minimal형
+
+우선 구현 범위:
+- InputField UI 렌더링 구조
+- 상태별 스타일 분기
+- 접근성 속성 반영
+- props 기반 데이터 주입 구조
+- clear 버튼 인터랙션 기초
+
+이번 단계에서 제외:
+- 실제 비동기 중복확인 API
+- 폼 검증 라이브러리 연동
+- 애니메이션
+- 마스킹 입력
+- prefix/suffix 확장
