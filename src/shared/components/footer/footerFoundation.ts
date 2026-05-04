@@ -1,5 +1,5 @@
 export const footerFoundation = {
-  maxWidth: 1200,
+  maxWidth: 'none',
   paddingInline: {
     mobile: 24,
     desktop: 40,

@@ -1,0 +1,566 @@
+.page {
+  display: grid;
+  grid-template-columns: var(--about-sidebar-width) minmax(0, 1fr);
+  min-height: calc(100vh - 160px);
+  background: var(--about-page-background);
+}
+
+.sidebar {
+  background: var(--about-sidebar-background);
+  border-right: 1px solid var(--about-tree-default-border);
+}
+
+.tree {
+  position: sticky;
+  top: 80px;
+  padding: 0;
+}
+
+.treeList,
+.treeGroup {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.treeItem {
+  margin: 0;
+}
+
+.treeGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.treeButton {
+  display: grid;
+  grid-template-columns: var(--about-tree-icon-size) minmax(0, 1fr);
+  align-items: center;
+  width: 100%;
+  min-height: var(--about-tree-item-height);
+  padding: 0 var(--about-tree-item-padding-x);
+  border: 0;
+  border-bottom: 1px solid var(--about-tree-default-border);
+  background: var(--about-tree-default-background);
+  color: var(--about-tree-default-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease;
+}
+
+.treeButton:hover {
+  background: var(--about-tree-hover-background);
+  color: var(--about-tree-hover-text);
+  border-color: var(--about-tree-hover-border);
+}
+
+.treeButton:active {
+  background: var(--about-tree-pressed-background);
+  color: var(--about-tree-pressed-text);
+  border-color: var(--about-tree-pressed-border);
+}
+
+.treeButton:focus-visible,
+.editButton:focus-visible {
+  outline: 2px solid var(--about-tree-focus-ring);
+  outline-offset: -2px;
+}
+
+.treeButtonParentActive {
+  background: var(--about-tree-active-parent-background);
+  color: var(--about-tree-active-parent-text);
+  border-color: var(--about-tree-active-parent-border);
+}
+
+.treeButtonLeafActive {
+  background: var(--about-tree-active-leaf-background);
+  color: var(--about-tree-active-leaf-text);
+  border-color: var(--about-tree-active-leaf-border);
+}
+
+.treeButtonDepth1 {
+  padding-left: calc(var(--about-tree-item-padding-x) + var(--about-tree-indent-1));
+}
+
+.treeButtonDepth2 {
+  padding-left: calc(var(--about-tree-item-padding-x) + var(--about-tree-indent-2));
+}
+
+.treeButtonDepth3 {
+  padding-left: calc(var(--about-tree-item-padding-x) + var(--about-tree-indent-3));
+}
+
+.treeLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--about-tree-text-size);
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+.treeButtonParentActive .treeLabel,
+.treeButtonLeafActive .treeLabel {
+  font-weight: 600;
+}
+
+.treeIconSlot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--about-tree-icon-size);
+  height: var(--about-tree-icon-size);
+}
+
+.treeIcon {
+  width: var(--about-tree-icon-size);
+  height: var(--about-tree-icon-size);
+  display: block;
+}
+
+.treeIconPlaceholder {
+  width: var(--about-tree-icon-size);
+  height: var(--about-tree-icon-size);
+}
+
+.content {
+  background: var(--about-content-background);
+}
+
+.contentInner {
+  padding-top: var(--about-content-padding-top);
+  padding-bottom: var(--about-content-padding-bottom);
+  padding-left: var(--about-content-padding-inline);
+  padding-right: var(--about-content-padding-inline);
+}
+
+.contentHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  margin-bottom: 40px;
+}
+
+.editActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--about-edit-button-width);
+  min-height: var(--about-edit-button-height);
+  border: 1px solid var(--about-edit-button-border);
+  border-radius: var(--about-edit-button-radius);
+  background: transparent;
+  color: var(--about-tree-default-text);
+  font-size: 0.875rem;
+  line-height: 1;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.document {
+  display: flex;
+  flex-direction: column;
+  gap: var(--about-content-section-gap);
+}
+
+.editorLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--about-editor-split-gap);
+}
+
+.editorPanel,
+.previewPanel {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--about-editor-min-height);
+  padding: var(--about-editor-panel-padding);
+  border: 1px solid var(--about-editor-border);
+  background: var(--about-editor-background);
+}
+
+.editorDocument {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.editorCategorySection,
+.editorSectionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.editorCategorySection {
+  padding-top: 4px;
+}
+
+.editorSectionBlock {
+  padding: 20px;
+  border: 1px solid var(--about-editor-border);
+  background: var(--about-editor-textarea-background);
+}
+
+.editorFieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.editorPanelHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.editorEyebrow {
+  margin: 0;
+  color: var(--about-tree-active-leaf-text);
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.editorTitle {
+  margin: 0;
+  color: var(--about-tree-default-text);
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.editorHint {
+  margin: 0;
+  color: var(--about-content-paragraph);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.editorLabel {
+  margin-bottom: 12px;
+  color: var(--about-tree-default-text);
+  font-size: 0.875rem;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.editorInput {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--about-editor-border);
+  border-radius: var(--about-editor-control-radius);
+  background: var(--about-editor-textarea-background);
+  color: var(--about-tree-default-text);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.editorInput:focus-visible {
+  outline: 2px solid var(--about-tree-focus-ring);
+  outline-offset: 2px;
+}
+
+.editorToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--about-editor-toolbar-gap);
+}
+
+.editorToolbarButton,
+.editorToolbarButtonWide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--about-editor-toolbar-button-min-width);
+  min-height: var(--about-editor-toolbar-button-height);
+  padding: 0 12px;
+  border: 1px solid var(--about-editor-border);
+  border-radius: var(--about-editor-control-radius);
+  background: var(--about-page-background);
+  color: var(--about-tree-default-text);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editorToolbarButtonWide {
+  min-width: 56px;
+}
+
+.editorToolbarButton:hover,
+.editorToolbarButtonWide:hover {
+  background: var(--about-tree-hover-background);
+  border-color: var(--about-tree-hover-border);
+}
+
+.editorToolbarButton:focus-visible,
+.editorToolbarButtonWide:focus-visible {
+  outline: 2px solid var(--about-tree-focus-ring);
+  outline-offset: 2px;
+}
+
+.editorTextarea {
+  flex: 1;
+  width: 100%;
+  min-height: calc(var(--about-editor-min-height) - 120px);
+  padding: 16px;
+  border: 1px solid var(--about-editor-border);
+  border-radius: var(--about-editor-control-radius);
+  background: var(--about-editor-textarea-background);
+  color: var(--about-tree-default-text);
+  font: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.editorTextarea:focus-visible {
+  outline: 2px solid var(--about-tree-focus-ring);
+  outline-offset: 2px;
+}
+
+.previewContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+}
+
+.markdownContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.markdownContent blockquote {
+  margin: 0;
+  padding: 12px 16px;
+  border-left: 3px solid var(--about-tree-active-parent-border);
+  background: var(--about-tree-active-leaf-background);
+  color: var(--about-content-paragraph);
+}
+
+.markdownContent pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  border-radius: var(--about-editor-control-radius);
+  background: #201c19;
+  color: #f8f3ea;
+}
+
+.markdownContent code {
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+
+.markdownContent :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: rgba(32, 28, 25, 0.08);
+  color: var(--about-tree-default-text);
+}
+
+.markdownParagraph {
+  margin: 0;
+  color: var(--about-content-paragraph);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+
+.previewHeadingLarge,
+.previewHeadingMedium,
+.previewHeadingSmall,
+.previewEmpty {
+  margin: 0;
+  color: var(--about-tree-default-text);
+}
+
+.previewHeadingLarge {
+  font-size: 1.375rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.previewHeadingMedium {
+  font-size: 1.125rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.previewHeadingSmall {
+  font-size: 1rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.previewList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--about-content-paragraph);
+}
+
+.previewOrderedList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-left: 22px;
+  color: var(--about-content-paragraph);
+}
+
+.previewListItem {
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+
+.markdownLink {
+  color: var(--about-tree-active-leaf-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdownStrong {
+  font-weight: 700;
+  color: var(--about-tree-default-text);
+}
+
+.markdownEmphasis {
+  font-style: italic;
+}
+
+.markdownImage {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  border: 1px solid var(--about-editor-border);
+}
+
+.previewEmpty {
+  color: var(--about-content-paragraph);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+
+.documentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.documentTitle {
+  margin: 0;
+  font-size: var(--about-h1-size);
+  line-height: 1.25;
+  font-weight: var(--about-h1-weight);
+  color: var(--about-tree-default-text);
+}
+
+.categorySection {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.categoryTitle {
+  margin: 0;
+  font-size: var(--about-h2-size);
+  line-height: 1.35;
+  font-weight: var(--about-h2-weight);
+  color: var(--about-tree-default-text);
+}
+
+.leafSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scroll-margin-top: 120px;
+}
+
+.leafTitle {
+  margin: 0;
+  font-size: var(--about-h3-size);
+  line-height: 1.5;
+  font-weight: var(--about-h3-weight);
+  color: var(--about-tree-default-text);
+}
+
+.paragraph {
+  margin: 0;
+  color: var(--about-content-paragraph);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+
+@media (max-width: 1279px) {
+  .contentInner {
+    padding-left: 80px;
+    padding-right: 80px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--about-tree-default-border);
+  }
+
+  .tree {
+    position: static;
+  }
+
+  .contentInner {
+    padding-top: 56px;
+    padding-bottom: 56px;
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .editorLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .contentInner {
+    padding-top: 40px;
+    padding-bottom: 40px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .contentHeader {
+    margin-bottom: 28px;
+  }
+
+  .document {
+    gap: 40px;
+  }
+
+  .editorSectionBlock {
+    padding: 16px;
+  }
+}

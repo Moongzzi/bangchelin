@@ -21,7 +21,8 @@
 }
 
 .container {
-  width: min(var(--footer-max-width), calc(100vw - 48px));
+  width: calc(100vw - 48px);
+  max-width: var(--footer-max-width);
   margin: 0 auto;
 }
 
@@ -133,7 +134,8 @@
 
 @media (min-width: 768px) {
   .container {
-    width: min(var(--footer-max-width), calc(100vw - 80px));
+    width: calc(100vw - 48px);
+    max-width: var(--footer-max-width);
   }
 
   .inner {

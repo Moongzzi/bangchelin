@@ -1,5 +1,5 @@
 export const headerFoundation = {
-  maxWidth: 1200,
+  maxWidth: 'none',
   height: {
     compact: 76,
     desktop: 80,
