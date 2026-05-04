@@ -1,0 +1,445 @@
+.page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: var(--register-background-image) center / cover no-repeat;
+}
+
+.viewport {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.card {
+  position: relative;
+  width: min(var(--register-card-width), calc(100vw - 48px));
+  min-height: var(--register-card-height);
+  border-radius: var(--register-card-radius);
+  background: var(--register-card-background);
+  overflow: hidden;
+  box-shadow: 0 24px 48px rgba(44, 12, 20, 0.24);
+}
+
+.brandLink {
+  position: absolute;
+  top: 18px;
+  left: 22px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--register-brand-gap);
+  color: var(--register-brand-color);
+  text-decoration: none;
+}
+
+.brandLink:focus-visible,
+.duplicateButton:focus-visible,
+.profileButton:focus-visible,
+.dateInput:focus-visible,
+.selectInput:focus-visible,
+.introInput:focus-visible,
+.submitButton:focus-visible,
+.backLink:focus-visible {
+  outline: 2px solid rgba(255, 248, 242, 0.92);
+  outline-offset: 3px;
+}
+
+.brandImage {
+  width: var(--register-brand-logo-size);
+  height: var(--register-brand-logo-size);
+  object-fit: contain;
+}
+
+.brandText {
+  font-size: var(--register-brand-text-size);
+  line-height: 1;
+  font-weight: 500;
+}
+
+.content {
+  min-height: var(--register-card-height);
+  padding: 72px 56px 52px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 250px 1px minmax(0, 1fr);
+  gap: var(--register-column-gap);
+  align-items: start;
+}
+
+.leftColumn,
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+}
+
+.leftColumn {
+  gap: 22px;
+}
+
+.rightColumn {
+  gap: 28px;
+  padding-top: var(--register-top-offset);
+}
+
+.divider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 420px;
+  background: var(--register-divider-color);
+  opacity: 0.6;
+  margin-top: var(--register-top-offset);
+}
+
+.heading {
+  margin: var(--register-top-offset) 0 0;
+  color: var(--register-heading-color);
+  font-size: 1.25rem;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldLabel,
+.nativeLabel {
+  color: var(--register-label-color);
+  font-size: 0.9375rem;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.nicknameRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 86px;
+  gap: 8px;
+  width: 100%;
+}
+
+.field,
+.emailField {
+  width: var(--register-input-width);
+}
+
+.nicknameField {
+  width: 100%;
+}
+
+.inlineError,
+.inlineSuccess,
+.hintText {
+  min-height: 1rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+
+.inlineError {
+  color: var(--register-error-color);
+}
+
+.inlineSuccess {
+  color: var(--register-success-color);
+}
+
+.hintText {
+  color: var(--register-muted-color);
+}
+
+.duplicateButton {
+  width: 86px;
+  min-height: var(--register-input-height);
+  border: 1px solid var(--register-duplicate-outline);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--register-label-color);
+  font-size: 0.8125rem;
+  line-height: 1;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.topRow,
+.bottomRow {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+
+.profileBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profileButton {
+  width: var(--register-profile-size);
+  height: var(--register-profile-size);
+  padding: 0;
+  border: 1px solid var(--register-profile-outline);
+  border-radius: 999px;
+  background: rgba(255, 253, 249, 0.78);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.profileImage,
+.profileIcon {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.dateBlock,
+.introBlock,
+.selectBlock,
+.emailBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dateInput,
+.selectInput {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--register-select-border);
+  background: rgba(245, 240, 230, 0.46);
+  color: var(--register-input-color);
+  font-size: 0.9375rem;
+  line-height: 1.2;
+}
+
+.dateInput {
+  max-width: 180px;
+}
+
+.introHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.counter {
+  color: var(--register-muted-color);
+  font-size: 0.8125rem;
+  line-height: 1;
+}
+
+.introInput {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 0 10px;
+  border: 0;
+  border-bottom: 1px solid var(--register-input-line);
+  background: transparent;
+  color: var(--register-input-color);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  resize: none;
+}
+
+.introInput::placeholder {
+  color: var(--register-placeholder-color);
+}
+
+.bottomRow {
+  grid-template-columns: minmax(0, 180px) minmax(0, 1fr);
+  gap: 32px;
+}
+
+.emailField {
+  width: 100%;
+  max-width: 325px;
+}
+
+.footerRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: auto;
+  padding-top: 36px;
+}
+
+.backLink {
+  color: var(--register-brand-color);
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
+.submitButton {
+  width: var(--register-submit-width);
+  min-height: var(--register-submit-height);
+  border: 0;
+  border-radius: var(--register-submit-radius);
+  background: var(--register-submit-background);
+  color: var(--register-submit-text);
+  font-size: 0.875rem;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 140ms ease, transform 140ms ease, opacity 140ms ease;
+}
+
+.submitButton:hover {
+  background: var(--register-submit-background-hover);
+  transform: translateY(-1px);
+}
+
+.submitButton:disabled {
+  opacity: 0.72;
+  transform: none;
+  cursor: wait;
+}
+
+.submitStatus {
+  flex: 1;
+  margin: 0;
+  color: var(--register-muted-color);
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.submitStatusError {
+  color: var(--register-error-color);
+}
+
+@media (max-width: 1365px) {
+  .card {
+    width: min(var(--register-card-width), calc(100vw - 32px));
+  }
+
+  .content {
+    padding-inline: 32px;
+  }
+
+  .columns {
+    gap: 32px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .card {
+    min-height: auto;
+  }
+
+  .content {
+    min-height: auto;
+    padding: 72px 24px 32px;
+  }
+
+  .columns {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .rightColumn {
+    padding-top: 0;
+  }
+
+  .heading {
+    margin-top: 28px;
+  }
+
+  .topRow,
+  .bottomRow {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .profileBlock {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 767px) {
+  .viewport {
+    padding: 24px 16px;
+  }
+
+  .card {
+    width: 100%;
+    border-radius: 20px;
+  }
+
+  .brandLink {
+    top: 18px;
+    left: 18px;
+  }
+
+  .brandImage {
+    width: 26px;
+    height: 26px;
+  }
+
+  .brandText {
+    font-size: 1rem;
+  }
+
+  .content {
+    padding: 64px 18px 24px;
+  }
+
+  .heading {
+    font-size: 1.5rem;
+  }
+
+  .field,
+  .emailField {
+    width: 100%;
+  }
+
+  .nicknameRow {
+    grid-template-columns: minmax(0, 1fr) 78px;
+  }
+
+  .duplicateButton {
+    width: 78px;
+    font-size: 0.75rem;
+  }
+
+  .footerRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .submitButton {
+    width: 100%;
+  }
+}
