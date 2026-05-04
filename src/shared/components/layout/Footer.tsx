@@ -6,6 +6,8 @@ import {
   type FooterSocialLink,
 } from '../footer';
 
+const assetBasePath = import.meta.env.BASE_URL;
+
 const policyLinks: FooterPolicyLink[] = [
   { key: 'terms', label: '서비스 이용약관', href: '#' },
   { key: 'privacy', label: '개인정보 처리방침', href: '#' },
@@ -34,7 +36,7 @@ const socialLinks: FooterSocialLink[] = [
     label: '카카오톡 채널',
     href: '#',
     ariaLabel: '카카오톡 채널 바로가기',
-    imageSrc: '/assets/icons/social/kakao.png',
+    imageSrc: `${assetBasePath}assets/icons/social/kakao.png`,
     imageAlt: '카카오톡 아이콘',
   },
   {
@@ -42,7 +44,7 @@ const socialLinks: FooterSocialLink[] = [
     label: '디스코드',
     href: '#',
     ariaLabel: '디스코드 바로가기',
-    imageSrc: '/assets/icons/social/discord.png',
+    imageSrc: `${assetBasePath}assets/icons/social/discord.png`,
     imageAlt: '디스코드 아이콘',
   },
 ];
