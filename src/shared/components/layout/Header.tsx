@@ -19,6 +19,11 @@ const navigationItems: HeaderNavItemData[] = [
   { key: 'report', label: '문의/제보', to: ROUTES.report },
 ];
 
+const mobileNavigationItems: HeaderNavItemData[] = [
+  ...navigationItems,
+  { key: 'login', label: '로그인', to: ROUTES.login },
+];
+
 function getActiveNavKey(pathname: string) {
   if (pathname === ROUTES.home) {
     return 'home';
@@ -52,6 +57,7 @@ export function Header() {
       logo={logo}
       navItems={navigationItems}
       actionType="loginIcon"
+      loginTo={ROUTES.login}
       navAriaLabel="Global navigation"
       activeNavKey={getActiveNavKey(pathname)}
       mobileMenu={{
@@ -59,6 +65,7 @@ export function Header() {
         onToggle: () => setIsMobileMenuOpen((open) => !open),
         onClose: () => setIsMobileMenuOpen(false),
         navAriaLabel: 'Mobile navigation',
+        items: mobileNavigationItems,
       }}
       showBottomBorder
     />

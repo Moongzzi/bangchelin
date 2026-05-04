@@ -59,11 +59,19 @@ type IconButtonProps = {
   children: ReactNode;
 };
 
+type IconLinkProps = {
+  to: To;
+  ariaLabel: string;
+  className?: string;
+  children: ReactNode;
+};
+
 type HeaderActionsProps = {
   actionType: HeaderActionType;
   onMenuClick?: () => void;
   profileLabel?: string;
   profileInitial?: string;
+  loginTo?: To;
   rightActions?: ReactNode;
 };
 
@@ -83,6 +91,7 @@ export type HeaderProps = {
   profileLabel?: string;
   profileInitial?: string;
   onMenuClick?: () => void;
+  loginTo?: To;
   className?: string;
   rightActions?: ReactNode;
   isCompact?: boolean;
@@ -254,11 +263,20 @@ export function IconButton({ ariaLabel, onClick, className, children }: IconButt
   );
 }
 
+export function IconLink({ to, ariaLabel, className, children }: IconLinkProps) {
+  return (
+    <Link to={to} className={joinClassNames(styles.iconButton, className)} aria-label={ariaLabel}>
+      {children}
+    </Link>
+  );
+}
+
 export function HeaderActions({
   actionType,
   onMenuClick,
   profileLabel,
   profileInitial,
+  loginTo,
   rightActions,
 }: HeaderActionsProps) {
   return (
@@ -269,9 +287,15 @@ export function HeaderActions({
         </IconButton>
       ) : null}
       {actionType === 'loginIcon' ? (
-        <IconButton ariaLabel="Login or enter account area">
-          <LoginIcon />
-        </IconButton>
+        loginTo ? (
+          <IconLink to={loginTo} ariaLabel="Login or enter account area">
+            <LoginIcon />
+          </IconLink>
+        ) : (
+          <IconButton ariaLabel="Login or enter account area">
+            <LoginIcon />
+          </IconButton>
+        )
       ) : null}
       {actionType === 'profile' ? (
         <button
@@ -295,6 +319,7 @@ export function Header({
   profileLabel,
   profileInitial,
   onMenuClick,
+  loginTo,
   className,
   rightActions,
   isCompact = false,
@@ -348,6 +373,7 @@ export function Header({
                 onMenuClick={onMenuClick}
                 profileLabel={profileLabel}
                 profileInitial={profileInitial}
+                loginTo={loginTo}
                 rightActions={rightActions}
               />
             </div>

@@ -1,0 +1,226 @@
+.page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background:
+    var(--login-background-image) center / cover no-repeat,
+    linear-gradient(125deg, var(--login-bg-start) 0%, var(--login-bg-mid) 44%, var(--login-bg-end) 100%);
+}
+
+.viewport {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.card {
+  position: relative;
+  width: min(1300px, calc(100vw - 48px));
+  min-height: 754px;
+  border-radius: 22px;
+  background-color: var(--login-card-background);
+  background-image: var(--login-panel-background-image);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  overflow: hidden;
+  box-shadow: 0 24px 48px rgba(44, 12, 20, 0.24);
+}
+
+.brandLink {
+  position: absolute;
+  top: 18px;
+  left: 22px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--login-brand);
+  text-decoration: none;
+}
+
+.brandLink:focus-visible,
+.submitButton:focus-visible,
+.signUpLink:focus-visible {
+  outline: 2px solid rgba(255, 248, 242, 0.9);
+  outline-offset: 3px;
+}
+
+.brandImage {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.brandText {
+  font-size: clamp(1rem, 0.9rem + 0.25vw, 1.125rem);
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  min-height: 754px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 48px 56px;
+}
+
+.title {
+  margin: 0 0 8px;
+  color: var(--login-text);
+  font-size: clamp(2.25rem, 1.55rem + 1.75vw, 3rem);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.formPanel {
+  width: min(350px, 100%);
+  min-height: 270px;
+  padding: 28px 50px 23px;
+  border-radius: 22px;
+  background: var(--login-form-panel);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.field {
+  width: min(250px, 100%);
+}
+
+.submitButton {
+  width: min(250px, 100%);
+  min-height: 55px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--login-button);
+  color: var(--login-button-text);
+  font-size: 0.875rem;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    background-color 140ms ease,
+    opacity 140ms ease;
+}
+
+.submitButton:hover {
+  transform: translateY(-1px);
+  background: var(--login-button-hover);
+}
+
+.submitButton:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  transform: none;
+}
+
+.statusMessage {
+  min-height: 1.25rem;
+  width: min(250px, 100%);
+  margin: 0;
+  color: var(--login-line);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.statusError {
+  color: var(--login-error);
+}
+
+.statusSuccess {
+  color: var(--login-success);
+}
+
+.signUpLink {
+  display: inline-flex;
+  justify-content: center;
+  margin-top: 12px;
+  color: var(--login-brand);
+  font-size: clamp(0.9375rem, 0.85rem + 0.2vw, 1rem);
+  line-height: 1.2;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+@media (max-width: 1023px) {
+  .card {
+    width: min(1300px, calc(100vw - 32px));
+  }
+}
+
+@media (max-width: 767px) {
+  .viewport {
+    padding: 24px 16px;
+  }
+
+  .card {
+    width: 100%;
+    min-height: auto;
+    border-radius: 20px;
+  }
+
+  .content {
+    min-height: auto;
+    padding: 78px 18px 24px;
+  }
+
+  .brandImage {
+    width: 26px;
+    height: 26px;
+  }
+
+  .brandText {
+    font-size: 1rem;
+  }
+
+  .title {
+    font-size: clamp(2rem, 1.4rem + 2vw, 2.5rem);
+    text-align: center;
+  }
+
+  .formPanel {
+    width: min(350px, 100%);
+    min-height: auto;
+    padding: 24px 28px 22px;
+  }
+
+  .field,
+  .submitButton,
+  .statusMessage {
+    width: 100%;
+  }
+
+  .fields {
+    gap: 14px;
+  }
+
+  .signUpLink {
+    font-size: 0.9375rem;
+  }
+}

@@ -43,6 +43,7 @@ export type InputFieldProps = NativeInputProps & {
   showClearButton?: boolean;
   onClear?: () => void;
   className?: string;
+  rootStyle?: CSSProperties;
   describedBy?: string;
   hideLabel?: boolean;
   fullWidth?: boolean;
@@ -190,6 +191,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(function
     showClearButton,
     onClear,
     className,
+    rootStyle,
     id,
     name,
     type = 'text',
@@ -268,9 +270,16 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(function
     '--input-message-success': colors.semantic.success,
     '--input-focus-ring': `${colors.accent.navy}33`,
   } as CSSProperties;
+  const mergedRootStyle = {
+    ...inputStyle,
+    ...rootStyle,
+  } as CSSProperties;
 
   return (
-    <div className={joinClassNames(styles.root, fullWidth && styles.fullWidth, className)} style={inputStyle}>
+    <div
+      className={joinClassNames(styles.root, fullWidth && styles.fullWidth, className)}
+      style={mergedRootStyle}
+    >
       {variant !== 'bare' ? <InputLabel htmlFor={inputId} label={label} hideLabel={hideLabel} /> : null}
       {variant === 'bare' && !hideLabel ? <InputLabel htmlFor={inputId} label={label} hideLabel={hideLabel} /> : null}
       <InputControl variant={variant} disabled={isDisabled} hasClearButton={shouldShowClearButton}>
