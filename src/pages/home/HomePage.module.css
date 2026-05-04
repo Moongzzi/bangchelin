@@ -1,0 +1,286 @@
+.page {
+  min-height: calc(100vh - 9rem);
+  background: var(--color-bg);
+}
+
+.container {
+  width: min(980px, calc(100vw - 2rem));
+  margin: 0 auto;
+}
+
+.heroContainer {
+  width: min(1040px, calc(100vw - 2rem));
+  margin: 0 auto;
+}
+
+.hero {
+  padding: 0.125rem 0 0;
+}
+
+.heroPanel {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.38fr) minmax(0, 1fr);
+  min-height: 17.0625rem;
+  overflow: hidden;
+}
+
+.heroMedia {
+  position: relative;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 22% 22%, rgba(255, 255, 255, 0.18), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
+}
+
+.heroMedia::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.02), transparent 48%);
+}
+
+.heroIllustrationWrap {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: 100%;
+  overflow: visible;
+}
+
+.heroIllustration {
+  width: auto;
+  height: 100%;
+  object-fit: contain;
+  object-position: left bottom;
+  filter: saturate(0.96) contrast(1.01);
+}
+
+.heroBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 1rem;
+  padding: 1.5rem 1.75rem 1.5rem 1rem;
+  color: var(--color-text-inverse, #fff8f2);
+}
+
+.heroEyebrow {
+  display: none;
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: clamp(1.5rem, 1.25rem + 0.625vw, 2rem);
+  line-height: 1.2;
+  font-weight: 700;
+  color: #fff8f2;
+}
+
+.heroDescription {
+  margin: 0;
+  max-width: 34rem;
+  font-size: clamp(1rem, 0.875rem + 0.3125vw, 1.25rem);
+  line-height: 1.6;
+  font-weight: 600;
+  color: #fff8f2;
+  text-align: right;
+  align-self: flex-end;
+}
+
+.content {
+  padding: 1.25rem 0 0;
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1.75rem, 4vw, 4rem);
+}
+
+.symbolSection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 19rem;
+}
+
+.symbolFrame {
+  width: min(100%, 27rem);
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.symbolImage {
+  width: 100%;
+  max-width: 25rem;
+  height: auto;
+  object-fit: contain;
+}
+
+.rulePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0.25rem 0 1rem;
+}
+
+.ruleTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.35;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.ruleSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ruleSectionTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.ruleList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ruleItem {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--color-text);
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 0.5rem;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 10.25rem;
+  min-height: 3.5rem;
+  padding: 0 1.5rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    transform 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.cta:hover {
+  transform: translateY(-1px);
+}
+
+.ctaPrimary {
+  background: #c88a95;
+  color: #fff8f2;
+}
+
+.ctaPrimary:hover {
+  background: #bb7a86;
+}
+
+.ctaSecondary {
+  background: #efd6da;
+  color: var(--color-text-secondary, #4a433b);
+}
+
+.ctaSecondary:hover {
+  background: #e8c9cf;
+}
+
+@media (max-width: 900px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .symbolSection {
+    min-height: auto;
+    order: 2;
+  }
+
+  .rulePanel {
+    order: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .container {
+    width: min(980px, calc(100vw - 1rem));
+  }
+
+  .heroContainer {
+    width: min(1040px, calc(100vw - 1rem));
+  }
+
+  .heroPanel {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .heroMedia {
+    min-height: 10rem;
+  }
+
+  .heroIllustrationWrap {
+    left: 0;
+    bottom: 0;
+    justify-content: flex-start;
+  }
+
+  .heroIllustration {
+    width: auto;
+    height: 100%;
+  }
+
+  .heroBody {
+    padding: 1.25rem 1rem 1.5rem;
+  }
+
+  .heroDescription {
+    max-width: none;
+    align-self: flex-start;
+    text-align: left;
+    font-size: 0.9375rem;
+  }
+
+  .content {
+    padding-top: 1.5rem;
+  }
+
+  .ruleItem,
+  .ruleSectionTitle {
+    font-size: 0.9rem;
+  }
+
+  .ctaRow {
+    flex-direction: column;
+  }
+
+  .cta {
+    width: 100%;
+  }
+}
