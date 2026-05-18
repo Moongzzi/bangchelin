@@ -27,7 +27,7 @@ export type InputFieldVariant =
 export type InputFieldMessageType = 'helper' | 'error' | 'success';
 
 type NativeInputProps = Omit<
-  ComponentPropsWithoutRef<'input'>,
+  ComponentPropsWithoutRef<'input'> & ComponentPropsWithoutRef<'textarea'>,
   'size' | 'value' | 'defaultValue' | 'onChange'
 >;
 
@@ -47,6 +47,8 @@ export type InputFieldProps = NativeInputProps & {
   describedBy?: string;
   hideLabel?: boolean;
   fullWidth?: boolean;
+  multiline?: boolean;
+  rows?: number;
 };
 
 type InputLabelProps = {
@@ -203,6 +205,8 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(function
     describedBy,
     hideLabel = false,
     fullWidth = true,
+    multiline = false,
+    rows,
     ...restProps
   },
   forwardedRef,
@@ -234,12 +238,14 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(function
     }
   }
 
-  function handleChange(event: ChangeEvent<HTMLInputElement>) {
+  function handleChange(event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>) {
     if (!isControlled) {
       setInternalValue(event.target.value);
     }
 
-    onChange?.(event);
+    // forward change event as InputField's onChange signature (input event)
+    // cast is safe because consumer expects event.target.value
+    onChange?.(event as ChangeEvent<HTMLInputElement>);
   }
 
   function handleClear() {
@@ -283,24 +289,43 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(function
       {variant !== 'bare' ? <InputLabel htmlFor={inputId} label={label} hideLabel={hideLabel} /> : null}
       {variant === 'bare' && !hideLabel ? <InputLabel htmlFor={inputId} label={label} hideLabel={hideLabel} /> : null}
       <InputControl variant={variant} disabled={isDisabled} hasClearButton={shouldShowClearButton}>
-        <input
-          {...restProps}
-          ref={setRefs}
-          id={inputId}
-          name={name}
-          type={type}
-          className={styles.input}
-          value={currentValue}
-          onChange={handleChange}
-          placeholder={placeholder}
-          disabled={isDisabled}
-          readOnly={readOnly}
-          required={required}
-          autoComplete={autoComplete}
-          maxLength={maxLength}
-          aria-describedby={resolvedDescribedBy}
-          aria-invalid={resolvedMessageType === 'error' ? true : undefined}
-        />
+        {multiline ? (
+          <textarea
+            {...(restProps as ComponentPropsWithoutRef<'textarea'>)}
+            ref={setRefs as any}
+            id={inputId}
+            name={name}
+            className={styles.input}
+            value={currentValue}
+            onChange={handleChange}
+            placeholder={placeholder}
+            disabled={isDisabled}
+            readOnly={readOnly}
+            required={required}
+            aria-describedby={resolvedDescribedBy}
+            aria-invalid={resolvedMessageType === 'error' ? true : undefined}
+            rows={(restProps as any).rows ?? 4}
+          />
+        ) : (
+          <input
+            {...(restProps as ComponentPropsWithoutRef<'input'>)}
+            ref={setRefs}
+            id={inputId}
+            name={name}
+            type={type}
+            className={styles.input}
+            value={currentValue}
+            onChange={handleChange}
+            placeholder={placeholder}
+            disabled={isDisabled}
+            readOnly={readOnly}
+            required={required}
+            autoComplete={autoComplete}
+            maxLength={maxLength}
+            aria-describedby={resolvedDescribedBy}
+            aria-invalid={resolvedMessageType === 'error' ? true : undefined}
+          />
+        )}
         {shouldShowClearButton ? <InputClearButton onClick={handleClear} disabled={isDisabled} /> : null}
       </InputControl>
       <InputMessage id={message ? helperId : undefined} message={message} type={resolvedMessageType} />

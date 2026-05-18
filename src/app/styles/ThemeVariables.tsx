@@ -9,6 +9,7 @@ const rootThemeVariables = `
     --color-surface: ${colors.surface.elevated};
     --color-surface-strong: ${colors.surface.default};
     --color-border: ${colors.border.default};
+    --color-border-strong: ${colors.border.strong};
     --color-text: ${colors.text.primary};
     --color-text-muted: ${colors.text.secondary};
     --color-accent: ${colors.brand.primary};

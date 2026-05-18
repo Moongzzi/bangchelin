@@ -1,0 +1,929 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 28px 30px 30px;
+  background: var(--calendar-panel-background);
+  overflow-y: auto;
+}
+
+.todaySummary {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.todayStatValue {
+  margin: 0;
+  font-size: 3rem;
+  line-height: 1;
+  font-weight: 500;
+  color: var(--calendar-text-primary);
+}
+
+.todayStatLabel,
+.todayMetaLabel {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--calendar-text-secondary);
+}
+
+.todayCreateButton,
+.confirmPrimaryButton,
+.confirmSecondaryButton,
+.panelActionButton,
+.modalPrimaryButton,
+.modalSecondaryButton,
+.monthNavButton,
+.detailCloseButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font: inherit;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.todayCreateButton,
+.confirmPrimaryButton,
+.modalPrimaryButton {
+  background: var(--calendar-brand-primary);
+  color: var(--calendar-on-primary);
+}
+
+.todayCreateButton {
+  width: 100%;
+  flex-shrink: 0;
+  gap: 8px;
+  background: color-mix(in srgb, var(--calendar-brand-primary) 22%, var(--calendar-panel-background));
+  color: var(--calendar-text-primary);
+}
+
+.todayCreateButton:hover,
+.confirmPrimaryButton:hover,
+.modalPrimaryButton:hover,
+.panelActionButton:hover {
+  filter: brightness(0.96);
+}
+
+.todayCardList,
+.detailEventList,
+.participantList,
+.commentList {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.eventCardButton {
+  display: block;
+  width: 100%;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--calendar-border-subtle);
+  border-radius: 12px;
+  background: var(--calendar-surface-elevated);
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.eventCardButtonActive {
+  border-color: var(--calendar-border-strong);
+  box-shadow: inset 0 0 0 1px var(--calendar-border-strong);
+}
+
+.eventCardMetaRow,
+.eventCardFooter,
+.detailMetaRow,
+.detailParticipantRow,
+.modalTimeRow,
+.modalFooter,
+.confirmFooter,
+.detailActionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.eventBadge,
+.participantChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 0.75rem;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.eventCardTitle,
+.detailTitle,
+.emptyPanelTitle,
+.confirmTitle,
+.modalTitle {
+  margin: 0;
+  color: var(--calendar-text-primary);
+}
+
+.eventCardTitle {
+  font-size: 0.95rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.eventCardDescription,
+.eventCardMeta,
+.detailMetaText,
+.detailDescription,
+.commentText,
+.emptyPanelText,
+.confirmMessage,
+.modalHint,
+.fieldHint,
+.detailLabel,
+.dayEmptyText,
+.moreEventsLabel {
+  margin: 0;
+  color: var(--calendar-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.eventCardFooter {
+  justify-content: space-between;
+}
+
+.calendarShell {
+  --calendar-day-cell-height: 112px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: var(--calendar-center-width);
+  margin: 0 auto;
+  padding: 18px 30px 30px;
+  background: var(--calendar-page-background);
+}
+
+.monthHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.monthLabelWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.monthYearLabel,
+.weekdayLabel,
+.dayNumberButton,
+.dayNumberStatic {
+  color: var(--calendar-text-primary);
+}
+
+.monthYearLabel {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.monthTitle {
+  margin: 0;
+  font-size: 2.5rem;
+  line-height: 1.05;
+  font-weight: 500;
+}
+
+.monthNav {
+  display: flex;
+  gap: 10px;
+}
+
+.monthNavButton,
+.detailCloseButton {
+  width: 32px;
+  min-height: 32px;
+  border-color: var(--calendar-border-subtle);
+  background: var(--calendar-surface-elevated);
+  color: var(--calendar-text-secondary);
+}
+
+.weekdayRow {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0;
+  padding: 0 0 8px;
+  border-top: 1px solid var(--calendar-border-default);
+  border-bottom: 1px solid var(--calendar-border-default);
+}
+
+.weekdayLabel {
+  padding-top: 4px;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(6, var(--calendar-day-cell-height));
+  gap: 10px;
+}
+
+.dayCell {
+  position: relative;
+  height: var(--calendar-day-cell-height);
+  padding: 10px 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  overflow: hidden;
+}
+
+.dayCellOutside {
+  opacity: 0.35;
+}
+
+.dayCellSelected {
+  border-color: var(--calendar-selected-day-border);
+  background: var(--calendar-selected-day-background);
+}
+
+.dayCellToday .dayNumberButton,
+.dayCellToday .dayNumberStatic {
+  color: var(--calendar-today-text-color);
+}
+
+.dayNumberButton,
+.dayNumberStatic {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 1.05rem;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.dayNumberButton {
+  cursor: pointer;
+}
+
+.dayNumberSunday {
+  color: var(--calendar-brand-primary);
+}
+
+.dayNumberSaturday {
+  color: var(--calendar-accent-navy);
+}
+
+.dayEventList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 34px;
+  overflow: hidden;
+}
+
+.dayEventButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--calendar-event-pill-background);
+  color: var(--calendar-text-primary);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.dayEventDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--calendar-event-dot-background);
+  flex: 0 0 auto;
+}
+
+.dayEventTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.moreEventsLabel {
+  padding-left: 4px;
+}
+
+.detailPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+  min-height: 0;
+  padding: 28px 22px 30px;
+  background: var(--calendar-panel-background);
+  overflow-y: auto;
+}
+
+.detailHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.detailTitle {
+  font-size: 1.1rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.panelActionButton {
+  min-height: 40px;
+  padding: 0 16px;
+  background: var(--calendar-brand-primary);
+  color: var(--calendar-on-primary);
+}
+
+.panelActionButtonMuted,
+.confirmSecondaryButton,
+.modalSecondaryButton {
+  border-color: var(--calendar-border-strong);
+  background: transparent;
+  color: var(--calendar-brand-primary);
+}
+
+.detailSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detailMetaList {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 12px 8px;
+}
+
+.participantList {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.commentItem {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.commentDot {
+  width: 16px;
+  height: 16px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--calendar-text-primary) 68%, white);
+}
+
+.emptyPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 260px;
+  gap: 10px;
+}
+
+.emptyPanelTitle {
+  font-size: 1.05rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.modalBackdrop,
+.confirmBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.modalCard,
+.confirmCard {
+  width: min(100%, 860px);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--calendar-page-background) 88%, white);
+  box-shadow: 0 30px 90px rgba(32, 28, 25, 0.16);
+}
+
+.modalCard {
+  padding: 36px 34px 28px;
+  /* Preferred fixed size for desktop (1920px width): 813 x 765.5 */
+  width: min(100%, 813px);
+  height: min(100%, 765.5px);
+  max-height: calc(100% - 48px);
+  overflow: hidden;
+  box-sizing: border-box;
+  border-radius: 32px;
+  background: var(--calendar-panel-background);
+  box-shadow: 0 24px 64px rgba(32, 28, 25, 0.14);
+
+  /* InputField CSS variable overrides to match modal design using existing tokens */
+  --input-label: var(--calendar-text-primary);
+  --input-text: var(--calendar-text-primary);
+  --input-placeholder: var(--calendar-text-secondary);
+  --input-border: var(--calendar-border-subtle);
+  --input-border-active: var(--calendar-border-strong);
+  --input-focus-ring: var(--calendar-focus-ring);
+  --input-control-min-height-outlined: 64px;
+  --input-outlined-padding-x: 12px;
+}
+
+/* Modal-specific scrollbar: ensure thumb stays inside modal and buttons/poppers are hidden */
+.modalCardContent {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--calendar-border-strong) transparent;
+}
+
+.modalCardContent::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.modalCardContent::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.modalCardContent::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 50px;
+}
+
+.modalCardContent::-webkit-scrollbar-thumb {
+  background-color: var(--calendar-border-strong);
+  border-radius: 50px;
+  border: 0;
+  box-shadow: inset 0 0 0 3px transparent;
+  min-height: 44px;
+}
+
+.modalCardContent::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.confirmCard {
+  width: min(100%, 360px);
+  padding: 24px 22px 18px;
+  text-align: center;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 0 10px 22px;
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.detailCloseButton,
+.modalCloseButton {
+  width: 34px;
+  min-height: 34px;
+  border: 0;
+  background: transparent;
+  color: var(--calendar-brand-primary);
+  cursor: pointer;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 10px 10px;
+}
+
+.modalGrid {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 18px 20px;
+  align-items: start;
+}
+
+.fieldLabel {
+  padding-top: 12px;
+  color: var(--calendar-text-primary);
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.modalTitleInputRoot .control.underline {
+  min-height: 30px;
+}
+
+.modalTitleInputRoot .input {
+  padding: 0;
+  line-height: 30px;
+}
+
+.fieldControl,
+.fieldSplitRow,
+.fieldColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.datePickerShell {
+  position: relative;
+}
+
+.dateTimeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.dateTimeTextButton {
+  flex: 1 1 0;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--calendar-text-primary);
+  text-align: left;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 400;
+  padding: 0;
+  cursor: pointer;
+}
+
+.dateTimeTextButton:hover,
+.dateTimeTextButton:focus-visible {
+  text-decoration: underline;
+}
+
+.toggleLabel {
+  color: var(--calendar-text-primary);
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+.toggleSwitch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.toggleSwitchTrack {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--calendar-border-subtle);
+  transition: background-color 160ms ease-in-out;
+}
+
+.toggleSwitchThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--calendar-page-background);
+  transition: transform 160ms ease-in-out, background-color 160ms ease-in-out;
+}
+
+.toggleSwitch[aria-checked='true'] .toggleSwitchTrack {
+  background: var(--calendar-brand-primary);
+}
+
+.toggleSwitch[aria-checked='true'] .toggleSwitchThumb {
+  transform: translateX(20px);
+}
+
+.toggleSwitchState {
+  color: var(--calendar-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
+
+.datePickerTrigger {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 14px;
+  border: 1px solid var(--calendar-border-subtle);
+  border-radius: 12px;
+  background: var(--calendar-surface-elevated);
+  color: var(--calendar-text-primary);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.datePickerTriggerLabel {
+  color: var(--calendar-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.datePickerTriggerValue,
+.datePickerMonthLabel {
+  color: var(--calendar-text-primary);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.datePickerPopover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 4;
+  width: min(100%, 320px);
+  padding: 16px;
+  border: 1px solid var(--calendar-border-subtle);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--calendar-page-background) 92%, white);
+  box-shadow: 0 24px 48px rgba(31, 24, 20, 0.14);
+}
+
+.datePickerHeader,
+.datePickerNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.datePickerNav {
+  justify-content: flex-end;
+}
+
+.datePickerNavButton {
+  width: 32px;
+  min-height: 32px;
+  border: 1px solid var(--calendar-border-subtle);
+  border-radius: 10px;
+  background: var(--calendar-surface-elevated);
+  color: var(--calendar-text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.datePickerWeekdays,
+.datePickerGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.datePickerWeekdays {
+  margin-top: 14px;
+}
+
+.datePickerWeekday {
+  text-align: center;
+  color: var(--calendar-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.datePickerGrid {
+  margin-top: 8px;
+}
+
+.datePickerDayButton {
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--calendar-text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.datePickerDayOutside {
+  color: var(--calendar-text-secondary);
+  opacity: 0.55;
+}
+
+.datePickerDaySelected {
+  border-color: var(--calendar-selected-day-border);
+  background: var(--calendar-selected-day-background);
+}
+
+.datePickerDayToday {
+  box-shadow: inset 0 0 0 1px var(--calendar-focus-ring);
+}
+
+.fieldSplitRow {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nativeInput,
+.nativeTextarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--calendar-border-strong);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--calendar-text-primary);
+  font: inherit;
+}
+
+.nativeTextarea {
+  min-height: 132px;
+  resize: vertical;
+}
+
+.fieldInlineInput {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.checkboxRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--calendar-text-secondary);
+  font-size: 0.875rem;
+}
+
+.helperError {
+  color: var(--calendar-brand-primary);
+}
+
+.modalFooter {
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+.modalPrimaryButton,
+.modalSecondaryButton,
+.confirmPrimaryButton,
+.confirmSecondaryButton {
+  min-width: 92px;
+  padding: 0 16px;
+}
+
+.confirmTitle {
+  font-size: 1.2rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.confirmMessage {
+  margin-top: 8px;
+  white-space: pre-line;
+}
+
+.confirmFooter {
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.focusRing:focus-visible,
+.todayCreateButton:focus-visible,
+.eventCardButton:focus-visible,
+.dayNumberButton:focus-visible,
+.dayEventButton:focus-visible,
+.monthNavButton:focus-visible,
+.panelActionButton:focus-visible,
+.detailCloseButton:focus-visible,
+.modalCloseButton:focus-visible,
+.confirmPrimaryButton:focus-visible,
+.confirmSecondaryButton:focus-visible,
+.modalPrimaryButton:focus-visible,
+.modalSecondaryButton:focus-visible,
+.datePickerTrigger:focus-visible,
+.datePickerNavButton:focus-visible,
+.datePickerDayButton:focus-visible,
+.nativeInput:focus-visible,
+.nativeTextarea:focus-visible {
+  outline: 2px solid var(--calendar-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1399px) {
+  .detailPanel {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .calendarShell {
+    --calendar-day-cell-height: 96px;
+  }
+
+  .sidebar,
+  .calendarShell,
+  .detailPanel {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .modalGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .fieldLabel {
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .calendarShell {
+    --calendar-day-cell-height: 72px;
+  }
+
+  .monthTitle {
+    font-size: 2rem;
+  }
+
+  .monthGrid {
+    gap: 6px;
+  }
+
+  .modalBackdrop,
+  .confirmBackdrop {
+    padding: 16px;
+  }
+
+  .modalCard {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .datePickerPopover {
+    width: 100%;
+  }
+}

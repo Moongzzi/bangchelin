@@ -1,30 +1,44 @@
+import { lazy, Suspense, type CSSProperties } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-import { AboutPage } from '../../pages/about/AboutPage';
-import { CalendarPage } from '../../pages/calendar/CalendarPage';
-import { DropdownPreviewPage } from '../../pages/dropdown-preview/DropdownPreviewPage';
 import { HomePage } from '../../pages/home/HomePage';
-import { InputPreviewPage } from '../../pages/input-preview/InputPreviewPage';
-import { LoginPage } from '../../pages/login/LoginPage';
-import { ProfilePage } from '../../pages/profile/ProfilePage';
-import { RegisterPage } from '../../pages/register/RegisterPage';
-import { ReportPage } from '../../pages/report/ReportPage';
-import { SearchPreviewPage } from '../../pages/search-preview/SearchPreviewPage';
 import { ROUTES } from '../../shared/constants/routes';
+
+const AboutPage = lazy(() => import('../../pages/about/AboutPage').then((module) => ({ default: module.AboutPage })));
+const CalendarPage = lazy(() => import('../../pages/calendar/CalendarPage').then((module) => ({ default: module.CalendarPage })));
+const DropdownPreviewPage = lazy(() => import('../../pages/dropdown-preview/DropdownPreviewPage').then((module) => ({ default: module.DropdownPreviewPage })));
+const InputPreviewPage = lazy(() => import('../../pages/input-preview/InputPreviewPage').then((module) => ({ default: module.InputPreviewPage })));
+const LoginPage = lazy(() => import('../../pages/login/LoginPage').then((module) => ({ default: module.LoginPage })));
+const ProfilePage = lazy(() => import('../../pages/profile/ProfilePage').then((module) => ({ default: module.ProfilePage })));
+const RegisterPage = lazy(() => import('../../pages/register/RegisterPage').then((module) => ({ default: module.RegisterPage })));
+const ReportPage = lazy(() => import('../../pages/report/ReportPage').then((module) => ({ default: module.ReportPage })));
+const SearchPreviewPage = lazy(() => import('../../pages/search-preview/SearchPreviewPage').then((module) => ({ default: module.SearchPreviewPage })));
+
+const routeFallbackStyle = {
+  minHeight: '40vh',
+  display: 'grid',
+  placeItems: 'center',
+  color: '#6b625d',
+  fontSize: '0.95rem',
+} satisfies CSSProperties;
+
+function LazyRoute({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<div style={routeFallbackStyle}>페이지를 불러오는 중입니다.</div>}>{children}</Suspense>;
+}
 
 export function AppRouter() {
   return (
     <Routes>
       <Route path={ROUTES.home} element={<HomePage />} />
-      <Route path={ROUTES.login} element={<LoginPage />} />
-      <Route path={ROUTES.register} element={<RegisterPage />} />
-      <Route path={ROUTES.about} element={<AboutPage />} />
-      <Route path={ROUTES.calendar} element={<CalendarPage />} />
-      <Route path={ROUTES.dropdownPreview} element={<DropdownPreviewPage />} />
-      <Route path={ROUTES.inputPreview} element={<InputPreviewPage />} />
-      <Route path={ROUTES.searchPreview} element={<SearchPreviewPage />} />
-      <Route path={ROUTES.report} element={<ReportPage />} />
-      <Route path={ROUTES.profile} element={<ProfilePage />} />
+      <Route path={ROUTES.login} element={<LazyRoute><LoginPage /></LazyRoute>} />
+      <Route path={ROUTES.register} element={<LazyRoute><RegisterPage /></LazyRoute>} />
+      <Route path={ROUTES.about} element={<LazyRoute><AboutPage /></LazyRoute>} />
+      <Route path={ROUTES.calendar} element={<LazyRoute><CalendarPage /></LazyRoute>} />
+      <Route path={ROUTES.dropdownPreview} element={<LazyRoute><DropdownPreviewPage /></LazyRoute>} />
+      <Route path={ROUTES.inputPreview} element={<LazyRoute><InputPreviewPage /></LazyRoute>} />
+      <Route path={ROUTES.searchPreview} element={<LazyRoute><SearchPreviewPage /></LazyRoute>} />
+      <Route path={ROUTES.report} element={<LazyRoute><ReportPage /></LazyRoute>} />
+      <Route path={ROUTES.profile} element={<LazyRoute><ProfilePage /></LazyRoute>} />
       <Route path="*" element={<Navigate replace to={ROUTES.home} />} />
     </Routes>
   );

@@ -1,0 +1,64 @@
+.page {
+  min-height: var(--calendar-page-min-height);
+  background: var(--calendar-page-background);
+}
+
+.layout {
+  display: grid;
+  width: min(100%, calc(var(--calendar-sidebar-width) + var(--calendar-center-width)));
+  margin-inline: auto;
+  grid-template-columns: var(--calendar-sidebar-width) minmax(0, 1fr);
+  align-items: stretch;
+  min-height: var(--calendar-page-min-height);
+}
+
+.layoutWithDetail {
+  width: min(100%, calc(var(--calendar-sidebar-width) + var(--calendar-center-width) + var(--calendar-detail-width)));
+  grid-template-columns:
+    var(--calendar-sidebar-width)
+    minmax(0, 1fr)
+    var(--calendar-detail-width);
+}
+
+.sidebarColumn,
+.centerColumn,
+.detailColumn {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
+.sidebarColumn {
+  background: var(--calendar-panel-background);
+  overflow: hidden;
+}
+
+.centerColumn {
+  background: var(--calendar-page-background);
+}
+
+.detailColumn {
+  background: var(--calendar-panel-background);
+  overflow: hidden;
+}
+
+@media (max-width: 1439px) {
+  .layout,
+  .layoutWithDetail {
+    width: 100%;
+    grid-template-columns: 320px minmax(0, 1fr);
+  }
+
+  .detailColumn {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--calendar-border-default);
+  }
+}
+
+@media (max-width: 1023px) {
+  .layout,
+  .layoutWithDetail {
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+}
