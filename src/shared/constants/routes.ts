@@ -8,5 +8,6 @@ export const ROUTES = {
   profile: '/profile',
   inputPreview: '/preview/input-field',
   dropdownPreview: '/preview/dropdown',
+  popupPreview: '/preview/popup',
   searchPreview: '/preview/search-box',
 } as const;

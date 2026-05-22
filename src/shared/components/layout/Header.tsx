@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { Header as HeaderRoot, type HeaderNavItemData, HomeIcon } from '../header';
+import { Header as HeaderRoot, type HeaderNavItemData } from '../header';
 import { ROUTES } from '../../constants/routes';
 
 const logo = {
@@ -13,7 +13,7 @@ const logo = {
 } as const;
 
 const navigationItems: HeaderNavItemData[] = [
-  { key: 'home', label: '홈', to: ROUTES.home, icon: <HomeIcon />, end: true },
+  { key: 'home', label: '홈', to: ROUTES.home, end: true },
   { key: 'guide', label: '가이드', to: ROUTES.about },
   { key: 'calendar', label: '캘린더', to: ROUTES.calendar },
   { key: 'report', label: '문의/제보', to: ROUTES.report },

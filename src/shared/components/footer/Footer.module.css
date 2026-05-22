@@ -35,26 +35,28 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 18px;
+  gap: 24px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .policyLink {
+  font-family: var(--font-sans);
   color: var(--footer-text);
   font-size: 1rem;
-  line-height: 1.35;
+  line-height: 1.375;
+  letter-spacing: 0;
   font-weight: 400;
 }
 
 .policyLinkEmphasized {
   color: var(--footer-text-strong);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .section {
-  margin-top: 34px;
+  margin-top: 36px;
 }
 
 .noticeList,
@@ -67,8 +69,9 @@
 .noticeItem,
 .metaItem,
 .socialTitle {
+  font-family: var(--font-sans);
   color: var(--footer-text);
-  font-size: 1rem;
+  font-size: 0.75rem;
   line-height: 1.5;
   font-weight: 400;
 }
@@ -78,13 +81,13 @@
 }
 
 .socialTitle {
-  margin: 0 0 12px;
+  margin: 0 0 5px;
 }
 
 .socialList {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -146,7 +149,7 @@
   .noticeItem,
   .metaItem,
   .socialTitle {
-    font-size: 1.0625rem;
+    font-size: inherit;
   }
 
   .section {

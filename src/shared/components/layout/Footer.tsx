@@ -27,14 +27,14 @@ const notices: FooterNoticeItem[] = [
 
 const metaItems: FooterMetaItem[] = [
   { key: 'copyright', label: '© 2026 옥. All rights reserved.' },
-  { key: 'contact', label: '개발자 문의 바로가기', href: '#' },
+  { key: 'contact', label: '개발자 문의 바로가기', href: 'https://open.kakao.com/o/s024KwFh' },
 ];
 
 const socialLinks: FooterSocialLink[] = [
   {
     key: 'kakao',
     label: '카카오톡 채널',
-    href: '#',
+    href: 'https://open.kakao.com/o/gVxKnbqi',
     ariaLabel: '카카오톡 채널 바로가기',
     imageSrc: `${assetBasePath}assets/icons/social/kakao.png`,
     imageAlt: '카카오톡 아이콘',
@@ -56,7 +56,6 @@ export function Footer() {
       notices={notices}
       metaItems={metaItems}
       socialLinks={socialLinks}
-      emphasizedPolicyKey="privacy"
       socialTitle="<방탈출 미식 협회> SNS 바로가기"
     />
   );

@@ -1,0 +1,349 @@
+당신은 React + TypeScript 기반 프로젝트의 시니어 프론트엔드 엔지니어이자 시안 기반 UI 컴포넌트 설계 어시스턴트입니다.
+
+이번 작업은 첨부된 Popup(팝업/모달) 이미지 구현에만 집중해주세요.
+
+첨부한 이미지는 Bangchelin Guide의 Popup 시안입니다.
+제목, 설명 문구, 액션 버튼 조합, overlay, 가변 크기 패널 등
+반복되는 UI 패턴을 분석해서
+재사용 가능한 Popup 컴포넌트로 설계해주세요.
+
+목표는 특정 화면 하나를 하드코딩하는 것이 아니라,
+이미지에 나타난 반복 구조와 실제 서비스 요구사항을 바탕으로
+전체 프로젝트에서 재사용 가능한 Popup 컴포넌트를 설계하고 구현하는 것입니다.
+
+중요한 원칙:
+- 시안 충실도를 우선하세요.
+- 과도하게 범용적인 디자인 시스템부터 만들지 마세요.
+- 현재 팝업 시안에서 실제로 보이는 패턴만 우선 공통화하세요.
+- 다만 화면 전용 하드코딩이 아니라, 이후 재사용 가능한 props 구조는 설계하세요.
+- any 사용 금지
+- React + TypeScript strict mode 기준으로 작성
+- 접근성 고려
+- 불필요한 외부 라이브러리 추가 금지
+- 설명보다 실제 코드 중심으로 작성
+- 아직 시안에 없는 드래그 이동, 리사이즈, 애니메이션 시스템, 중첩 모달 관리, 토스트 기능 등은 과도하게 확장하지 마세요.
+
+입력으로 제공되는 자료는 다음일 수 있습니다.
+- Popup 이미지 캡처
+- Figma 링크
+- 디자이너 설명
+- 상태 메모
+- 컬러/토큰 정보
+
+당신은 이 자료를 바탕으로:
+1. 팝업에서 반복되는 UI 패턴을 분석하고
+2. 어떤 단위를 공통 컴포넌트로 추출할지 판단하고
+3. 현재 단계에서 필요한 최소 foundation/token만 정의하고
+4. 실제 프로젝트에 넣을 수 있는 코드로 구현해야 합니다.
+
+특히 이미지가 제공되면 반드시 아래를 구분해서 설명하세요.
+- 이미지에서 명확히 확인 가능한 사실
+- 텍스트 설명으로 보강된 사실
+- 구현을 위해 합리적으로 추정한 사실
+
+이 3가지를 섞어서 단정하지 말고 구분해서 작성하세요.
+
+출력은 반드시 아래 순서로 작성하세요.
+1. 제공된 Popup 시안 해석 요약
+2. 반복 패턴 분석
+3. 이번에 공통 컴포넌트로 추출할 대상과 선정 이유
+4. variant / state 정의
+5. 제안 컴포넌트 구조
+6. 제안 파일 구조
+7. 필요한 최소 token / foundation 정리
+8. 각 컴포넌트 Props 설계
+9. TypeScript 코드
+10. CSS Modules 코드
+11. 접근성 처리 설명
+12. 사용 예시 / mock data
+13. 추후 확장 포인트 정리
+
+출력 규칙:
+- 먼저 “무엇을 공통 컴포넌트로 볼 것인지” 판단부터 하세요.
+- 입력 자료가 부족하면 추정한 부분과 확정된 부분을 구분해서 작성하세요.
+- 캡처만 보고 확정하기 어려운 값은 임의 단정하지 말고, 합리적 추정이라고 명시하세요.
+- 코드에서 하드코딩을 반복하지 마세요.
+- 현재 구현에 필요한 범위까지만 token/foundation을 정의하세요.
+- 실제 프로젝트에 바로 넣을 수 있는 수준으로 작성하세요.
+
+이제 아래 입력 정보를 바탕으로 작업해주세요.
+
+[프로젝트 기본 정보]
+프로젝트명:
+Bangchelin Guide
+
+기술 스택:
+React + TypeScript
+
+스타일 방식:
+CSS Modules
+
+상태 관리 방향:
+기본 controlled / uncontrolled 모두 대응 가능한 구조 선호
+
+공통 컴포넌트 재사용 우선순위:
+- Button
+- Typography
+- Layout / Portal
+- Overlay 관련 foundation
+
+접근성 요구 수준:
+기본 웹 접근성 준수 + ESC 닫기 + 포커스 이동 고려 + 배경 상호작용 차단
+
+---
+
+[작업 목표]
+이번에 우선 구현할 컴포넌트:
+Popup
+
+함께 공통화할 하위 컴포넌트:
+PopupOverlay, PopupPanel, PopupHeader, PopupBody, PopupActions
+
+이번 단계에서 중요하게 볼 기준:
+시안 충실도 우선 + 추후 재사용 가능한 구조 유지
+
+---
+
+[디자인 자료]
+참고 프레임/페이지명:
+Popup / modal / confirm states
+
+추가 캡처 이미지:
+- 이미지 1: 취소 + primary 버튼 조합
+- 이미지 2: 단일 primary 버튼 조합
+- 이미지 3: 취소 + outline 버튼 조합
+- 이미지 4: 단일 outline 버튼 조합
+- 이미지 5: 취소 + text 액션 조합
+- 이미지 6: 단일 text 액션 또는 최소 액션 조합
+
+디자이너 메모 또는 화면 설명:
+- 팝업 뒤에는 사이트 전체를 덮는 dimmed overlay가 있음
+- overlay가 있는 동안 뒤쪽 사이트는 클릭 및 스크롤 되지 않아야 함
+- 팝업 패널 크기는 고정이 아니라 내부 콘텐츠 길이에 따라 자연스럽게 늘어나야 함
+- 모바일에서도 안전하게 보여야 함
+- 내부 액션 버튼은 상황에 따라 filled / outline / text 조합으로 바뀔 수 있음
+
+---
+
+[이번 캡처 기준으로 확인되는 패턴]
+반복되는 요소라고 생각하는 것:
+- 전체 화면 overlay
+- 중앙 정렬된 popup panel
+- 제목 텍스트
+- 설명 문구
+- 하단 액션 영역
+- 액션 버튼 1개 또는 2개
+- 버튼 스타일 variation (filled / outline / text)
+
+이번 구현에서 우선 반영할 variation/state:
+1. confirm-cancel / filled
+   - 좌측 취소
+   - 우측 filled 확인/로그아웃 버튼
+2. single / filled
+   - 단일 filled 버튼
+3. confirm-cancel / outline
+   - 좌측 취소
+   - 우측 outline 버튼
+4. single / outline
+   - 단일 outline 버튼
+5. confirm-cancel / text
+   - 좌측 취소
+   - 우측 text 스타일 액션
+6. single / text
+   - 단일 text 액션
+7. custom content
+   - title/description 없이 children 기반 확장 가능
+8. responsive/mobile
+   - 좁은 화면에서 width 축소, 내부 여백 조정, overflow 대응
+
+---
+
+[레이아웃/구조 해석]
+이미지에서 명확히 확인 가능한 사실:
+- 팝업은 중앙 정렬되어 있음
+- 패널은 밝은 배경의 카드 형태임
+- 패널에는 제목, 설명, 버튼 영역이 있음
+- 버튼 조합은 한 개 또는 두 개일 수 있음
+- 동일 레이아웃에 버튼 스타일만 달라지는 variation이 존재함
+- 패널은 고정 폭처럼 보이지만, 실제 서비스 요구사항상 콘텐츠에 따라 유동 크기여야 함
+
+텍스트 설명으로 보강된 사실:
+- overlay는 text/primary-40% 계열 컬러 박스로 사이트 전체를 덮음
+- overlay가 있는 동안 사이트 뒤쪽은 클릭/스크롤이 되지 않아야 함
+- 모바일 반응형도 고려해야 함
+
+구현을 위해 합리적으로 추정하는 사실:
+- Popup은 Portal 기반 렌더링이 적절할 가능성이 높음
+- body scroll lock이 필요함
+- overlay 클릭 닫기 여부는 옵션화 가능함
+- ESC 닫기 여부도 옵션화 가능함
+- 패널의 width는 콘텐츠 기반이되, min/max width가 있어야 함
+- 긴 콘텐츠는 내부 scroll 또는 body 영역 scroll을 지원하는 것이 적절함
+
+---
+
+[중요한 overlay 처리 규칙]
+- 팝업이 열리면 사이트 전체를 덮는 overlay를 반드시 렌더링해야 함
+- overlay는 text/primary-40% 계열 컬러를 우선 사용해야 함
+- 현재 exact token 값이 명시되어 있지 않으면:
+  1) 기존 토큰 참조 위치를 먼저 찾을 것
+  2) 없다면 popup overlay 전용 token 또는 CSS variable로 분리할 것
+- overlay가 떠 있는 동안:
+  - 배경 클릭 차단
+  - 배경 스크롤 차단
+  - 배경 포커스 이동 차단 또는 최소화
+- 구현 시 overlay 색상을 임의의 검정 rgba로 바로 하드코딩하지 말고,
+  가능하면 토큰 또는 CSS variable로 먼저 분리하세요.
+
+---
+
+[레이아웃/상태 규칙]
+동작:
+- open / close 제어 가능해야 함
+- onClose 핸들러 제공
+- 필요 시 overlay click 닫기 옵션 지원
+- 필요 시 ESC 닫기 옵션 지원
+- 버튼 클릭 시 각 action handler 실행 가능해야 함
+
+정렬 규칙:
+- title, description은 중앙 정렬 우선
+- actions는 하단 영역에서 시안에 맞는 정렬 방식 유지
+- 버튼 2개일 때 간격 유지
+- 버튼 1개일 때 자연스럽게 단독 배치
+
+크기 규칙:
+- popup panel은 내부 콘텐츠에 따라 유동적 크기
+- 단, max-width / max-height 필요
+- 모바일에서는 viewport를 넘지 않도록 width 축소
+- 필요 시 내부 콘텐츠 영역 scroll 허용
+
+상태 처리 방향:
+- open / closed
+- action variant
+- single / double action
+- dismissible / non-dismissible
+- loading action은 아직 과도하게 구현하지 말고 확장 가능성만 고려
+
+---
+
+[디자인 토큰/스타일 참고]
+확정된 컬러 토큰:
+- text/primary : text
+- bg/elevated : background
+- border/strong : Outline
+- brand/primary : primary button background, Outline button outline&text 
+- text/inverse : primary button text
+
+추가 스타일 해석:
+- panel 배경은 밝은 neutral/surface 계열
+- title과 description은 중앙 정렬된 텍스트 구조
+- 버튼은 기존 공통 Button variant를 재사용하는 것이 적절함
+- panel radius는 비교적 둥근 편
+- overlay는 text/primary-40% 계열로 분리하는 것이 적절함
+- 그림자/레이어가 필요하면 foundation 수준으로 최소 정의
+
+---
+
+[콘텐츠 초안]
+title 예시:
+- 로그아웃
+
+description 예시:
+- 로그아웃하시겠습니까?
+- 서비스 이용이 제한될 수 있습니다.
+
+버튼 문구 예시:
+- 취소
+- 로그아웃
+- 확인
+
+aria-label 예시:
+- 팝업 닫기
+- 확인
+- 취소
+
+---
+
+[구현 제약]
+반드시 props로 받을 것:
+- open
+- onClose
+- title
+- description
+- actions
+- className (선택)
+
+선택적으로 props로 받을 것:
+- children
+- closeOnOverlayClick
+- closeOnEscape
+- ariaLabel
+- role
+- size
+- maxWidth
+- initialFocusRef
+- hideCloseButton
+- preventScrollLock (선택)
+
+하드코딩해도 되는 것:
+- 임시 버튼 문구 예시
+- 임시 mock action handler
+- 임시 portal root id
+
+피해야 할 것:
+- 외부 모달 라이브러리 의존
+- drag / resize 기능 추가
+- 토스트 기능 혼합
+- 멀티 스텝 모달까지 한 번에 확장
+- 불필요한 애니메이션 시스템 도입
+
+---
+
+[원하는 컴포넌트 구조]
+구현 희망 구조:
+- Popup
+- PopupOverlay
+- PopupPanel
+- PopupHeader
+- PopupBody
+- PopupActions
+
+희망 사용 예시:
+- <Popup open={open} onClose={handleClose} title="로그아웃" description="..." actions={...} />
+- <Popup open={open} onClose={handleClose} actions={...}>custom content</Popup>
+- <Popup open={open} onClose={handleClose} closeOnOverlayClick={false} />
+
+또는 더 단순한 구조로 제안해도 괜찮습니다.
+단, 시안 기준 형태를 가장 자연스럽게 표현할 수 있는 API를 우선해주세요.
+
+---
+
+[원하는 출력 방식]
+원하는 결과물:
+- Popup 중심 컴포넌트 설계
+- 필요한 최소 하위 컴포넌트 코드
+- 최소 token/foundation 분리안
+- CSS Modules 예시
+- mock data 예시
+- 사용 예시 5~6종
+  1) 취소 + filled 액션형
+  2) 단일 filled 버튼형
+  3) 취소 + outline 액션형
+  4) 단일 outline 버튼형
+  5) text 액션형
+  6) custom content + 모바일 대응형
+
+우선 구현 범위:
+- Popup UI 렌더링 구조
+- 상태별 스타일 분기
+- overlay 렌더링
+- 배경 클릭/스크롤 차단
+- 접근성 속성 반영
+- props 기반 데이터 주입 구조
+
+이번 단계에서 제외:
+- 복잡한 애니메이션
+- 모달 스택 관리
+- 드래그 이동
+- 리사이즈
+- 전역 알림 시스템

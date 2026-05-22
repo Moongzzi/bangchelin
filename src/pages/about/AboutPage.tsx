@@ -65,6 +65,40 @@ type ToolbarAction =
   | 'orderedList'
   | 'blockquote';
 
+type ToolbarButtonConfig = {
+  action: ToolbarAction;
+  label: string;
+  title: string;
+};
+
+type ToolbarSelectOption = {
+  action: ToolbarAction;
+  label: string;
+};
+
+const structureOptions: ToolbarSelectOption[] = [
+  { action: 'heading1', label: 'H1 제목' },
+  { action: 'heading2', label: 'H2 제목' },
+  { action: 'heading3', label: 'H3 제목' },
+];
+
+const insertOptions: ToolbarSelectOption[] = [
+  { action: 'link', label: '링크' },
+  { action: 'image', label: '이미지' },
+  { action: 'codeBlock', label: '코드 블록' },
+  { action: 'unorderedList', label: '목록' },
+  { action: 'orderedList', label: '번호 목록' },
+];
+
+const editorIconButtons: ToolbarButtonConfig[] = [
+  { action: 'bold', label: 'B', title: '굵게' },
+  { action: 'italic', label: 'I', title: '기울임' },
+  { action: 'inlineCode', label: '</>', title: '인라인 코드' },
+  { action: 'blockquote', label: '"', title: '인용문' },
+];
+
+type ToolbarSelectValue = '' | ToolbarAction;
+
 function sanitizeTree(nodes: GuideTreeNode[], maxDepth: number, currentDepth = 1): GuideTreeNode[] {
   if (currentDepth > maxDepth) {
     return [];
@@ -429,6 +463,7 @@ export function AboutPage() {
   const [savedDocuments, setSavedDocuments] = useState<EditableGuideDocument[]>(initialDocuments);
   const [draftMarkdownByDocument, setDraftMarkdownByDocument] = useState<Record<string, string>>(() => buildDocumentMarkdownMap(initialDocuments));
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isEditorHelpOpen, setIsEditorHelpOpen] = useState(false);
 
   const sanitizedTree = useMemo(
     () => sanitizeTree(buildGuideTree(toGuideTreeDocuments(savedDocuments)), treeTokens.maxDepth),
@@ -461,6 +496,29 @@ export function AboutPage() {
       ?? (activeSavedDocument ? serializeDocumentToMarkdown(activeSavedDocument) : ''),
     [activeDocumentId, activeSavedDocument, draftMarkdownByDocument],
   );
+
+  const editorLineCount = useMemo(
+    () => (activeDraftMarkdown ? activeDraftMarkdown.split(/\r?\n/).length : 0),
+    [activeDraftMarkdown],
+  );
+
+  const editorCharacterCount = activeDraftMarkdown.length;
+
+  function handleStructureSelectChange(nextValue: ToolbarSelectValue) {
+    if (!nextValue) {
+      return;
+    }
+
+    applyToolbarAction(nextValue);
+  }
+
+  function handleInsertSelectChange(nextValue: ToolbarSelectValue) {
+    if (!nextValue) {
+      return;
+    }
+
+    applyToolbarAction(nextValue);
+  }
 
   useEffect(() => {
     if (!activeLeafId) {
@@ -692,11 +750,13 @@ export function AboutPage() {
 
   function handleStartEditing() {
     setDraftMarkdownByDocument(buildDocumentMarkdownMap(savedDocuments));
+    setIsEditorHelpOpen(false);
     setIsEditMode(true);
   }
 
   function handleCancelEditing() {
     setDraftMarkdownByDocument(buildDocumentMarkdownMap(savedDocuments));
+    setIsEditorHelpOpen(false);
     setIsEditMode(false);
   }
 
@@ -714,6 +774,7 @@ export function AboutPage() {
     if (nextLeafId) {
       setActiveLeafId(nextLeafId);
     }
+    setIsEditorHelpOpen(false);
     setIsEditMode(false);
   }
 
@@ -846,72 +907,150 @@ export function AboutPage() {
         <div className={styles.content}>
           <div className={styles.contentInner}>
             <div className={styles.contentHeader}>
-              {isAdmin ? (
+              {isAdmin && !isEditMode ? (
                 <div className={styles.editActions}>
-                  {isEditMode ? (
-                    <>
-                      <button type="button" className={styles.editButton} onClick={handleCancelEditing}>
-                        취소
-                      </button>
-                      <button type="button" className={styles.editButton} onClick={handleApplyEditing}>
-                        적용
-                      </button>
-                    </>
-                  ) : (
-                    <button type="button" className={styles.editButton} onClick={handleStartEditing}>
-                      {permissionMockConfig.editLabel}
-                    </button>
-                  )}
+                  <button type="button" className={styles.editButton} onClick={handleStartEditing}>
+                    {permissionMockConfig.editLabel}
+                  </button>
                 </div>
               ) : null}
             </div>
 
             {isEditMode && activeSavedDocument ? (
-              <section className={styles.editorLayout} aria-label="가이드 문서 편집기">
-                <div className={styles.editorPanel}>
-                  <div className={styles.editorPanelHeader}>
-                    <p className={styles.editorEyebrow}>Editor</p>
-                    <h2 className={styles.editorTitle}>{activeSavedDocument.title}</h2>
-                    <p className={styles.editorHint}>
-                      현재 선택된 1depth 문서 전체를 하나의 markdown 문서로 편집합니다. 저장 시 `# / ## / ###` 구조를 다시 1depth / 2depth / 3depth 데이터로 변환합니다.
-                    </p>
+              <section className={styles.editorWorkspace} aria-label="가이드 문서 편집기">
+                <div className={styles.editorTopBar}>
+                  <div className={styles.editorTopMeta}>
+                    <div className={styles.editorStatusRow}>
+                      <span className={styles.editorBadge}>Editing</span>
+                      <span className={styles.editorBadgeMuted}>Markdown Workspace</span>
+                      <button
+                        type="button"
+                        className={styles.editorHelpButton}
+                        aria-expanded={isEditorHelpOpen}
+                        onClick={() => setIsEditorHelpOpen((currentState) => !currentState)}
+                      >
+                        <span className={styles.editorHelpIcon} aria-hidden="true">?</span>
+                        도움말
+                      </button>
+                    </div>
                   </div>
 
-                  <div className={styles.editorToolbar} role="toolbar" aria-label="문서 서식 도구">
-                    <button type="button" className={styles.editorToolbarButtonWide} onClick={() => applyToolbarAction('heading1')}>H1</button>
-                    <button type="button" className={styles.editorToolbarButtonWide} onClick={() => applyToolbarAction('heading2')}>H2</button>
-                    <button type="button" className={styles.editorToolbarButtonWide} onClick={() => applyToolbarAction('heading3')}>H3</button>
-                    <button type="button" className={styles.editorToolbarButton} onClick={() => applyToolbarAction('bold')}>B</button>
-                    <button type="button" className={styles.editorToolbarButton} onClick={() => applyToolbarAction('italic')}>I</button>
-                    <button type="button" className={styles.editorToolbarButtonWide} onClick={() => applyToolbarAction('link')}>링크</button>
-                    <button type="button" className={styles.editorToolbarButtonWide} onClick={() => applyToolbarAction('image')}>이미지</button>
-                    <button type="button" className={styles.editorToolbarButtonWide} onClick={() => applyToolbarAction('inlineCode')}>인라인 코드</button>
-                    <button type="button" className={styles.editorToolbarButtonWide} onClick={() => applyToolbarAction('codeBlock')}>코드 블록</button>
-                    <button type="button" className={styles.editorToolbarButtonWide} onClick={() => applyToolbarAction('unorderedList')}>목록</button>
-                    <button type="button" className={styles.editorToolbarButtonWide} onClick={() => applyToolbarAction('orderedList')}>번호</button>
-                    <button type="button" className={styles.editorToolbarButtonWide} onClick={() => applyToolbarAction('blockquote')}>인용</button>
+                  <div className={styles.editorTopActions}>
+                    <div className={styles.editorMetrics} aria-label="문서 통계">
+                      <span className={styles.editorMetric}>줄 {editorLineCount}</span>
+                      <span className={styles.editorMetric}>문자 {editorCharacterCount}</span>
+                    </div>
+                    <div className={styles.editActions}>
+                      <button type="button" className={styles.editorActionButtonSecondary} onClick={handleCancelEditing}>
+                        취소
+                      </button>
+                      <button type="button" className={styles.editorActionButtonPrimary} onClick={handleApplyEditing}>
+                        적용
+                      </button>
+                    </div>
                   </div>
-
-                  <label htmlFor="about-document-editor" className={styles.editorLabel}>
-                    1depth 문서 전체 편집
-                  </label>
-                  <textarea
-                    id="about-document-editor"
-                    ref={editorRef}
-                    className={styles.editorTextarea}
-                    value={activeDraftMarkdown}
-                    onChange={(event) => handleEditorMarkdownChange(event.target.value)}
-                    spellCheck={false}
-                  />
                 </div>
 
-                <div className={styles.previewPanel} aria-live="polite">
-                  <div className={styles.editorPanelHeader}>
-                    <p className={styles.editorEyebrow}>Preview</p>
-                    <h2 className={styles.editorTitle}>{activeSavedDocument.title}</h2>
+                {isEditorHelpOpen ? (
+                  <div className={styles.editorHelpPanel} role="note" aria-label="편집 도움말">
+                    <p className={styles.editorHelpText}>현재 선택된 1depth 문서 전체를 하나의 markdown 문서로 편집합니다.</p>
+                    <p className={styles.editorHelpText}>저장 시 # / ## / ### 구조를 다시 1depth / 2depth / 3depth 데이터로 변환합니다.</p>
                   </div>
-                  <div className={styles.previewContent}>
-                    {renderMarkdownPreview(activeDraftMarkdown, styles.paragraph)}
+                ) : null}
+
+                <div className={styles.editorLayout}>
+                  <div className={styles.editorPanel}>
+                    <div className={styles.editorSurfaceHeader}>
+                      <div className={styles.editorPanelHeader}>
+                        <p className={styles.editorEyebrow}>Writing</p>
+                        <h3 className={styles.editorTitle}>문서 작성 캔버스</h3>
+                      </div>
+
+                      <div className={styles.editorToolbar} role="toolbar" aria-label="문서 서식 도구">
+                        <label className={styles.editorToolbarSelectWrap}>
+                          <span className={styles.editorToolbarSelectLabel}>서식</span>
+                          <select
+                            className={styles.editorToolbarSelect}
+                            value=""
+                            onChange={(event) => handleStructureSelectChange(event.target.value as ToolbarSelectValue)}
+                            aria-label="제목 서식 선택"
+                          >
+                            <option value="">서식</option>
+                            {structureOptions.map((option) => (
+                              <option key={option.action} value={option.action}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <div className={styles.editorToolbarIconGroup}>
+                          {editorIconButtons.map((button) => (
+                            <button
+                              key={button.action}
+                              type="button"
+                              className={styles.editorToolbarIconButton}
+                              title={button.title}
+                              aria-label={button.title}
+                              onClick={() => applyToolbarAction(button.action)}
+                            >
+                              {button.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        <label className={styles.editorToolbarSelectWrap}>
+                          <span className={styles.editorToolbarSelectLabel}>삽입</span>
+                          <select
+                            className={styles.editorToolbarSelect}
+                            value=""
+                            onChange={(event) => handleInsertSelectChange(event.target.value as ToolbarSelectValue)}
+                            aria-label="삽입 도구 선택"
+                          >
+                            <option value="">삽입</option>
+                            {insertOptions.map((option) => (
+                              <option key={option.action} value={option.action}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className={styles.editorCanvasWrap}>
+                      <label htmlFor="about-document-editor" className={styles.editorLabel}>
+                        1depth 문서 전체 편집
+                      </label>
+                      <textarea
+                        id="about-document-editor"
+                        ref={editorRef}
+                        className={styles.editorTextarea}
+                        value={activeDraftMarkdown}
+                        onChange={(event) => handleEditorMarkdownChange(event.target.value)}
+                        placeholder="# 제목을 입력하고 내용을 작성해보세요"
+                        spellCheck={false}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.previewPanel} aria-live="polite">
+                    <div className={styles.editorSurfaceHeader}>
+                      <div className={styles.editorPanelHeader}>
+                        <p className={styles.editorEyebrow}>Preview</p>
+                        <h3 className={styles.editorTitle}>라이브 미리보기</h3>
+                        <p className={styles.editorHint}>작성 중인 문서가 실제 가이드 본문에서 어떤 리듬으로 보이는지 바로 확인할 수 있습니다.</p>
+                      </div>
+
+                      <div className={styles.previewMetaCard}>
+                        <span className={styles.previewMetaLabel}>문서</span>
+                        <strong className={styles.previewMetaTitle}>{activeSavedDocument.title}</strong>
+                      </div>
+                    </div>
+
+                    <div className={styles.previewContent}>
+                      {renderMarkdownPreview(activeDraftMarkdown, styles.paragraph)}
+                    </div>
                   </div>
                 </div>
               </section>

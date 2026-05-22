@@ -12,8 +12,10 @@ const rootThemeVariables = `
     --color-border-strong: ${colors.border.strong};
     --color-text: ${colors.text.primary};
     --color-text-muted: ${colors.text.secondary};
+    --color-text-inverse: ${colors.text.inverse};
     --color-accent: ${colors.brand.primary};
     --color-accent-strong: ${colors.brand.primaryHover};
+    --color-overlay-dialog: ${colors.text.primaryAlpha40};
     --color-danger: ${colors.semantic.error};
     --shadow-soft: ${foundation.shadow.soft};
     --radius-sm: ${foundation.radius.sm};

@@ -9,6 +9,7 @@ const CalendarPage = lazy(() => import('../../pages/calendar/CalendarPage').then
 const DropdownPreviewPage = lazy(() => import('../../pages/dropdown-preview/DropdownPreviewPage').then((module) => ({ default: module.DropdownPreviewPage })));
 const InputPreviewPage = lazy(() => import('../../pages/input-preview/InputPreviewPage').then((module) => ({ default: module.InputPreviewPage })));
 const LoginPage = lazy(() => import('../../pages/login/LoginPage').then((module) => ({ default: module.LoginPage })));
+const PopupPreviewPage = lazy(() => import('../../pages/popup-preview/PopupPreviewPage').then((module) => ({ default: module.PopupPreviewPage })));
 const ProfilePage = lazy(() => import('../../pages/profile/ProfilePage').then((module) => ({ default: module.ProfilePage })));
 const RegisterPage = lazy(() => import('../../pages/register/RegisterPage').then((module) => ({ default: module.RegisterPage })));
 const ReportPage = lazy(() => import('../../pages/report/ReportPage').then((module) => ({ default: module.ReportPage })));
@@ -36,6 +37,7 @@ export function AppRouter() {
       <Route path={ROUTES.calendar} element={<LazyRoute><CalendarPage /></LazyRoute>} />
       <Route path={ROUTES.dropdownPreview} element={<LazyRoute><DropdownPreviewPage /></LazyRoute>} />
       <Route path={ROUTES.inputPreview} element={<LazyRoute><InputPreviewPage /></LazyRoute>} />
+      <Route path={ROUTES.popupPreview} element={<LazyRoute><PopupPreviewPage /></LazyRoute>} />
       <Route path={ROUTES.searchPreview} element={<LazyRoute><SearchPreviewPage /></LazyRoute>} />
       <Route path={ROUTES.report} element={<LazyRoute><ReportPage /></LazyRoute>} />
       <Route path={ROUTES.profile} element={<LazyRoute><ProfilePage /></LazyRoute>} />

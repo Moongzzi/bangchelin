@@ -1,26 +1,19 @@
-import type { CalendarEvent, CalendarMonthCell } from '../types/calendar.types';
+import type { CalendarMonthCell } from '../types/calendar.types';
 import styles from './CalendarShared.module.css';
 
 type CalendarDayCellProps = {
   cell: CalendarMonthCell;
-  events: CalendarEvent[];
   selected: boolean;
-  visibleEventCount: number;
+  hiddenEventCount: number;
   onSelectDate: (date: Date) => void;
-  onSelectEvent: (eventId: string) => void;
 };
 
 export function CalendarDayCell({
   cell,
-  events,
   selected,
-  visibleEventCount,
+  hiddenEventCount,
   onSelectDate,
-  onSelectEvent,
 }: CalendarDayCellProps) {
-  const visibleEvents = events.slice(0, visibleEventCount);
-  const hiddenEventCount = Math.max(events.length - visibleEventCount, 0);
-
   return (
     <button
       type="button"
@@ -43,22 +36,7 @@ export function CalendarDayCell({
         {cell.dayNumber}
       </span>
 
-      <div className={styles.dayEventList}>
-        {visibleEvents.map((event) => (
-          <button
-            key={event.id}
-            type="button"
-            className={styles.dayEventButton}
-            onClick={(eventClick) => {
-              eventClick.stopPropagation();
-              onSelectEvent(event.id);
-            }}
-          >
-            <span className={styles.dayEventDot} aria-hidden="true" />
-            <span className={styles.dayEventTitle}>{event.title}</span>
-          </button>
-        ))}
-
+      <div className={styles.dayEventMeta}>
         {hiddenEventCount > 0 ? <p className={styles.moreEventsLabel}>+{hiddenEventCount}개 일정</p> : null}
       </div>
     </button>

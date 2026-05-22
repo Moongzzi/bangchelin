@@ -1,6 +1,7 @@
 import { colors } from '../../../shared/styles/tokens/colors';
 import type {
   CalendarEventCategory,
+  CalendarLocationRegion,
   CalendarEventStatus,
   ConfirmDialogTone,
 } from '../types/calendar.types';
@@ -9,7 +10,7 @@ export const calendarLayoutTokens = {
   todaySidebarWidth: '350px',
   calendarMaxWidth: '920px',
   rightPanelWidth: '360px',
-  pageMinHeight: 'calc(100vh - 160px)',
+  pageMinHeight: 'auto',
 } as const;
 
 export const calendarStyleTokens = {
@@ -52,6 +53,12 @@ export const calendarCategoryLabels: Record<CalendarEventCategory, string> = {
   theater: '연극',
   boardgame: '보드게임',
   etc: '기타',
+};
+
+export const calendarLocationRegionLabels: Record<CalendarLocationRegion, string> = {
+  seoul: '서울',
+  gyeonggi: '경기',
+  incheon: '인천',
 };
 
 export const calendarStatusTone: Record<
@@ -123,5 +130,10 @@ export const calendarStatusOptions = Object.entries(calendarStatusLabels).map(([
 
 export const calendarCategoryOptions = Object.entries(calendarCategoryLabels).map(([value, label]) => ({
   value: value as CalendarEventCategory,
+  label,
+}));
+
+export const calendarLocationRegionOptions = Object.entries(calendarLocationRegionLabels).map(([value, label]) => ({
+  value: value as CalendarLocationRegion,
   label,
 }));

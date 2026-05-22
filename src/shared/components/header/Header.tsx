@@ -6,6 +6,8 @@ import { colors } from '../../styles/tokens/colors';
 import { headerFoundation } from './headerFoundation';
 import styles from './Header.module.css';
 
+const assetBasePath = import.meta.env.BASE_URL;
+
 export type HeaderActionType = 'hamburger' | 'profile' | 'loginIcon' | 'none';
 
 export type HeaderNavItemData = {
@@ -190,13 +192,11 @@ function HamburgerIcon() {
 
 function LoginIcon() {
   return (
-    <svg viewBox="0 0 44 44" fill="none" aria-hidden="true">
-      <g stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M18 12h10a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4H18" />
-        <path d="m23 16 7 6-7 6" />
-        <path d="M12 22h17" />
-      </g>
-    </svg>
+    <span
+      className={styles.iconMask}
+      style={{ '--header-icon-mask': `url(${assetBasePath}assets/icons/header/logIn.png)` } as CSSProperties}
+      aria-hidden="true"
+    />
   );
 }
 

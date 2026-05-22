@@ -1,5 +1,4 @@
 .page {
-  min-height: calc(100vh - 9rem);
   background: var(--color-bg);
 }
 

@@ -2,6 +2,8 @@ export type CalendarEventStatus = 'recruiting' | 'closed' | 'done';
 
 export type CalendarEventCategory = 'escape' | 'theater' | 'boardgame' | 'etc';
 
+export type CalendarLocationRegion = 'seoul' | 'gyeonggi' | 'incheon';
+
 export type CalendarEventComment = {
   id: string;
   author: string;
@@ -12,6 +14,7 @@ export type CalendarEvent = {
   id: string;
   title: string;
   date: string;
+  endDate?: string;
   startTime: string;
   endTime: string;
   status: CalendarEventStatus;
@@ -28,16 +31,18 @@ export type CalendarEvent = {
 
 export type CalendarEventFormValues = {
   title: string;
-  date: string;
+  startDate: string;
+  endDate: string;
   startTime: string;
   endTime: string;
   status: CalendarEventStatus;
   category: CalendarEventCategory;
-  location: string;
-  capacity: string;
-  currentParticipants: string;
+  locationRegion: CalendarLocationRegion | '';
+  locationDetail: string;
+  participantLimit: string;
+  externalGuestCount: string;
+  participantNames: string[];
   description: string;
-  organizer: string;
   isAllDay: boolean;
 };
 
@@ -50,6 +55,13 @@ export type CalendarMonthCell = {
   isWeekend: boolean;
   isSunday: boolean;
   isSaturday: boolean;
+};
+
+export type CalendarEventSpanPosition = 'single' | 'start' | 'middle' | 'end';
+
+export type CalendarEventInCell = {
+  event: CalendarEvent;
+  spanPosition: CalendarEventSpanPosition;
 };
 
 export type ConfirmDialogTone = 'default' | 'danger' | 'brand';

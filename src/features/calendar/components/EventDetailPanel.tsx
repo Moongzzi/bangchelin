@@ -126,7 +126,7 @@ export function EventDetailPanel({
           <p className={styles.detailMetaText}>{selectedEvent.title}</p>
 
           <p className={styles.detailLabel}>일시</p>
-          <p className={styles.detailMetaText}>{formatDateTimeRange(selectedEvent.date, selectedEvent.startTime, selectedEvent.endTime)}</p>
+          <p className={styles.detailMetaText}>{formatDateTimeRange(selectedEvent.date, selectedEvent.endDate ?? selectedEvent.date, selectedEvent.startTime, selectedEvent.endTime)}</p>
 
           <p className={styles.detailLabel}>장소</p>
           <p className={styles.detailMetaText}>{selectedEvent.location}</p>

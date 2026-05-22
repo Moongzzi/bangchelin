@@ -19,6 +19,8 @@ export function ToggleSwitch({
   offLabel = 'Off',
   style,
 }: ToggleSwitchProps) {
+  const stateLabel = checked ? onLabel : offLabel;
+
   return (
     <button
       type="button"
@@ -32,7 +34,7 @@ export function ToggleSwitch({
       <span className={styles.toggleSwitchTrack}>
         <span className={styles.toggleSwitchThumb} aria-hidden="true" />
       </span>
-      <span className={styles.toggleSwitchState}>{checked ? onLabel : offLabel}</span>
+      {stateLabel ? <span className={styles.toggleSwitchState}>{stateLabel}</span> : null}
     </button>
   );
 }

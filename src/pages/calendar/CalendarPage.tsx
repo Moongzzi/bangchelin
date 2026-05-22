@@ -10,6 +10,8 @@ import {
   calendarCategoryOptions,
   calendarConfig,
   calendarLayoutTokens,
+  calendarLocationRegionLabels,
+  calendarLocationRegionOptions,
   calendarStyleTokens,
   calendarStatusOptions,
 } from '../../features/calendar/constants/calendar.constants';
@@ -17,6 +19,7 @@ import { calendarEventsMock } from '../../features/calendar/mock/calendarEvents.
 import type {
   CalendarEvent,
   CalendarEventFormValues,
+  CalendarLocationRegion,
   ConfirmDialogTone,
 } from '../../features/calendar/types/calendar.types';
 import {
@@ -30,6 +33,36 @@ import {
 } from '../../features/calendar/utils/calendarDate.utils';
 import { PageShell } from '../../shared/components/layout/PageShell';
 import styles from './CalendarPage.module.css';
+
+const seoulLocationKeywords = ['강남', '건대', '대학로', '성수', '송파', '잠실', '연남', '합정', '홍대', '혜화'];
+const gyeonggiLocationKeywords = ['분당', '수원', '성남', '안양', '일산', '판교'];
+const incheonLocationKeywords = ['인천', '송도', '부평', '구월'];
+
+function detectLocationRegion(location: string): CalendarLocationRegion | '' {
+  if (seoulLocationKeywords.some((keyword) => location.includes(keyword))) {
+    return 'seoul';
+  }
+
+  if (gyeonggiLocationKeywords.some((keyword) => location.includes(keyword))) {
+    return 'gyeonggi';
+  }
+
+  if (incheonLocationKeywords.some((keyword) => location.includes(keyword))) {
+    return 'incheon';
+  }
+
+  return '';
+}
+
+function getParticipantCount(values: CalendarEventFormValues) {
+  const externalGuestCount = Number(values.externalGuestCount || '0');
+  return values.participantNames.length + externalGuestCount;
+}
+
+function formatEventLocation(values: CalendarEventFormValues) {
+  const regionLabel = values.locationRegion ? calendarLocationRegionLabels[values.locationRegion] : '';
+  return [regionLabel, values.locationDetail.trim()].filter(Boolean).join(' ');
+}
 
 type ModalState = {
   open: boolean;
@@ -60,55 +93,68 @@ type ConfirmDialogState = {
 function createDefaultFormValues(dateKey: string): CalendarEventFormValues {
   return {
     title: '',
-    date: dateKey,
+    startDate: dateKey,
+    endDate: dateKey,
     startTime: '19:00',
     endTime: '20:00',
     status: 'recruiting',
     category: 'escape',
-    location: '',
-    capacity: '4',
-    currentParticipants: '1',
+    locationRegion: 'seoul',
+    locationDetail: '',
+    participantLimit: '8',
+    externalGuestCount: '0',
+    participantNames: [],
     description: '',
-    organizer: '',
     isAllDay: false,
   };
 }
 
 function mapEventToFormValues(event: CalendarEvent): CalendarEventFormValues {
+  const participantNames = event.participants ?? [];
+  const externalGuestCount = Math.max(event.currentParticipants - participantNames.length, 0);
+
   return {
     title: event.title,
-    date: event.date,
+    startDate: event.date,
+    endDate: event.endDate ?? event.date,
     startTime: event.startTime,
     endTime: event.endTime,
     status: event.status,
     category: event.category,
-    location: event.location,
-    capacity: `${event.capacity}`,
-    currentParticipants: `${event.currentParticipants}`,
+    locationRegion: detectLocationRegion(event.location),
+    locationDetail: event.location,
+    participantLimit: `${event.capacity}`,
+    externalGuestCount: `${externalGuestCount}`,
+    participantNames,
     description: event.description ?? '',
-    organizer: event.organizer ?? '',
     isAllDay: event.isAllDay ?? false,
   };
 }
 
 function buildEventFromForm(values: CalendarEventFormValues, existingEvent?: CalendarEvent): CalendarEvent {
-  const currentParticipants = Number(values.currentParticipants || '0');
-  const capacity = Number(values.capacity || '0');
+  const participantNames = values.participantNames.map((name) => name.trim()).filter(Boolean);
+  const currentParticipants = getParticipantCount({
+    ...values,
+    participantNames,
+  });
+  const capacity = Number(values.participantLimit || '0');
+  const organizer = participantNames[0] ?? '';
 
   return {
-    id: existingEvent?.id ?? `event-${values.date}-${Math.random().toString(36).slice(2, 8)}`,
+    id: existingEvent?.id ?? `event-${values.startDate}-${Math.random().toString(36).slice(2, 8)}`,
     title: values.title.trim(),
-    date: values.date,
+    date: values.startDate,
+    endDate: values.endDate,
     startTime: values.isAllDay ? '00:00' : values.startTime,
     endTime: values.isAllDay ? '23:59' : values.endTime,
     status: values.status,
     category: values.category,
-    location: values.location.trim(),
+    location: formatEventLocation(values),
     capacity,
     currentParticipants,
     description: values.description.trim(),
-    organizer: values.organizer.trim(),
-    participants: existingEvent?.participants ?? (values.organizer.trim() ? [values.organizer.trim()] : []),
+    organizer,
+    participants: participantNames,
     comments: existingEvent?.comments ?? [],
     isAllDay: values.isAllDay,
   };
@@ -119,39 +165,52 @@ function getValidationMessage(values: CalendarEventFormValues) {
     return '일정 제목을 입력해주세요.';
   }
 
-  if (!values.date) {
-    return '일정 날짜를 선택해주세요.';
+  if (!values.startDate || !values.endDate) {
+    return '시작 날짜와 종료 날짜를 선택해주세요.';
   }
 
-  if (!values.location.trim()) {
-    return '장소를 입력해주세요.';
+  if (values.endDate < values.startDate) {
+    return '종료 날짜는 시작 날짜보다 이전일 수 없습니다.';
+  }
+
+  if (!values.locationRegion) {
+    return '지역을 선택해주세요.';
   }
 
   if (!values.isAllDay && (!values.startTime || !values.endTime)) {
     return '시작 시간과 종료 시간을 입력해주세요.';
   }
 
-  if (!values.isAllDay && values.startTime > values.endTime) {
+  if (!values.isAllDay && values.startDate === values.endDate && values.startTime > values.endTime) {
     return '종료 시간은 시작 시간 이후여야 합니다.';
   }
 
-  if (Number(values.currentParticipants || '0') > Number(values.capacity || '0')) {
-    return '현재 참가 인원은 정원을 초과할 수 없습니다.';
+  if (!values.participantLimit) {
+    return '참석 정원을 입력해주세요.';
+  }
+
+  if (Number(values.participantLimit || '0') > 999) {
+    return '참석 정원은 최대 999명까지 설정할 수 있습니다.';
+  }
+
+  if (getParticipantCount(values) > Number(values.participantLimit || '0')) {
+    return '참석자 수는 정원을 초과할 수 없습니다.';
   }
 
   return null;
 }
 
 export function CalendarPage() {
-  const mockToday = useMemo(() => parseDateKey(calendarConfig.mockToday), []);
+  const todayKey = useMemo(() => formatDateKey(new Date()), []);
+  const today = useMemo(() => parseDateKey(todayKey), [todayKey]);
   const [events, setEvents] = useState<CalendarEvent[]>(calendarEventsMock);
-  const [currentMonth, setCurrentMonth] = useState<Date>(() => startOfMonth(mockToday));
-  const [selectedDate, setSelectedDate] = useState<Date | null>(mockToday);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(() => getEventsForDate(calendarEventsMock, calendarConfig.mockToday)[0]?.id ?? null);
+  const [currentMonth, setCurrentMonth] = useState<Date>(() => startOfMonth(today));
+  const [selectedDate, setSelectedDate] = useState<Date | null>(today);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(() => getEventsForDate(calendarEventsMock, todayKey)[0]?.id ?? null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [modalHelperMessage, setModalHelperMessage] = useState<string | undefined>(undefined);
   const [modalState, setModalState] = useState<ModalState>(() => {
-    const defaultValues = createDefaultFormValues(calendarConfig.mockToday);
+    const defaultValues = createDefaultFormValues(todayKey);
     return {
       open: false,
       mode: 'create',
@@ -172,7 +231,6 @@ export function CalendarPage() {
 
   const selectedDateKey = selectedDate ? formatDateKey(selectedDate) : null;
   const eventsByDate = useMemo(() => groupEventsByDate(events), [events]);
-  const todayEvents = useMemo(() => getEventsForDate(events, calendarConfig.mockToday), [events]);
   const selectedDateEvents = useMemo(
     () => (selectedDateKey ? getEventsForDate(events, selectedDateKey) : []),
     [events, selectedDateKey],
@@ -182,8 +240,8 @@ export function CalendarPage() {
     [events, selectedEventId],
   );
   const monthCells = useMemo(
-    () => buildMonthGrid(currentMonth, calendarConfig.mockToday),
-    [currentMonth],
+    () => buildMonthGrid(currentMonth, todayKey),
+    [currentMonth, todayKey],
   );
 
   useEffect(() => {
@@ -275,7 +333,7 @@ export function CalendarPage() {
   }
 
   function openCreateModal() {
-    const defaultValues = createDefaultFormValues(selectedDateKey ?? calendarConfig.mockToday);
+    const defaultValues = createDefaultFormValues(selectedDateKey ?? todayKey);
     setModalHelperMessage(undefined);
     setModalState({
       open: true,
@@ -403,10 +461,10 @@ export function CalendarPage() {
       setEvents((currentEvents) => currentEvents.map((event) => (
         event.id === pendingAction.eventId ? buildEventFromForm(pendingAction.values, event) : event
       )));
-      setSelectedDate(parseDateKey(pendingAction.values.date));
+      setSelectedDate(parseDateKey(pendingAction.values.startDate));
       setSelectedEventId(pendingAction.eventId);
       setShowDetail(true);
-      setCurrentMonth(startOfMonth(parseDateKey(pendingAction.values.date)));
+      setCurrentMonth(startOfMonth(parseDateKey(pendingAction.values.startDate)));
       closeModalImmediately();
       // TODO: connect update action to Supabase REST API.
       openNotice('일정 수정 완료', '일정이 수정되었습니다.');
@@ -419,7 +477,7 @@ export function CalendarPage() {
         <div className={`${styles.layout} ${selectedDate && showDetail ? styles.layoutWithDetail : ''}`.trim()}>
           <div className={styles.sidebarColumn}>
             <TodaySidebar
-              selectedDate={selectedDate ?? mockToday}
+              selectedDate={selectedDate ?? today}
               selectedDateEvents={selectedDateEvents}
               onCreateClick={openCreateModal}
               onSelectEvent={handleSelectEvent}
@@ -464,6 +522,7 @@ export function CalendarPage() {
           open={modalState.open}
           mode={modalState.mode}
           values={modalState.values}
+            regionOptions={calendarLocationRegionOptions}
           categoryOptions={calendarCategoryOptions}
           statusOptions={calendarStatusOptions}
           helperMessage={modalHelperMessage}

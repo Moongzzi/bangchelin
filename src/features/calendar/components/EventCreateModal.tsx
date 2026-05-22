@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 import { Dropdown } from '../../../shared/components/dropdown/Dropdown';
 import { InputField } from '../../../shared/components/input-field/InputField';
@@ -6,6 +6,7 @@ import { ToggleSwitch } from './ToggleSwitch';
 import type {
   CalendarEventCategory,
   CalendarEventFormValues,
+  CalendarLocationRegion,
   CalendarEventStatus,
 } from '../types/calendar.types';
 import {
@@ -23,6 +24,7 @@ type EventCreateModalProps = {
   open: boolean;
   mode: 'create' | 'edit';
   values: CalendarEventFormValues;
+  regionOptions: Array<{ value: CalendarLocationRegion; label: string }>;
   categoryOptions: Array<{ value: CalendarEventCategory; label: string }>;
   statusOptions: Array<{ value: CalendarEventStatus; label: string }>;
   helperMessage?: string;
@@ -43,6 +45,7 @@ export function EventCreateModal({
   open,
   mode,
   values,
+  regionOptions,
   categoryOptions,
   statusOptions,
   helperMessage,
@@ -52,25 +55,66 @@ export function EventCreateModal({
 }: EventCreateModalProps) {
   const datePickerRef = useRef<HTMLDivElement | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [displayMonth, setDisplayMonth] = useState<Date>(() => startOfMonth(values.date ? parseDateKey(values.date) : new Date()));
+  const [activeDateField, setActiveDateField] = useState<'startDate' | 'endDate'>('startDate');
+  const [displayMonth, setDisplayMonth] = useState<Date>(() => startOfMonth(values.startDate ? parseDateKey(values.startDate) : new Date()));
+  const [participantSearchValue, setParticipantSearchValue] = useState('');
+  const [showTimeEditor, setShowTimeEditor] = useState(false);
 
-  const selectedDate = useMemo(
-    () => (values.date ? parseDateKey(values.date) : null),
-    [values.date],
+  const selectedStartDate = useMemo(
+    () => (values.startDate ? parseDateKey(values.startDate) : null),
+    [values.startDate],
   );
-  const selectedDateLabel = useMemo(() => {
-    if (!selectedDate) {
+  const selectedEndDate = useMemo(
+    () => (values.endDate ? parseDateKey(values.endDate) : null),
+    [values.endDate],
+  );
+
+  const formatDateLabel = useMemo(() => (
+    (date: Date | null) => {
+      if (!date) {
+        return '날짜를 선택해주세요.';
+      }
+
+      const year = date.getFullYear();
+      const month = `${date.getMonth() + 1}`.padStart(2, '0');
+      const day = `${date.getDate()}`.padStart(2, '0');
+      const weekday = new Intl.DateTimeFormat('ko-KR', { weekday: 'long' }).format(date);
+
+      return `${year}. ${month}. ${day} ${weekday}`;
+    }
+  ), []);
+
+  const selectedStartDateLabel = useMemo(() => {
+    if (!selectedStartDate) {
       return '날짜를 선택해주세요.';
     }
 
-    return new Intl.DateTimeFormat('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'short',
-    }).format(selectedDate);
-  }, [selectedDate]);
-  const [showTimeEditor, setShowTimeEditor] = useState(false);
+    return formatDateLabel(selectedStartDate);
+  }, [formatDateLabel, selectedStartDate]);
+
+  const selectedEndDateLabel = useMemo(() => formatDateLabel(selectedEndDate), [formatDateLabel, selectedEndDate]);
+
+  const formatTimeLabel = useMemo(() => (
+    (time: string) => {
+      if (!time) {
+        return '시간 선택';
+      }
+
+      const [hourString, minuteString] = time.split(':');
+      const hours = Number(hourString ?? '0');
+      const minutes = Number(minuteString ?? '0');
+      const date = new Date();
+      date.setHours(hours, minutes, 0, 0);
+
+      return new Intl.DateTimeFormat('ko-KR', {
+        hour: 'numeric',
+        minute: '2-digit',
+      }).format(date);
+    }
+  ), []);
+
+  const startTimeLabel = useMemo(() => formatTimeLabel(values.startTime), [formatTimeLabel, values.startTime]);
+  const endTimeLabel = useMemo(() => formatTimeLabel(values.endTime), [formatTimeLabel, values.endTime]);
 
   const displayMonthLabel = useMemo(() => new Intl.DateTimeFormat('ko-KR', {
     year: 'numeric',
@@ -78,39 +122,18 @@ export function EventCreateModal({
   }).format(displayMonth), [displayMonth]);
   const monthCells = useMemo(() => buildMonthGrid(displayMonth), [displayMonth]);
 
-  const formattedTimeLabel = useMemo(() => {
-    const formatTime = (time: string) => {
-      const [hourString, minuteString] = time.split(':');
-      const hours = Number(hourString ?? '0');
-      const minutes = Number(minuteString ?? '0');
-      const date = new Date();
-      date.setHours(hours, minutes, 0, 0);
-      return new Intl.DateTimeFormat('ko-KR', {
-        hour: 'numeric',
-        minute: '2-digit',
-      }).format(date);
-    };
-
-    if (!values.startTime && !values.endTime) {
-      return '시간을 선택해주세요.';
-    }
-
-    if (!values.endTime) {
-      return formatTime(values.startTime);
-    }
-
-    return `${formatTime(values.startTime)} - ${formatTime(values.endTime)}`;
-  }, [values.startTime, values.endTime]);
-
-  useEffect(() => {
-    if (values.isAllDay) {
-      setShowTimeEditor(false);
-    }
-  }, [values.isAllDay]);
+  const participantLimit = useMemo(() => Number(values.participantLimit || '0'), [values.participantLimit]);
+  const externalGuestCount = useMemo(() => Number(values.externalGuestCount || '0'), [values.externalGuestCount]);
+  const participantCount = values.participantNames.length + externalGuestCount;
+  const canIncreaseExternalGuests = participantCount < participantLimit;
+  const participantExceeded = participantLimit > 0 && participantCount > participantLimit;
 
   useEffect(() => {
     if (!open) {
       setIsDatePickerOpen(false);
+      setActiveDateField('startDate');
+      setParticipantSearchValue('');
+      setShowTimeEditor(false);
       return undefined;
     }
 
@@ -164,12 +187,14 @@ export function EventCreateModal({
   }, [open]);
 
   useEffect(() => {
-    if (!open || !values.date) {
+    const activeDateKey = activeDateField === 'startDate' ? values.startDate : values.endDate;
+
+    if (!open || !activeDateKey) {
       return;
     }
 
-    setDisplayMonth(startOfMonth(parseDateKey(values.date)));
-  }, [open, values.date]);
+    setDisplayMonth(startOfMonth(parseDateKey(activeDateKey)));
+  }, [activeDateField, open, values.endDate, values.startDate]);
 
   useEffect(() => {
     if (!isDatePickerOpen) {
@@ -191,20 +216,84 @@ export function EventCreateModal({
   }
 
   function handleSelectDate(nextDate: Date) {
-    onChange('date', formatDateKey(nextDate));
+    const nextDateKey = formatDateKey(nextDate);
+
+    if (activeDateField === 'startDate') {
+      onChange('startDate', nextDateKey);
+
+      if (values.endDate < nextDateKey) {
+        onChange('endDate', nextDateKey);
+      }
+    } else {
+      if (nextDateKey < values.startDate) {
+        return;
+      }
+
+      onChange('endDate', nextDateKey);
+    }
+
     setDisplayMonth(startOfMonth(nextDate));
     setIsDatePickerOpen(false);
   }
 
-  function handleDateTextClick() {
+  function handleDateTextClick(field: 'startDate' | 'endDate') {
+    setActiveDateField(field);
     setIsDatePickerOpen(true);
-    setShowTimeEditor(false);
+    const targetDate = field === 'startDate' ? selectedStartDate : selectedEndDate;
+    if (targetDate) {
+      setDisplayMonth(startOfMonth(targetDate));
+    }
   }
 
   function handleTimeTextClick() {
-    if (!values.isAllDay) {
-      setShowTimeEditor((currentValue) => !currentValue);
+    if (values.isAllDay) {
+      return;
     }
+
+    setShowTimeEditor((currentValue) => !currentValue);
+    setIsDatePickerOpen(false);
+  }
+
+  function sanitizeNumberInput(nextValue: string) {
+    return nextValue.replace(/\D/g, '').slice(0, 3);
+  }
+
+  function updateParticipantLimit(nextValue: string) {
+    onChange('participantLimit', sanitizeNumberInput(nextValue));
+  }
+
+  function updateExternalGuestCount(nextValue: number) {
+    const clampedValue = Math.max(0, Math.min(nextValue, 999));
+
+    if (clampedValue > externalGuestCount && clampedValue + values.participantNames.length > participantLimit) {
+      return;
+    }
+
+    onChange('externalGuestCount', `${clampedValue}`);
+  }
+
+  function addParticipantName(rawValue: string) {
+    const nextName = rawValue.trim();
+
+    if (!nextName || values.participantNames.includes(nextName) || participantCount >= participantLimit) {
+      return;
+    }
+
+    onChange('participantNames', [...values.participantNames, nextName]);
+    setParticipantSearchValue('');
+  }
+
+  function removeParticipantName(targetName: string) {
+    onChange('participantNames', values.participantNames.filter((name) => name !== targetName));
+  }
+
+  function handleParticipantSearchKeyDown(event: ReactKeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    if (event.key !== 'Enter') {
+      return;
+    }
+
+    event.preventDefault();
+    addParticipantName(participantSearchValue);
   }
 
   return (
@@ -240,36 +329,54 @@ export function EventCreateModal({
             <span className={styles.fieldLabel}>일시</span>
             <div className={styles.fieldControl}>
               <div className={styles.modalTimeRow}>
-                <span className={styles.toggleLabel}>하루 종일</span>
                 <ToggleSwitch
                   checked={values.isAllDay}
                   onChange={(checked) => onChange('isAllDay', checked)}
                   ariaLabel="하루 종일 토글"
-                  onLabel="On"
-                  offLabel="Off"
+                  onLabel=""
+                  offLabel=""
                 />
+                <span className={styles.toggleLabel}>하루 종일</span>
               </div>
 
               <div ref={datePickerRef} className={styles.datePickerShell}>
-                <div className={styles.dateTimeRow}>
-                  <button
-                    type="button"
-                    className={styles.dateTimeTextButton}
-                    onClick={handleDateTextClick}
-                    aria-label="일정 날짜 편집"
-                  >
-                    {selectedDateLabel}
-                  </button>
-                  {!values.isAllDay ? (
+                <div className={styles.dateTimeGrid}>
+                  <div className={styles.dateTimeTextRow}>
                     <button
                       type="button"
                       className={styles.dateTimeTextButton}
-                      onClick={handleTimeTextClick}
-                      aria-label="일정 시간 편집"
+                      onClick={() => handleDateTextClick('startDate')}
+                      aria-label="시작 날짜 편집"
                     >
-                      {formattedTimeLabel}
+                      {selectedStartDateLabel}
                     </button>
-                  ) : null}
+                    <button
+                      type="button"
+                      className={`${styles.dateTimeTextButton} ${styles.dateTimeTextButtonTime}`}
+                      onClick={handleTimeTextClick}
+                      aria-label="시작 시간 편집"
+                    >
+                      {values.isAllDay ? '하루 종일' : startTimeLabel}
+                    </button>
+                  </div>
+                  <div className={styles.dateTimeTextRow}>
+                    <button
+                      type="button"
+                      className={styles.dateTimeTextButton}
+                      onClick={() => handleDateTextClick('endDate')}
+                      aria-label="종료 날짜 편집"
+                    >
+                      {selectedEndDateLabel}
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.dateTimeTextButton} ${styles.dateTimeTextButtonTime}`}
+                      onClick={handleTimeTextClick}
+                      aria-label="종료 시간 편집"
+                    >
+                      {values.isAllDay ? '하루 종일' : endTimeLabel}
+                    </button>
+                  </div>
                 </div>
 
                 {isDatePickerOpen ? (
@@ -304,12 +411,14 @@ export function EventCreateModal({
 
                     <div className={styles.datePickerGrid}>
                       {monthCells.map((cell) => {
-                        const isSelected = values.date === cell.dateKey;
+                        const isSelected = (activeDateField === 'startDate' ? values.startDate : values.endDate) === cell.dateKey;
+                        const isDisabled = activeDateField === 'endDate' && cell.dateKey < values.startDate;
                         const dayButtonClassName = [
                           styles.datePickerDayButton,
                           !cell.inCurrentMonth ? styles.datePickerDayOutside : '',
                           isSelected ? styles.datePickerDaySelected : '',
                           cell.isToday ? styles.datePickerDayToday : '',
+                          isDisabled ? styles.datePickerDayDisabled : '',
                         ].filter(Boolean).join(' ');
 
                         return (
@@ -319,6 +428,7 @@ export function EventCreateModal({
                             className={dayButtonClassName}
                             onClick={() => handleSelectDate(cell.date)}
                             aria-pressed={isSelected}
+                            disabled={isDisabled}
                           >
                             {cell.dayNumber}
                           </button>
@@ -355,16 +465,33 @@ export function EventCreateModal({
               ) : null}
             </div>
 
-            <label className={styles.fieldLabel} htmlFor="calendar-event-location">장소</label>
-            <InputField
-              id="calendar-event-location"
-              label="장소"
-              hideLabel
-              placeholder="상세 위치를 입력해주세요."
-              variant="outlined"
-              value={values.location}
-              onChange={(event) => onChange('location', event.target.value)}
-            />
+            <span className={styles.fieldLabel}>장소</span>
+            <div className={styles.fieldSplitRow}>
+              <Dropdown
+                label="지역 선택"
+                hideLabel
+                placeholder="지역 선택"
+                options={regionOptions}
+                value={values.locationRegion || undefined}
+                onChange={(value) => onChange('locationRegion', value as CalendarLocationRegion)}
+                className={styles.modalCompactDropdown}
+              />
+              <InputField
+                id="calendar-event-location"
+                label="상세 위치"
+                hideLabel
+                placeholder="상세 위치를 입력해주세요. (선택)"
+                variant="default"
+                value={values.locationDetail}
+                onChange={(event) => onChange('locationDetail', event.target.value)}
+                rootStyle={{
+                  '--input-control-min-height-underline': '35px',
+                  '--input-line-height': '35px',
+                  '--input-padding-underline': '0',
+                } as CSSProperties}
+                className={styles.modalLocationInputRoot}
+              />
+            </div>
 
             <span className={styles.fieldLabel}>모집 상태</span>
             <Dropdown
@@ -374,6 +501,7 @@ export function EventCreateModal({
               options={statusOptions}
               value={values.status}
               onChange={(value) => onChange('status', value as CalendarEventStatus)}
+              className={styles.modalCompactDropdown}
             />
 
             <span className={styles.fieldLabel}>카테고리</span>
@@ -384,43 +512,84 @@ export function EventCreateModal({
               options={categoryOptions}
               value={values.category}
               onChange={(value) => onChange('category', value as CalendarEventCategory)}
+              className={styles.modalCompactDropdown}
             />
 
-            <label className={styles.fieldLabel} htmlFor="calendar-event-organizer">작성자</label>
-            <InputField
-              id="calendar-event-organizer"
-              label="작성자"
-              hideLabel
-              placeholder="작성자 닉네임"
-              variant="outlined"
-              value={values.organizer}
-              onChange={(event) => onChange('organizer', event.target.value)}
-            />
+            <span className={styles.fieldLabel}>참석자</span>
+            <div className={styles.fieldColumn}>
+              <div className={styles.participantSummaryRow}>
+                <span className={styles.participantCountText}>{participantCount}/</span>
+                <InputField
+                  label="참석 정원"
+                  hideLabel
+                  placeholder="0"
+                  variant="outlined"
+                  inputMode="numeric"
+                  maxLength={3}
+                  value={values.participantLimit}
+                  onChange={(event) => updateParticipantLimit(event.target.value)}
+                  className={styles.participantLimitInput}
+                />
+              </div>
 
-            <span className={styles.fieldLabel}>정원</span>
-            <div className={styles.fieldSplitRow}>
-              <InputField
-                label="정원"
-                hideLabel
-                placeholder="정원"
-                variant="outlined"
-                type="number"
-                min={1}
-                value={values.capacity}
-                onChange={(event) => onChange('capacity', event.target.value)}
-                className={styles.fieldInlineInput}
-              />
-              <InputField
-                label="현재 참가 인원"
-                hideLabel
-                placeholder="현재 참가 인원"
-                variant="outlined"
-                type="number"
-                min={0}
-                value={values.currentParticipants}
-                onChange={(event) => onChange('currentParticipants', event.target.value)}
-                className={styles.fieldInlineInput}
-              />
+              <div className={styles.participantControlRow}>
+                <InputField
+                  label="닉네임 검색"
+                  hideLabel
+                  placeholder="닉네임을 검색해주세요."
+                  variant="default"
+                  value={participantSearchValue}
+                  onChange={(event) => setParticipantSearchValue(event.target.value)}
+                  onKeyDown={handleParticipantSearchKeyDown}
+                  rootStyle={{
+                    '--input-control-min-height-underline': '35px',
+                    '--input-line-height': '35px',
+                    '--input-padding-underline': '0',
+                  } as CSSProperties}
+                  className={styles.participantSearchInputRoot}
+                />
+
+                <div className={styles.externalGuestControl}>
+                  <button
+                    type="button"
+                    className={styles.externalGuestButton}
+                    onClick={() => updateExternalGuestCount(externalGuestCount - 1)}
+                    disabled={externalGuestCount <= 0}
+                    aria-label="외부인 수 감소"
+                  >
+                    -
+                  </button>
+                  <span className={styles.externalGuestText}>외부인 {externalGuestCount}</span>
+                  <button
+                    type="button"
+                    className={styles.externalGuestButton}
+                    onClick={() => updateExternalGuestCount(externalGuestCount + 1)}
+                    disabled={!canIncreaseExternalGuests}
+                    aria-label="외부인 수 증가"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className={styles.participantChipList}>
+                {values.participantNames.map((participantName) => (
+                  <span key={participantName} className={styles.participantEditorChip}>
+                    <span className={styles.participantEditorChipDot} aria-hidden="true" />
+                    <span>{participantName}</span>
+                    <button
+                      type="button"
+                      className={styles.participantChipRemoveButton}
+                      onClick={() => removeParticipantName(participantName)}
+                      aria-label={`${participantName} 삭제`}
+                    >
+                      <CloseIcon />
+                    </button>
+                  </span>
+                ))}
+              </div>
+
+              {participantExceeded ? <p className={`${styles.fieldHint} ${styles.helperError}`}>참석자 수가 정원을 초과했습니다.</p> : null}
             </div>
 
             <label className={styles.fieldLabel} htmlFor="calendar-event-description">내용</label>

@@ -1,0 +1,169 @@
+.page {
+  min-height: calc(100vh - 12rem);
+  padding: var(--inquiry-page-top-padding) 1rem var(--inquiry-page-bottom-padding);
+  background: var(--inquiry-page-background);
+}
+
+.inner {
+  width: min(100%, calc(var(--inquiry-page-width) + 2rem));
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: var(--inquiry-title-gap);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--inquiry-text-color);
+}
+
+.form {
+  display: grid;
+  gap: var(--inquiry-form-gap);
+}
+
+.topRow {
+  display: grid;
+  grid-template-columns: minmax(0, var(--inquiry-nickname-width)) minmax(0, var(--inquiry-category-width));
+  gap: var(--inquiry-top-row-gap);
+  align-items: start;
+}
+
+.nicknameField,
+.categoryField {
+  min-width: 0;
+}
+
+.fieldDropdown {
+  --dropdown-label: var(--inquiry-text-color);
+  --dropdown-text: var(--inquiry-muted-color);
+  --dropdown-placeholder: rgba(108, 100, 92, 0.72);
+  --dropdown-outline: var(--inquiry-border-color);
+  --dropdown-icon: var(--inquiry-border-color);
+  --dropdown-panel-outline: var(--inquiry-border-color);
+  --dropdown-helper: var(--inquiry-muted-color);
+  --dropdown-trigger-min-height: var(--inquiry-row-height);
+  --dropdown-trigger-padding-x: 0.875rem;
+  --dropdown-option-min-height: 3rem;
+  --dropdown-option-padding-x: 0.875rem;
+  --dropdown-menu-offset: 0.25rem;
+  --dropdown-trigger-background: var(--inquiry-page-background);
+  --dropdown-menu-background: var(--inquiry-page-background);
+  --dropdown-option-background: var(--inquiry-page-background);
+}
+
+.card {
+  display: grid;
+  gap: 1.5rem;
+  width: min(100%, var(--inquiry-card-width));
+  min-height: var(--inquiry-card-height);
+  padding: var(--inquiry-card-padding);
+  border-radius: var(--inquiry-card-radius);
+  background: var(--inquiry-card-background);
+}
+
+.cardFields {
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
+}
+
+.cardDropdown {
+  --dropdown-label: var(--inquiry-text-color);
+  --dropdown-text: var(--inquiry-muted-color);
+  --dropdown-placeholder: rgba(108, 100, 92, 0.72);
+  --dropdown-outline: var(--inquiry-border-color);
+  --dropdown-icon: var(--inquiry-border-color);
+  --dropdown-panel-outline: var(--inquiry-border-color);
+  --dropdown-helper: var(--inquiry-muted-color);
+  --dropdown-trigger-min-height: var(--inquiry-row-height);
+  --dropdown-trigger-padding-x: 0.875rem;
+  --dropdown-option-min-height: 3rem;
+  --dropdown-option-padding-x: 0.875rem;
+  --dropdown-menu-offset: 0.25rem;
+  --dropdown-trigger-background: var(--inquiry-card-background);
+  --dropdown-menu-background: var(--inquiry-card-background);
+  --dropdown-option-background: var(--inquiry-card-background);
+}
+
+.subjectField {
+  --input-control-min-height-underline: var(--inquiry-title-height);
+}
+
+.messageField {
+  --input-control-min-height-outlined: var(--inquiry-textarea-height);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--inquiry-button-gap);
+  margin-top: auto;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: max(var(--inquiry-button-width), 3.125rem);
+  height: max(var(--inquiry-button-height), 2rem);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--inquiry-button-radius);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.secondaryButton {
+  border: 1px solid var(--inquiry-border-color);
+  background: transparent;
+  color: var(--inquiry-button-secondary-text);
+}
+
+.primaryButton {
+  border: 0;
+  background: var(--inquiry-button-primary);
+  color: var(--inquiry-button-primary-text);
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feedback {
+  margin: 0;
+  color: var(--inquiry-muted-color);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding: 2rem 1rem 4rem;
+  }
+
+  .topRow {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    min-height: auto;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    flex: 1 1 0;
+  }
+}

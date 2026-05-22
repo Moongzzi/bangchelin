@@ -8,6 +8,14 @@
   --dropdown-helper: #6c645c;
   --dropdown-invalid: #9b3442;
   --dropdown-focus-ring: rgba(192, 123, 132, 0.28);
+  --dropdown-trigger-min-height: 96px;
+  --dropdown-trigger-padding-x: 32px;
+  --dropdown-option-min-height: 96px;
+  --dropdown-option-padding-x: 40px;
+  --dropdown-menu-offset: 14px;
+  --dropdown-trigger-background: transparent;
+  --dropdown-menu-background: transparent;
+  --dropdown-option-background: transparent;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -43,10 +51,10 @@
   justify-content: space-between;
   gap: 20px;
   width: 100%;
-  min-height: 96px;
-  padding: 0 32px;
+  min-height: var(--dropdown-trigger-min-height);
+  padding: 0 var(--dropdown-trigger-padding-x);
   border: 1px solid var(--dropdown-outline);
-  background: transparent;
+  background: var(--dropdown-trigger-background);
   color: var(--dropdown-text);
   text-align: left;
 }
@@ -93,7 +101,7 @@
 
 .menu {
   position: absolute;
-  top: calc(100% + 14px + 1px);
+  top: calc(100% + var(--dropdown-menu-offset) + 1px);
   left: 0;
   right: 0;
   z-index: 20;
@@ -101,7 +109,7 @@
   padding: 6px 0;
   list-style: none;
   border: 1px solid var(--dropdown-panel-outline);
-  background: transparent;
+  background: var(--dropdown-menu-background);
 }
 
 .menuHidden {
@@ -112,8 +120,9 @@
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 96px;
-  padding: 0 40px;
+  min-height: var(--dropdown-option-min-height);
+  padding: 0 var(--dropdown-option-padding-x);
+  background: var(--dropdown-option-background);
   color: var(--dropdown-text);
   font-size: 1rem;
   line-height: 1.35;
@@ -155,14 +164,15 @@
 
   .trigger,
   .option {
-    min-height: 72px;
+    min-height: min(var(--dropdown-trigger-min-height), 72px);
   }
 
   .trigger {
-    padding: 0 24px;
+    padding: 0 min(var(--dropdown-trigger-padding-x), 24px);
   }
 
   .option {
-    padding: 0 32px;
+    min-height: min(var(--dropdown-option-min-height), 72px);
+    padding: 0 min(var(--dropdown-option-padding-x), 32px);
   }
 }

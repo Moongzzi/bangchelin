@@ -1,5 +1,5 @@
 import { calendarConfig } from '../constants/calendar.constants';
-import type { CalendarEvent, CalendarMonthCell } from '../types/calendar.types';
+import type { CalendarEvent, CalendarEventInCell, CalendarMonthCell } from '../types/calendar.types';
 
 export function formatDateKey(date: Date) {
   const year = date.getFullYear();
@@ -35,7 +35,7 @@ export function isWeekend(date: Date) {
   return day === 0 || day === 6;
 }
 
-export function buildMonthGrid(currentMonth: Date, todayDateKey = calendarConfig.mockToday): CalendarMonthCell[] {
+export function buildMonthGrid(currentMonth: Date, todayDateKey: string = calendarConfig.mockToday): CalendarMonthCell[] {
   const firstDay = startOfMonth(currentMonth);
   const firstDayIndex = firstDay.getDay();
   const visibleCellCount = calendarConfig.weekDays.length * calendarConfig.visibleWeekCount;
@@ -60,14 +60,57 @@ export function buildMonthGrid(currentMonth: Date, todayDateKey = calendarConfig
   });
 }
 
-export function groupEventsByDate(events: CalendarEvent[]) {
-  return events.reduce<Record<string, CalendarEvent[]>>((grouped, event) => {
-    if (!grouped[event.date]) {
-      grouped[event.date] = [];
-    }
+function getEventEndDateKey(event: CalendarEvent) {
+  return event.endDate ?? event.date;
+}
 
-    grouped[event.date]?.push(event);
-    grouped[event.date]?.sort((left, right) => `${left.startTime}${left.endTime}`.localeCompare(`${right.startTime}${right.endTime}`));
+function enumerateDateKeys(startDateKey: string, endDateKey: string) {
+  const startDate = parseDateKey(startDateKey);
+  const endDate = parseDateKey(endDateKey);
+  const dateKeys: string[] = [];
+
+  for (let currentDate = new Date(startDate); currentDate <= endDate; currentDate.setDate(currentDate.getDate() + 1)) {
+    dateKeys.push(formatDateKey(currentDate));
+  }
+
+  return dateKeys;
+}
+
+function resolveSpanPosition(currentDateKey: string, startDateKey: string, endDateKey: string) {
+  if (startDateKey === endDateKey) {
+    return 'single' as const;
+  }
+
+  if (currentDateKey === startDateKey) {
+    return 'start' as const;
+  }
+
+  if (currentDateKey === endDateKey) {
+    return 'end' as const;
+  }
+
+  return 'middle' as const;
+}
+
+export function groupEventsByDate(events: CalendarEvent[]) {
+  return events.reduce<Record<string, CalendarEventInCell[]>>((grouped, event) => {
+    const startDateKey = event.date;
+    const endDateKey = getEventEndDateKey(event);
+
+    enumerateDateKeys(startDateKey, endDateKey).forEach((dateKey) => {
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+
+      grouped[dateKey]?.push({
+        event,
+        spanPosition: resolveSpanPosition(dateKey, startDateKey, endDateKey),
+      });
+    });
+
+    Object.values(grouped).forEach((group) => {
+      group.sort((left, right) => `${left.event.startTime}${left.event.endTime}`.localeCompare(`${right.event.startTime}${right.event.endTime}`));
+    });
 
     return grouped;
   }, {});
@@ -75,7 +118,7 @@ export function groupEventsByDate(events: CalendarEvent[]) {
 
 export function getEventsForDate(events: CalendarEvent[], dateKey: string) {
   return events
-    .filter((event) => event.date === dateKey)
+    .filter((event) => event.date <= dateKey && getEventEndDateKey(event) >= dateKey)
     .sort((left, right) => `${left.startTime}${left.endTime}`.localeCompare(`${right.startTime}${right.endTime}`));
 }
 
@@ -100,13 +143,20 @@ export function formatShortDateLabel(dateKey: string) {
   }).format(date);
 }
 
-export function formatDateTimeRange(dateKey: string, startTime: string, endTime: string) {
-  const date = parseDateKey(dateKey);
-  const dateLabel = new Intl.DateTimeFormat('ko-KR', {
+export function formatDateTimeRange(startDateKey: string, endDateKey: string, startTime: string, endTime: string) {
+  const startDate = parseDateKey(startDateKey);
+  const endDate = parseDateKey(endDateKey);
+  const startDateLabel = new Intl.DateTimeFormat('ko-KR', {
     month: 'long',
     day: 'numeric',
     weekday: 'short',
-  }).format(date);
+  }).format(startDate);
 
-  return `${dateLabel} ${startTime} - ${dateLabel} ${endTime}`;
+  const endDateLabel = new Intl.DateTimeFormat('ko-KR', {
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  }).format(endDate);
+
+  return `${startDateLabel} ${startTime} - ${endDateLabel} ${endTime}`;
 }
