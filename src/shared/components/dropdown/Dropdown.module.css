@@ -12,10 +12,10 @@
   --dropdown-trigger-padding-x: 32px;
   --dropdown-option-min-height: 96px;
   --dropdown-option-padding-x: 40px;
-  --dropdown-menu-offset: 14px;
+  --dropdown-menu-offset: 0px;
   --dropdown-trigger-background: transparent;
   --dropdown-menu-background: transparent;
-  --dropdown-option-background: transparent;
+  --dropdown-option-background: #ddd0bc;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -101,7 +101,7 @@
 
 .menu {
   position: absolute;
-  top: calc(100% + var(--dropdown-menu-offset) + 1px);
+  top: calc(100% + var(--dropdown-menu-offset));
   left: 0;
   right: 0;
   z-index: 20;

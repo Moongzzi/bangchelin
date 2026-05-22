@@ -833,6 +833,125 @@
   cursor: not-allowed;
 }
 
+.timePickerPopover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 170px;
+  z-index: 5;
+  width: min(100%, 280px);
+  padding: 14px 16px 16px;
+  border: 1px solid var(--calendar-border-subtle);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--calendar-page-background) 92%, white);
+  box-shadow: 0 24px 48px rgba(31, 24, 20, 0.14);
+}
+
+.timePickerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.timePickerTitle {
+  color: var(--calendar-text-primary);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.timePickerValue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--calendar-brand-primary) 12%, var(--calendar-surface-elevated));
+  color: var(--calendar-brand-primary);
+  font-size: 1rem;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.timePickerWheelWrap {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
+  align-items: center;
+  height: 162px;
+  padding: 0 12px;
+  border-radius: 16px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.82),
+    rgba(255, 255, 255, 0.5) 28%,
+    rgba(255, 255, 255, 0.5) 72%,
+    rgba(255, 255, 255, 0.82)
+  );
+  overflow: hidden;
+}
+
+.timePickerSelectionBar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 50%;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(31, 24, 20, 0.06);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.timePickerWheel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 132px;
+  padding: 45px 0;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+}
+
+.timePickerWheel::-webkit-scrollbar {
+  display: none;
+}
+
+.timePickerOption {
+  flex: 0 0 34px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--calendar-text-secondary) 72%, white);
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  scroll-snap-align: center;
+}
+
+.timePickerOptionSelected {
+  color: var(--calendar-text-primary);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.timePickerDivider {
+  position: relative;
+  z-index: 1;
+  color: var(--calendar-text-primary);
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 600;
+  text-align: center;
+}
+
 .fieldSplitRow {
   flex-direction: row;
   align-items: center;
@@ -863,14 +982,14 @@
 
 .participantCountText {
   color: var(--calendar-text-primary);
-  font-size: 2rem;
+  font-size: 1.25rem;
   line-height: 1;
   font-weight: 500;
 }
 
 .participantLimitInput {
-  width: 88px;
-  flex: 0 0 88px;
+  width: 56px;
+  flex: 0 0 56px;
 }
 
 .participantControlRow {
@@ -1040,6 +1159,7 @@
 .datePickerTrigger:focus-visible,
 .datePickerNavButton:focus-visible,
 .datePickerDayButton:focus-visible,
+.timePickerOption:focus-visible,
 .nativeInput:focus-visible,
 .nativeTextarea:focus-visible {
   outline: 2px solid var(--calendar-focus-ring);
@@ -1113,6 +1233,11 @@
   }
 
   .datePickerPopover {
+    width: 100%;
+  }
+
+  .timePickerPopover {
+    left: 0;
     width: 100%;
   }
 

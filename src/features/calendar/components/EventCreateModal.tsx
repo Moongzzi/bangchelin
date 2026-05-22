@@ -54,11 +54,14 @@ export function EventCreateModal({
   onSubmit,
 }: EventCreateModalProps) {
   const datePickerRef = useRef<HTMLDivElement | null>(null);
+  const selectedHourRef = useRef<HTMLButtonElement | null>(null);
+  const selectedMinuteRef = useRef<HTMLButtonElement | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [activeDateField, setActiveDateField] = useState<'startDate' | 'endDate'>('startDate');
+  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
+  const [activeTimeField, setActiveTimeField] = useState<'startTime' | 'endTime'>('startTime');
   const [displayMonth, setDisplayMonth] = useState<Date>(() => startOfMonth(values.startDate ? parseDateKey(values.startDate) : new Date()));
   const [participantSearchValue, setParticipantSearchValue] = useState('');
-  const [showTimeEditor, setShowTimeEditor] = useState(false);
 
   const selectedStartDate = useMemo(
     () => (values.startDate ? parseDateKey(values.startDate) : null),
@@ -115,6 +118,10 @@ export function EventCreateModal({
 
   const startTimeLabel = useMemo(() => formatTimeLabel(values.startTime), [formatTimeLabel, values.startTime]);
   const endTimeLabel = useMemo(() => formatTimeLabel(values.endTime), [formatTimeLabel, values.endTime]);
+  const hourOptions = useMemo(() => Array.from({ length: 24 }, (_, hour) => `${hour}`.padStart(2, '0')), []);
+  const minuteOptions = useMemo(() => Array.from({ length: 60 }, (_, minute) => `${minute}`.padStart(2, '0')), []);
+  const activeTimeValue = activeTimeField === 'startTime' ? values.startTime : values.endTime;
+  const [activeHour = '00', activeMinute = '00'] = activeTimeValue.split(':');
 
   const displayMonthLabel = useMemo(() => new Intl.DateTimeFormat('ko-KR', {
     year: 'numeric',
@@ -127,13 +134,21 @@ export function EventCreateModal({
   const participantCount = values.participantNames.length + externalGuestCount;
   const canIncreaseExternalGuests = participantCount < participantLimit;
   const participantExceeded = participantLimit > 0 && participantCount > participantLimit;
+  const compactDropdownStyle = useMemo(() => ({
+    '--dropdown-trigger-min-height': '35px',
+    '--dropdown-trigger-padding-x': '12px',
+    '--dropdown-option-min-height': '35px',
+    '--dropdown-option-padding-x': '12px',
+    '--dropdown-menu-offset': '0px',
+  }) as CSSProperties, []);
 
   useEffect(() => {
     if (!open) {
       setIsDatePickerOpen(false);
       setActiveDateField('startDate');
+      setIsTimePickerOpen(false);
+      setActiveTimeField('startTime');
       setParticipantSearchValue('');
-      setShowTimeEditor(false);
       return undefined;
     }
 
@@ -144,13 +159,18 @@ export function EventCreateModal({
           return;
         }
 
+        if (isTimePickerOpen) {
+          setIsTimePickerOpen(false);
+          return;
+        }
+
         onRequestClose();
       }
     }
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isDatePickerOpen, open, onRequestClose]);
+  }, [isDatePickerOpen, isTimePickerOpen, open, onRequestClose]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -197,19 +217,33 @@ export function EventCreateModal({
   }, [activeDateField, open, values.endDate, values.startDate]);
 
   useEffect(() => {
-    if (!isDatePickerOpen) {
+    if (!isDatePickerOpen && !isTimePickerOpen) {
       return undefined;
     }
 
     function handlePointerDown(event: MouseEvent) {
       if (!datePickerRef.current?.contains(event.target as Node)) {
         setIsDatePickerOpen(false);
+        setIsTimePickerOpen(false);
       }
     }
 
     window.addEventListener('mousedown', handlePointerDown);
     return () => window.removeEventListener('mousedown', handlePointerDown);
-  }, [isDatePickerOpen]);
+  }, [isDatePickerOpen, isTimePickerOpen]);
+
+  useEffect(() => {
+    if (!isTimePickerOpen) {
+      return undefined;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      selectedHourRef.current?.scrollIntoView({ block: 'center' });
+      selectedMinuteRef.current?.scrollIntoView({ block: 'center' });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeHour, activeMinute, isTimePickerOpen]);
 
   if (!open) {
     return null;
@@ -234,24 +268,32 @@ export function EventCreateModal({
 
     setDisplayMonth(startOfMonth(nextDate));
     setIsDatePickerOpen(false);
+    setIsTimePickerOpen(false);
   }
 
   function handleDateTextClick(field: 'startDate' | 'endDate') {
     setActiveDateField(field);
     setIsDatePickerOpen(true);
+    setIsTimePickerOpen(false);
     const targetDate = field === 'startDate' ? selectedStartDate : selectedEndDate;
     if (targetDate) {
       setDisplayMonth(startOfMonth(targetDate));
     }
   }
 
-  function handleTimeTextClick() {
+  function handleTimeTextClick(field: 'startTime' | 'endTime') {
     if (values.isAllDay) {
       return;
     }
 
-    setShowTimeEditor((currentValue) => !currentValue);
+    setActiveTimeField(field);
+    setIsTimePickerOpen((currentValue) => (activeTimeField === field ? !currentValue : true));
     setIsDatePickerOpen(false);
+  }
+
+  function handleSelectTimePart(part: 'hour' | 'minute', nextValue: string) {
+    const nextTime = part === 'hour' ? `${nextValue}:${activeMinute}` : `${activeHour}:${nextValue}`;
+    onChange(activeTimeField, nextTime);
   }
 
   function sanitizeNumberInput(nextValue: string) {
@@ -331,7 +373,12 @@ export function EventCreateModal({
               <div className={styles.modalTimeRow}>
                 <ToggleSwitch
                   checked={values.isAllDay}
-                  onChange={(checked) => onChange('isAllDay', checked)}
+                  onChange={(checked) => {
+                    onChange('isAllDay', checked);
+                    if (checked) {
+                      setIsTimePickerOpen(false);
+                    }
+                  }}
                   ariaLabel="하루 종일 토글"
                   onLabel=""
                   offLabel=""
@@ -353,7 +400,7 @@ export function EventCreateModal({
                     <button
                       type="button"
                       className={`${styles.dateTimeTextButton} ${styles.dateTimeTextButtonTime}`}
-                      onClick={handleTimeTextClick}
+                      onClick={() => handleTimeTextClick('startTime')}
                       aria-label="시작 시간 편집"
                     >
                       {values.isAllDay ? '하루 종일' : startTimeLabel}
@@ -371,7 +418,7 @@ export function EventCreateModal({
                     <button
                       type="button"
                       className={`${styles.dateTimeTextButton} ${styles.dateTimeTextButtonTime}`}
-                      onClick={handleTimeTextClick}
+                      onClick={() => handleTimeTextClick('endTime')}
                       aria-label="종료 시간 편집"
                     >
                       {values.isAllDay ? '하루 종일' : endTimeLabel}
@@ -437,32 +484,51 @@ export function EventCreateModal({
                     </div>
                   </div>
                 ) : null}
-              </div>
 
-              {!values.isAllDay && showTimeEditor ? (
-                <div className={styles.fieldSplitRow}>
-                  <InputField
-                    label="시작 시간"
-                    hideLabel
-                    placeholder="시작 시간"
-                    variant="outlined"
-                    type="time"
-                    value={values.startTime}
-                    onChange={(event) => onChange('startTime', event.target.value)}
-                    className={styles.fieldInlineInput}
-                  />
-                  <InputField
-                    label="종료 시간"
-                    hideLabel
-                    placeholder="종료 시간"
-                    variant="outlined"
-                    type="time"
-                    value={values.endTime}
-                    onChange={(event) => onChange('endTime', event.target.value)}
-                    className={styles.fieldInlineInput}
-                  />
-                </div>
-              ) : null}
+                {!values.isAllDay && isTimePickerOpen ? (
+                  <div className={styles.timePickerPopover} role="dialog" aria-label="시간 선택">
+                    <div className={styles.timePickerHeader}>
+                      <strong className={styles.timePickerTitle}>
+                        {activeTimeField === 'startTime' ? '시작 시간' : '종료 시간'}
+                      </strong>
+                      <span className={styles.timePickerValue}>{activeHour}:{activeMinute}</span>
+                    </div>
+
+                    <div className={styles.timePickerWheelWrap}>
+                      <div className={styles.timePickerSelectionBar} aria-hidden="true" />
+                      <div className={styles.timePickerWheel} role="listbox" aria-label="시">
+                        {hourOptions.map((hour) => (
+                          <button
+                            key={hour}
+                            ref={hour === activeHour ? selectedHourRef : undefined}
+                            type="button"
+                            className={`${styles.timePickerOption} ${hour === activeHour ? styles.timePickerOptionSelected : ''}`}
+                            onClick={() => handleSelectTimePart('hour', hour)}
+                            aria-selected={hour === activeHour}
+                          >
+                            {hour}
+                          </button>
+                        ))}
+                      </div>
+                      <span className={styles.timePickerDivider} aria-hidden="true">:</span>
+                      <div className={styles.timePickerWheel} role="listbox" aria-label="분">
+                        {minuteOptions.map((minute) => (
+                          <button
+                            key={minute}
+                            ref={minute === activeMinute ? selectedMinuteRef : undefined}
+                            type="button"
+                            className={`${styles.timePickerOption} ${minute === activeMinute ? styles.timePickerOptionSelected : ''}`}
+                            onClick={() => handleSelectTimePart('minute', minute)}
+                            aria-selected={minute === activeMinute}
+                          >
+                            {minute}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             <span className={styles.fieldLabel}>장소</span>
@@ -474,6 +540,7 @@ export function EventCreateModal({
                 options={regionOptions}
                 value={values.locationRegion || undefined}
                 onChange={(value) => onChange('locationRegion', value as CalendarLocationRegion)}
+                rootStyle={compactDropdownStyle}
                 className={styles.modalCompactDropdown}
               />
               <InputField
@@ -501,6 +568,7 @@ export function EventCreateModal({
               options={statusOptions}
               value={values.status}
               onChange={(value) => onChange('status', value as CalendarEventStatus)}
+              rootStyle={compactDropdownStyle}
               className={styles.modalCompactDropdown}
             />
 
@@ -512,6 +580,7 @@ export function EventCreateModal({
               options={categoryOptions}
               value={values.category}
               onChange={(value) => onChange('category', value as CalendarEventCategory)}
+              rootStyle={compactDropdownStyle}
               className={styles.modalCompactDropdown}
             />
 
@@ -528,6 +597,13 @@ export function EventCreateModal({
                   maxLength={3}
                   value={values.participantLimit}
                   onChange={(event) => updateParticipantLimit(event.target.value)}
+                  rootStyle={{
+                    '--input-control-min-height-outlined': '24px',
+                    '--input-outlined-padding-x': '6px',
+                    '--input-padding-outlined': '0',
+                    '--input-font-size': '1.25rem',
+                    '--input-line-height': '1',
+                  } as CSSProperties}
                   className={styles.participantLimitInput}
                 />
               </div>

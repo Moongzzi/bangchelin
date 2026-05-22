@@ -40,6 +40,7 @@ export type DropdownProps = {
   fullWidth?: boolean;
   invalid?: boolean;
   helperText?: string;
+  rootStyle?: CSSProperties;
 };
 
 type DropdownLabelProps = {
@@ -270,6 +271,7 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(function Dr
     fullWidth = true,
     invalid = false,
     helperText,
+    rootStyle,
   },
   forwardedRef,
 ) {
@@ -304,6 +306,7 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(function Dr
     '--dropdown-helper': colors.text.tertiary,
     '--dropdown-invalid': colors.semantic.error,
     '--dropdown-focus-ring': `${colors.accent.rose}33`,
+    '--dropdown-option-background': colors.background.tertiary,
   } as CSSProperties;
 
   function assignTriggerRef(node: HTMLButtonElement | null) {
@@ -447,7 +450,7 @@ export const Dropdown = forwardRef<HTMLButtonElement, DropdownProps>(function Dr
     <div
       ref={rootRef}
       className={joinClassNames(styles.root, fullWidth && styles.fullWidth, className)}
-      style={dropdownStyle}
+      style={{ ...dropdownStyle, ...rootStyle }}
     >
       <DropdownLabel id={labelId} htmlFor={dropdownId} label={label} hideLabel={hideLabel} />
       {name ? <input type="hidden" name={name} value={value ?? ''} required={required} /> : null}

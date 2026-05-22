@@ -14,7 +14,9 @@
     "react-dom": "^19.2.5",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.9.4",
-    "remark-gfm": "^4.0.1"
+    "react-time-picker": "^8.0.3",
+    "remark-gfm": "^4.0.1",
+    "swiper": "^12.1.4"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.14",
