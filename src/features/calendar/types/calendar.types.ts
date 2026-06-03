@@ -10,6 +10,7 @@ export type CalendarEventParticipant = {
   id: string;
   profileId?: string | null;
   displayName: string;
+  avatarUrl?: string | null;
   status: CalendarParticipantStatus;
 };
 

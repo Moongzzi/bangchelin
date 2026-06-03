@@ -80,6 +80,7 @@ type HeaderActionsProps = {
   onMenuClick?: () => void;
   profileLabel?: string;
   profileInitial?: string;
+  profileImageSrc?: string | null;
   profileTo?: To;
   profileMenuItems?: HeaderProfileMenuItem[];
   loginTo?: To;
@@ -101,6 +102,7 @@ export type HeaderProps = {
   actionType: HeaderActionType;
   profileLabel?: string;
   profileInitial?: string;
+  profileImageSrc?: string | null;
   profileTo?: To;
   profileMenuItems?: HeaderProfileMenuItem[];
   onMenuClick?: () => void;
@@ -287,6 +289,7 @@ export function HeaderActions({
   onMenuClick,
   profileLabel,
   profileInitial,
+  profileImageSrc,
   profileTo,
   profileMenuItems,
   loginTo,
@@ -321,6 +324,12 @@ export function HeaderActions({
     };
   }, [isProfileMenuOpen]);
 
+  const profileBadgeContent = profileImageSrc ? (
+    <img src={profileImageSrc} alt="" className={styles.profileBadgeImage} aria-hidden="true" />
+  ) : (
+    profileInitial ?? 'B'
+  );
+
   return (
     <div className={styles.actions}>
       {actionType === 'hamburger' ? (
@@ -351,7 +360,7 @@ export function HeaderActions({
               aria-expanded={isProfileMenuOpen}
               onClick={() => setIsProfileMenuOpen((isOpen) => !isOpen)}
             >
-              {profileInitial ?? 'B'}
+              {profileBadgeContent}
             </button>
             {isProfileMenuOpen ? (
               <div className={styles.profileMenu} role="menu">
@@ -394,7 +403,7 @@ export function HeaderActions({
               aria-label={profileLabel ?? 'Open profile'}
               title={profileLabel}
             >
-              {profileInitial ?? 'B'}
+              {profileBadgeContent}
             </Link>
           ) : (
           <button
@@ -403,7 +412,7 @@ export function HeaderActions({
             aria-label={profileLabel ?? 'Open profile menu'}
             title={profileLabel}
           >
-            {profileInitial ?? 'B'}
+            {profileBadgeContent}
           </button>
         )
       ) : null}
@@ -418,6 +427,7 @@ export function Header({
   actionType,
   profileLabel,
   profileInitial,
+  profileImageSrc,
   profileTo,
   profileMenuItems,
   onMenuClick,
@@ -475,6 +485,7 @@ export function Header({
                 onMenuClick={onMenuClick}
                 profileLabel={profileLabel}
                 profileInitial={profileInitial}
+                profileImageSrc={profileImageSrc}
                 profileTo={profileTo}
                 profileMenuItems={profileMenuItems}
                 loginTo={loginTo}

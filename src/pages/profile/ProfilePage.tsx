@@ -1,4 +1,4 @@
-import type { ChangeEvent, FormEvent } from 'react';
+import type { ChangeEvent, CSSProperties, FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -8,9 +8,11 @@ import {
   type ActivityRegion,
   type Profile,
 } from '../../features/auth/auth.api';
+import { InputField } from '../../shared/components/input-field';
 import { PageShell } from '../../shared/components/layout/PageShell';
 import { ROUTES } from '../../shared/constants/routes';
-import { signupFormConfig } from '../register/registerConfig';
+import { colors } from '../../shared/styles/tokens/colors';
+import { emailPattern, signupFormConfig } from '../register/registerConfig';
 
 type ProfileFormValues = {
   nickname: string;
@@ -19,6 +21,8 @@ type ProfileFormValues = {
   activityRegion: ActivityRegion | '';
   email: string;
 };
+
+type ProfileFormErrors = Partial<Record<keyof ProfileFormValues, string>>;
 
 type PageStatus = 'loading' | 'editing' | 'saving' | 'error' | 'success' | 'empty';
 
@@ -43,9 +47,44 @@ function createInitialValues(profile?: Profile | null): ProfileFormValues {
   };
 }
 
+function isSameProfileFormValues(left: ProfileFormValues, right: ProfileFormValues) {
+  return (
+    left.nickname === right.nickname &&
+    left.birthDate === right.birthDate &&
+    left.introduction === right.introduction &&
+    left.activityRegion === right.activityRegion &&
+    left.email === right.email
+  );
+}
+
+function validateProfileForm(values: ProfileFormValues) {
+  const errors: ProfileFormErrors = {};
+
+  if (!values.nickname.trim()) {
+    errors.nickname = '닉네임을 입력해주세요.';
+  } else if (values.nickname.length > signupFormConfig.nicknameMaxLength) {
+    errors.nickname = `닉네임은 ${signupFormConfig.nicknameMaxLength}자 이내여야 합니다.`;
+  }
+
+  if (values.introduction.length > signupFormConfig.introductionMaxLength) {
+    errors.introduction = `자기 소개는 ${signupFormConfig.introductionMaxLength}자 이내여야 합니다.`;
+  }
+
+  if (values.email.trim() && !emailPattern.test(values.email.trim())) {
+    errors.email = '이메일 형식을 확인해주세요.';
+  }
+
+  return errors;
+}
+
+function hasFormErrors(errors: ProfileFormErrors) {
+  return Object.values(errors).some(Boolean);
+}
+
 export function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [formValues, setFormValues] = useState<ProfileFormValues>(() => createInitialValues());
+  const [formErrors, setFormErrors] = useState<ProfileFormErrors>({});
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<PageStatus>('loading');
@@ -95,10 +134,34 @@ export function ProfilePage() {
     };
   }, [avatarPreviewUrl]);
 
+  const savedValues = useMemo(() => createInitialValues(profile), [profile]);
   const avatarSrc = useMemo(
     () => avatarPreviewUrl ?? profile?.avatar_url ?? '',
     [avatarPreviewUrl, profile?.avatar_url],
   );
+  const hasUnsavedChanges = Boolean(avatarFile) || !isSameProfileFormValues(formValues, savedValues);
+  const isSaving = status === 'saving';
+  const canSave = hasUnsavedChanges && !isSaving;
+
+  const inputRootStyle = {
+    '--input-border': colors.border.default,
+    '--input-border-active': colors.accent.navyHover,
+    '--input-control-background': colors.surface.elevated,
+    '--input-element-background': colors.surface.elevated,
+    '--input-control-min-height-outlined': '44px',
+    '--input-padding-outlined': '10px 0',
+    '--input-outlined-padding-x': '12px',
+    '--input-font-size': '0.875rem',
+    '--input-line-height': '1.25',
+    '--input-message-error': colors.semantic.error,
+    '--input-message-success': colors.semantic.success,
+  } as CSSProperties;
+
+  const introductionInputRootStyle = {
+    ...inputRootStyle,
+    '--input-textarea-min-height': '44px',
+    '--input-textarea-resize': 'vertical',
+  } as CSSProperties;
 
   function updateField<K extends keyof ProfileFormValues>(field: K, value: ProfileFormValues[K]) {
     setFormValues((currentValues) => ({
@@ -106,10 +169,31 @@ export function ProfilePage() {
       [field]: value,
     }));
 
+    setFormErrors((currentErrors) => {
+      if (!currentErrors[field]) {
+        return currentErrors;
+      }
+
+      return {
+        ...currentErrors,
+        [field]: undefined,
+      };
+    });
+
     if (status === 'success' || status === 'error') {
       setStatus('editing');
       setMessage('');
     }
+  }
+
+  function handleInputChange(field: keyof ProfileFormValues) {
+    return (event: ChangeEvent<HTMLInputElement>) => {
+      updateField(field, event.target.value as ProfileFormValues[typeof field]);
+    };
+  }
+
+  function handleFieldClear(field: keyof ProfileFormValues) {
+    return () => updateField(field, '' as ProfileFormValues[typeof field]);
   }
 
   function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
@@ -127,20 +211,26 @@ export function ProfilePage() {
 
       return URL.createObjectURL(nextFile);
     });
+
+    if (status === 'success' || status === 'error') {
+      setStatus('editing');
+      setMessage('');
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!formValues.nickname.trim()) {
-      setStatus('error');
-      setMessage('닉네임은 1자 이상이어야 합니다.');
+    if (!hasUnsavedChanges || isSaving) {
       return;
     }
 
-    if (formValues.nickname.length > signupFormConfig.nicknameMaxLength) {
+    const nextErrors = validateProfileForm(formValues);
+    setFormErrors(nextErrors);
+
+    if (hasFormErrors(nextErrors)) {
       setStatus('error');
-      setMessage(`닉네임은 ${signupFormConfig.nicknameMaxLength}자 이내여야 합니다.`);
+      setMessage('입력값을 다시 확인해주세요.');
       return;
     }
 
@@ -156,8 +246,14 @@ export function ProfilePage() {
         email: formValues.email,
       });
 
+      if (avatarPreviewUrl) {
+        URL.revokeObjectURL(avatarPreviewUrl);
+      }
+
       setProfile(nextProfile);
+      setFormValues(createInitialValues(nextProfile));
       setAvatarFile(null);
+      setAvatarPreviewUrl(null);
       setStatus('success');
       setMessage('프로필이 저장되었습니다.');
     } catch (error) {
@@ -168,7 +264,7 @@ export function ProfilePage() {
 
   return (
     <PageShell>
-      <section className="mx-auto w-[var(--space-content)] py-16">
+      <section className="mx-auto w-full max-w-[1120px] px-4 py-16">
         <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-8 shadow-[var(--shadow-soft)]">
           <p className="text-sm uppercase tracking-[0.22em] text-[var(--color-accent)]">Profile</p>
           <h1 className="mt-4 font-[var(--font-display)] text-4xl">프로필</h1>
@@ -187,7 +283,7 @@ export function ProfilePage() {
           ) : null}
 
           {status !== 'loading' && status !== 'empty' ? (
-            <form className="mt-8 grid max-w-3xl gap-5" onSubmit={handleSubmit}>
+            <form id="profile-form" className="mt-8 grid max-w-3xl gap-5" onSubmit={handleSubmit} noValidate>
               <label className="grid gap-2 text-sm font-semibold">
                 프로필 이미지
                 <div className="flex items-center gap-4">
@@ -200,40 +296,61 @@ export function ProfilePage() {
                       </span>
                     )}
                   </div>
-                  <input type="file" accept="image/*" onChange={handleAvatarChange} />
+                  <input type="file" accept="image/*" onChange={handleAvatarChange} disabled={isSaving} />
                 </div>
               </label>
 
-              <label className="grid gap-2 text-sm font-semibold">
-                닉네임
-                <input
-                  className="h-11 rounded border border-[var(--color-border)] bg-white px-3"
-                  value={formValues.nickname}
-                  maxLength={signupFormConfig.nicknameMaxLength}
-                  onChange={(event) => updateField('nickname', event.target.value)}
-                  required
-                />
-              </label>
+              <InputField
+                id="profile-nickname"
+                name="nickname"
+                label="닉네임"
+                placeholder="닉네임을 입력해주세요."
+                variant={formErrors.nickname ? 'error' : 'outlined'}
+                value={formValues.nickname}
+                maxLength={signupFormConfig.nicknameMaxLength}
+                onChange={handleInputChange('nickname')}
+                showClearButton
+                onClear={handleFieldClear('nickname')}
+                rootStyle={inputRootStyle}
+                message={formErrors.nickname}
+                required
+                disabled={isSaving}
+              />
 
-              <label className="grid gap-2 text-sm font-semibold">
-                생일
-                <input
-                  className="h-11 rounded border border-[var(--color-border)] bg-white px-3"
-                  type="date"
-                  value={formValues.birthDate}
-                  onChange={(event) => updateField('birthDate', event.target.value)}
-                />
-              </label>
+              <InputField
+                id="profile-birth-date"
+                name="birthDate"
+                type="date"
+                label="생일"
+                placeholder="생일을 선택해주세요."
+                variant="outlined"
+                value={formValues.birthDate}
+                onChange={handleInputChange('birthDate')}
+                rootStyle={inputRootStyle}
+                disabled={isSaving}
+              />
 
-              <label className="grid gap-2 text-sm font-semibold">
-                한줄 소개
-                <input
-                  className="h-11 rounded border border-[var(--color-border)] bg-white px-3"
-                  value={formValues.introduction}
-                  maxLength={signupFormConfig.introductionMaxLength}
-                  onChange={(event) => updateField('introduction', event.target.value)}
-                />
-              </label>
+              <InputField
+                id="profile-introduction"
+                name="introduction"
+                label="자기 소개"
+                placeholder="자기 소개를 입력해주세요."
+                variant={formErrors.introduction ? 'error' : 'outlined'}
+                value={formValues.introduction}
+                maxLength={signupFormConfig.introductionMaxLength}
+                onChange={handleInputChange('introduction')}
+                showClearButton
+                onClear={handleFieldClear('introduction')}
+                rootStyle={introductionInputRootStyle}
+                message={
+                  formErrors.introduction ??
+                  `${formValues.introduction.length}/${signupFormConfig.introductionMaxLength}`
+                }
+                messageType={formErrors.introduction ? 'error' : 'helper'}
+                multiline
+                rows={2}
+                disabled={isSaving}
+              />
 
               <label className="grid gap-2 text-sm font-semibold">
                 활동지역
@@ -241,8 +358,9 @@ export function ProfilePage() {
                   className="h-11 rounded border border-[var(--color-border)] bg-white px-3"
                   value={formValues.activityRegion}
                   onChange={(event) => updateField('activityRegion', event.target.value as ActivityRegion | '')}
+                  disabled={isSaving}
                 >
-                  <option value="">선택 안 함</option>
+                  <option value="">선택 없음</option>
                   {signupFormConfig.regions.map((label, index) => (
                     <option key={regionValues[index]} value={regionValues[index]}>
                       {label}
@@ -251,15 +369,24 @@ export function ProfilePage() {
                 </select>
               </label>
 
-              <label className="grid gap-2 text-sm font-semibold">
-                이메일
-                <input
-                  className="h-11 rounded border border-[var(--color-border)] bg-white px-3"
-                  type="email"
-                  value={formValues.email}
-                  onChange={(event) => updateField('email', event.target.value)}
-                />
-              </label>
+              <InputField
+                id="profile-email"
+                name="email"
+                type="email"
+                label="이메일"
+                placeholder="example@bangchelin.com"
+                variant={formErrors.email ? 'error' : 'outlined'}
+                value={formValues.email}
+                onChange={handleInputChange('email')}
+                showClearButton
+                onClear={handleFieldClear('email')}
+                rootStyle={inputRootStyle}
+                message={formErrors.email}
+                autoComplete="email"
+                inputMode="email"
+                pattern={emailPattern.source}
+                disabled={isSaving}
+              />
 
               {message ? (
                 <p
@@ -270,13 +397,15 @@ export function ProfilePage() {
                 </p>
               ) : null}
 
-              <button
-                type="submit"
-                className="h-11 w-36 rounded-full bg-[var(--color-brand)] text-white disabled:opacity-60"
-                disabled={status === 'saving'}
-              >
-                {status === 'saving' ? '저장 중...' : '저장'}
-              </button>
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  className="h-11 w-36 rounded-full bg-[var(--color-accent)] text-white transition-colors hover:bg-[var(--color-accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={!canSave}
+                >
+                  {isSaving ? '저장 중...' : '저장'}
+                </button>
+              </div>
             </form>
           ) : null}
         </div>

@@ -6,7 +6,7 @@ import {
   calendarStatusLabels,
   calendarStatusTone,
 } from '../constants/calendar.constants';
-import type { CalendarEvent, CalendarEventComment } from '../types/calendar.types';
+import type { CalendarEvent, CalendarEventComment, CalendarEventParticipant } from '../types/calendar.types';
 import { formatDateTimeRange, formatShortDateLabel } from '../utils/calendarDate.utils';
 import styles from './CalendarShared.module.css';
 
@@ -58,6 +58,34 @@ function CloseIcon() {
       <path d="M6 6 18 18M18 6 6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
+}
+
+function getParticipantInitial(displayName: string) {
+  return displayName.trim().slice(0, 1).toUpperCase() || 'B';
+}
+
+function renderParticipantChip(participant: CalendarEventParticipant, className?: string) {
+  return (
+    <span key={participant.id} className={`${styles.participantChip} ${className ?? ''}`.trim()}>
+      <span className={styles.participantAvatar} aria-hidden="true">
+        {participant.avatarUrl ? (
+          <img src={participant.avatarUrl} alt="" className={styles.participantAvatarImage} />
+        ) : (
+          getParticipantInitial(participant.displayName)
+        )}
+      </span>
+      <span>{participant.displayName}</span>
+    </span>
+  );
+}
+
+function toFallbackParticipant(displayName: string, status: CalendarEventParticipant['status']): CalendarEventParticipant {
+  return {
+    id: `${status}-${displayName}`,
+    displayName,
+    avatarUrl: null,
+    status,
+  };
 }
 
 export function EventDetailPanel({
@@ -161,6 +189,13 @@ export function EventDetailPanel({
   const isRecruiting = selectedEvent.status === 'recruiting';
   const isAlreadyJoined = Boolean(selectedEvent.isCurrentUserParticipant || selectedEvent.isCurrentUserWaitlisted);
   const attendanceLabel = selectedEvent.currentParticipants >= selectedEvent.capacity ? '대기 참석' : '참석';
+  const participantDetails = selectedEvent.participantsDetail ?? [];
+  const confirmedParticipants = participantDetails.length
+    ? participantDetails.filter((participant) => participant.status === 'confirmed')
+    : (selectedEvent.participants ?? []).map((displayName) => toFallbackParticipant(displayName, 'confirmed'));
+  const waitlistedParticipants = participantDetails.length
+    ? participantDetails.filter((participant) => participant.status === 'waitlisted')
+    : (selectedEvent.waitlistedParticipants ?? []).map((displayName) => toFallbackParticipant(displayName, 'waitlisted'));
 
   return (
     <aside className={styles.detailPanel} aria-label="선택한 일정 상세 정보">
@@ -241,9 +276,7 @@ export function EventDetailPanel({
         <div className={styles.detailSection}>
           <p className={styles.detailLabel}>참석자</p>
           <div className={styles.participantList}>
-            {(selectedEvent.participants ?? []).map((participant) => (
-              <span key={participant} className={styles.participantChip}>{participant}</span>
-            ))}
+            {confirmedParticipants.map((participant) => renderParticipantChip(participant))}
           </div>
         </div>
 
@@ -251,10 +284,8 @@ export function EventDetailPanel({
           <div className={styles.detailSection}>
             <p className={styles.detailLabel}>대기 참석자</p>
             <div className={styles.participantList}>
-              {selectedEvent.waitlistedParticipants?.length ? (
-                selectedEvent.waitlistedParticipants.map((participant) => (
-                  <span key={participant} className={`${styles.participantChip} ${styles.waitlistedParticipantChip}`.trim()}>{participant}</span>
-                ))
+              {waitlistedParticipants.length ? (
+                waitlistedParticipants.map((participant) => renderParticipantChip(participant, styles.waitlistedParticipantChip))
               ) : (
                 <p className={styles.emptyPanelText}>대기 참석자가 없습니다.</p>
               )}

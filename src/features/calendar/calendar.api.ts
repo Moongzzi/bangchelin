@@ -37,6 +37,9 @@ type CalendarEventParticipantRow = {
   status?: CalendarParticipantStatus;
   sort_order: number;
   created_at?: string;
+  profiles?: {
+    avatar_url: string | null;
+  } | null;
 };
 
 type CalendarEventCommentRow = {
@@ -152,6 +155,7 @@ function toCalendarEvent(row: CalendarEventRow): CalendarEvent {
       id: participant.id,
       profileId: participant.profile_id,
       displayName: participant.display_name,
+      avatarUrl: participant.profiles?.avatar_url ?? null,
       status: participant.status ?? 'confirmed',
     })),
     description: row.description ?? '',
@@ -238,7 +242,7 @@ const eventSelect = [
   'description',
   'is_all_day',
   'comments',
-  'calendar_event_participants(id,profile_id,display_name,status,sort_order,created_at)',
+  'calendar_event_participants(id,profile_id,display_name,status,sort_order,created_at,profiles(avatar_url))',
   'calendar_event_comments(id,event_id,parent_id,user_id,content,created_at,updated_at,profiles(nickname))',
 ].join(',');
 
@@ -258,7 +262,7 @@ const legacyEventSelect = [
   'description',
   'is_all_day',
   'comments',
-  'calendar_event_participants(id,profile_id,display_name,sort_order,created_at)',
+  'calendar_event_participants(id,profile_id,display_name,sort_order,created_at,profiles(avatar_url))',
   'calendar_event_comments(id,event_id,parent_id,user_id,content,created_at,updated_at,profiles(nickname))',
 ].join(',');
 

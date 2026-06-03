@@ -152,6 +152,7 @@ export function Header() {
         profileTo={ROUTES.profile}
         profileLabel={profileName}
         profileInitial={profileName.slice(0, 1).toUpperCase()}
+        profileImageSrc={profile?.avatar_url}
         profileMenuItems={[
           { key: 'logout', label: '로그아웃', onClick: handleLogout },
           { key: 'profile', label: '프로필', to: ROUTES.profile },
