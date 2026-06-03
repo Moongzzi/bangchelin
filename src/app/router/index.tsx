@@ -2,6 +2,7 @@ import { lazy, Suspense, type CSSProperties } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { HomePage } from '../../pages/home/HomePage';
+import { getSession } from '../../shared/api/supabaseRest';
 import { ROUTES } from '../../shared/constants/routes';
 
 const AboutPage = lazy(() => import('../../pages/about/AboutPage').then((module) => ({ default: module.AboutPage })));
@@ -27,6 +28,14 @@ function LazyRoute({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<div style={routeFallbackStyle}>페이지를 불러오는 중입니다.</div>}>{children}</Suspense>;
 }
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  if (!getSession()) {
+    return <Navigate replace to={ROUTES.home} />;
+  }
+
+  return children;
+}
+
 export function AppRouter() {
   return (
     <Routes>
@@ -34,12 +43,12 @@ export function AppRouter() {
       <Route path={ROUTES.login} element={<LazyRoute><LoginPage /></LazyRoute>} />
       <Route path={ROUTES.register} element={<LazyRoute><RegisterPage /></LazyRoute>} />
       <Route path={ROUTES.about} element={<LazyRoute><AboutPage /></LazyRoute>} />
-      <Route path={ROUTES.calendar} element={<LazyRoute><CalendarPage /></LazyRoute>} />
+      <Route path={ROUTES.calendar} element={<ProtectedRoute><LazyRoute><CalendarPage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.dropdownPreview} element={<LazyRoute><DropdownPreviewPage /></LazyRoute>} />
       <Route path={ROUTES.inputPreview} element={<LazyRoute><InputPreviewPage /></LazyRoute>} />
       <Route path={ROUTES.popupPreview} element={<LazyRoute><PopupPreviewPage /></LazyRoute>} />
       <Route path={ROUTES.searchPreview} element={<LazyRoute><SearchPreviewPage /></LazyRoute>} />
-      <Route path={ROUTES.report} element={<LazyRoute><ReportPage /></LazyRoute>} />
+      <Route path={ROUTES.report} element={<ProtectedRoute><LazyRoute><ReportPage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.profile} element={<LazyRoute><ProfilePage /></LazyRoute>} />
       <Route path="*" element={<Navigate replace to={ROUTES.home} />} />
     </Routes>

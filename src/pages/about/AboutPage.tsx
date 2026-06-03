@@ -4,6 +4,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { PageShell } from '../../shared/components/layout/PageShell';
+import { getGuideDocuments, updateGuideDocument } from '../../features/guide/guide.api';
 import { colors } from '../../shared/styles/tokens/colors';
 import {
   buildGuideTree,
@@ -40,6 +41,8 @@ type EditableGuideDocument = {
   title: string;
   categories: EditableGuideCategory[];
 };
+
+type GuidePageStatus = 'loading' | 'ready' | 'saving' | 'error' | 'success' | 'empty';
 
 type ParsedSection = {
   title: string;
@@ -464,6 +467,8 @@ export function AboutPage() {
   const [draftMarkdownByDocument, setDraftMarkdownByDocument] = useState<Record<string, string>>(() => buildDocumentMarkdownMap(initialDocuments));
   const [isEditMode, setIsEditMode] = useState(false);
   const [isEditorHelpOpen, setIsEditorHelpOpen] = useState(false);
+  const [pageStatus, setPageStatus] = useState<GuidePageStatus>('loading');
+  const [statusMessage, setStatusMessage] = useState('');
 
   const sanitizedTree = useMemo(
     () => sanitizeTree(buildGuideTree(toGuideTreeDocuments(savedDocuments)), treeTokens.maxDepth),
@@ -503,6 +508,52 @@ export function AboutPage() {
   );
 
   const editorCharacterCount = activeDraftMarkdown.length;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadGuideDocuments() {
+      try {
+        const documents = await getGuideDocuments();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!documents.length) {
+          setSavedDocuments([]);
+          setDraftMarkdownByDocument({});
+          setPageStatus('empty');
+          setStatusMessage('');
+          return;
+        }
+
+        const nextDocuments = createEditableDocuments(documents);
+        const nextLeafId = findFirstLeafIdInDocuments(nextDocuments);
+
+        setSavedDocuments(nextDocuments);
+        setDraftMarkdownByDocument(buildDocumentMarkdownMap(nextDocuments));
+        if (nextLeafId) {
+          setActiveLeafId(nextLeafId);
+        }
+        setPageStatus('ready');
+        setStatusMessage('');
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setPageStatus('error');
+        setStatusMessage(error instanceof Error ? error.message : '가이드 문서를 불러오지 못했습니다.');
+      }
+    }
+
+    void loadGuideDocuments();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   function handleStructureSelectChange(nextValue: ToolbarSelectValue) {
     if (!nextValue) {
@@ -760,7 +811,7 @@ export function AboutPage() {
     setIsEditMode(false);
   }
 
-  function handleApplyEditing() {
+  async function handleApplyEditing() {
     const nextDocuments = savedDocuments.map((document) => {
       const nextMarkdown = draftMarkdownByDocument[document.id] ?? serializeDocumentToMarkdown(document);
       return parseMarkdownToDocument(document, nextMarkdown);
@@ -769,13 +820,48 @@ export function AboutPage() {
     const nextActiveDocument = nextDocuments.find((document) => document.id === activeDocumentId) ?? nextDocuments[0];
     const nextLeafId = findFirstLeafIdInDocument(nextActiveDocument) ?? findFirstLeafIdInDocuments(nextDocuments);
 
-    setSavedDocuments(nextDocuments);
-    setDraftMarkdownByDocument(buildDocumentMarkdownMap(nextDocuments));
-    if (nextLeafId) {
-      setActiveLeafId(nextLeafId);
+    if (!nextActiveDocument) {
+      setPageStatus('empty');
+      setStatusMessage('');
+      return;
     }
-    setIsEditorHelpOpen(false);
-    setIsEditMode(false);
+
+    setPageStatus('saving');
+    setStatusMessage('');
+
+    try {
+      const savedDocument = await updateGuideDocument({
+        slug: nextActiveDocument.id,
+        title: nextActiveDocument.title,
+        content: nextActiveDocument.categories.map((category) => ({
+          id: category.id,
+          title: category.title,
+          sections: category.sections.map((section) => ({
+            id: section.id,
+            title: section.title,
+            body: [section.markdown],
+          })),
+        })),
+      });
+
+      const editableSavedDocument = createEditableDocuments([savedDocument])[0]!;
+      const nextSavedDocuments = nextDocuments.map((document) => (
+        document.id === savedDocument.id ? editableSavedDocument : document
+      ));
+
+      setSavedDocuments(nextSavedDocuments);
+      setDraftMarkdownByDocument(buildDocumentMarkdownMap(nextSavedDocuments));
+      if (nextLeafId) {
+        setActiveLeafId(nextLeafId);
+      }
+      setPageStatus('success');
+      setStatusMessage('가이드 문서가 저장되었습니다.');
+      setIsEditorHelpOpen(false);
+      setIsEditMode(false);
+    } catch (error) {
+      setPageStatus('error');
+      setStatusMessage(error instanceof Error ? error.message : '가이드 문서 저장에 실패했습니다.');
+    }
   }
 
   function handleTreeKeyDown(item: VisibleTreeItem, event: ReactKeyboardEvent<HTMLButtonElement>) {
@@ -916,6 +1002,16 @@ export function AboutPage() {
               ) : null}
             </div>
 
+            {pageStatus === 'loading' ? (
+              <p className={styles.previewEmpty}>가이드 문서를 불러오는 중입니다.</p>
+            ) : null}
+
+            {pageStatus !== 'loading' && statusMessage ? (
+              <p className={styles.previewEmpty} role={pageStatus === 'error' ? 'alert' : 'status'}>
+                {statusMessage}
+              </p>
+            ) : null}
+
             {isEditMode && activeSavedDocument ? (
               <section className={styles.editorWorkspace} aria-label="가이드 문서 편집기">
                 <div className={styles.editorTopBar}>
@@ -944,8 +1040,13 @@ export function AboutPage() {
                       <button type="button" className={styles.editorActionButtonSecondary} onClick={handleCancelEditing}>
                         취소
                       </button>
-                      <button type="button" className={styles.editorActionButtonPrimary} onClick={handleApplyEditing}>
-                        적용
+                      <button
+                        type="button"
+                        className={styles.editorActionButtonPrimary}
+                        onClick={handleApplyEditing}
+                        disabled={pageStatus === 'saving'}
+                      >
+                        {pageStatus === 'saving' ? '저장 중' : '적용'}
                       </button>
                     </div>
                   </div>

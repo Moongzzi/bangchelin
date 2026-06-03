@@ -7,6 +7,16 @@ import { EventDetailPanel } from '../../features/calendar/components/EventDetail
 import { MonthCalendar } from '../../features/calendar/components/MonthCalendar';
 import { TodaySidebar } from '../../features/calendar/components/TodaySidebar';
 import {
+  createCalendarEvent,
+  createCalendarEventComment,
+  deleteCalendarEvent,
+  getCalendarEvent,
+  getCalendarEventsByRange,
+  joinCalendarEvent,
+  leaveCalendarEvent,
+  updateCalendarEvent,
+} from '../../features/calendar/calendar.api';
+import {
   calendarCategoryOptions,
   calendarConfig,
   calendarLayoutTokens,
@@ -72,6 +82,8 @@ type ModalState = {
   initialValues: CalendarEventFormValues;
 };
 
+type CalendarPageStatus = 'loading' | 'ready' | 'saving' | 'error' | 'success' | 'empty';
+
 type ConfirmAction =
   | { type: 'save-create'; values: CalendarEventFormValues }
   | { type: 'save-edit'; eventId: string; values: CalendarEventFormValues }
@@ -121,7 +133,7 @@ function mapEventToFormValues(event: CalendarEvent): CalendarEventFormValues {
     endTime: event.endTime,
     status: event.status,
     category: event.category,
-    locationRegion: detectLocationRegion(event.location),
+    locationRegion: event.locationRegion ?? detectLocationRegion(event.location),
     locationDetail: event.location,
     participantLimit: `${event.capacity}`,
     externalGuestCount: `${externalGuestCount}`,
@@ -149,6 +161,7 @@ function buildEventFromForm(values: CalendarEventFormValues, existingEvent?: Cal
     endTime: values.isAllDay ? '23:59' : values.endTime,
     status: values.status,
     category: values.category,
+    locationRegion: values.locationRegion,
     location: formatEventLocation(values),
     capacity,
     currentParticipants,
@@ -160,7 +173,13 @@ function buildEventFromForm(values: CalendarEventFormValues, existingEvent?: Cal
   };
 }
 
+function isEventInDateRange(event: CalendarEvent, startDate: string, endDate: string) {
+  return event.date <= endDate && (event.endDate ?? event.date) >= startDate;
+}
+
 function getValidationMessage(values: CalendarEventFormValues) {
+  const todayKey = formatDateKey(new Date());
+
   if (!values.title.trim()) {
     return '일정 제목을 입력해주세요.';
   }
@@ -171,6 +190,10 @@ function getValidationMessage(values: CalendarEventFormValues) {
 
   if (values.endDate < values.startDate) {
     return '종료 날짜는 시작 날짜보다 이전일 수 없습니다.';
+  }
+
+  if (values.startDate < todayKey || values.endDate < todayKey) {
+    return '과거 날짜는 선택할 수 없습니다.';
   }
 
   if (!values.locationRegion) {
@@ -203,12 +226,18 @@ function getValidationMessage(values: CalendarEventFormValues) {
 export function CalendarPage() {
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
   const today = useMemo(() => parseDateKey(todayKey), [todayKey]);
-  const [events, setEvents] = useState<CalendarEvent[]>(calendarEventsMock);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [currentMonth, setCurrentMonth] = useState<Date>(() => startOfMonth(today));
   const [selectedDate, setSelectedDate] = useState<Date | null>(today);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(() => getEventsForDate(calendarEventsMock, todayKey)[0]?.id ?? null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [modalHelperMessage, setModalHelperMessage] = useState<string | undefined>(undefined);
+  const [pageStatus, setPageStatus] = useState<CalendarPageStatus>('loading');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [commentError, setCommentError] = useState('');
+  const [attendanceSubmitting, setAttendanceSubmitting] = useState(false);
+  const [attendanceError, setAttendanceError] = useState('');
   const [modalState, setModalState] = useState<ModalState>(() => {
     const defaultValues = createDefaultFormValues(todayKey);
     return {
@@ -243,6 +272,54 @@ export function CalendarPage() {
     () => buildMonthGrid(currentMonth, todayKey),
     [currentMonth, todayKey],
   );
+  const visibleRange = useMemo(() => ({
+    startDate: monthCells[0]?.dateKey ?? formatDateKey(currentMonth),
+    endDate: monthCells[monthCells.length - 1]?.dateKey ?? formatDateKey(currentMonth),
+  }), [currentMonth, monthCells]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadMonthEvents() {
+      setPageStatus('loading');
+      setStatusMessage('');
+
+      try {
+        const nextEvents = await getCalendarEventsByRange(visibleRange.startDate, visibleRange.endDate);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setEvents((currentEvents) => [
+          ...currentEvents.filter((event) => !isEventInDateRange(event, visibleRange.startDate, visibleRange.endDate)),
+          ...nextEvents,
+        ]);
+        setSelectedEventId((currentEventId) => {
+          if (currentEventId) {
+            return currentEventId;
+          }
+
+          return selectedDateKey ? getEventsForDate(nextEvents, selectedDateKey)[0]?.id ?? null : null;
+        });
+        setPageStatus(nextEvents.length ? 'ready' : 'empty');
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setEvents((currentEvents) => (currentEvents.length ? currentEvents : calendarEventsMock));
+        setPageStatus('error');
+        setStatusMessage(error instanceof Error ? error.message : '일정을 불러오지 못했습니다.');
+      }
+    }
+
+    void loadMonthEvents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [visibleRange.endDate, visibleRange.startDate]);
 
   useEffect(() => {
     if (selectedEventId && !events.some((event) => event.id === selectedEventId)) {
@@ -303,6 +380,13 @@ export function CalendarPage() {
     setCurrentMonth((previousMonth) => addMonths(previousMonth, 1));
   }
 
+  function handleTodayClick() {
+    setSelectedDate(today);
+    setCurrentMonth(startOfMonth(today));
+    setShowDetail(false);
+    setSelectedEventId(null);
+  }
+
   function handleSelectDate(date: Date) {
     setSelectedDate(date);
     setCurrentMonth((previousMonth) => (previousMonth.getMonth() === date.getMonth() && previousMonth.getFullYear() === date.getFullYear()
@@ -310,7 +394,7 @@ export function CalendarPage() {
       : startOfMonth(date)));
   }
 
-  function handleSelectEvent(eventId: string) {
+  async function handleSelectEvent(eventId: string) {
     const nextSelectedEvent = events.find((event) => event.id === eventId);
     if (!nextSelectedEvent) {
       return;
@@ -319,7 +403,91 @@ export function CalendarPage() {
     setSelectedDate(parseDateKey(nextSelectedEvent.date));
     setSelectedEventId(eventId);
     setShowDetail(true);
+    setAttendanceError('');
+    setCommentError('');
     setCurrentMonth(startOfMonth(parseDateKey(nextSelectedEvent.date)));
+
+    try {
+      const freshEvent = await getCalendarEvent(eventId);
+
+      if (!freshEvent) {
+        return;
+      }
+
+      setEvents((currentEvents) => currentEvents.map((event) => (
+        event.id === freshEvent.id ? freshEvent : event
+      )));
+    } catch {
+      // The cached month data already has enough fields for the detail panel.
+    }
+  }
+
+  async function handleSubmitComment(content: string, parentId?: string | null) {
+    if (!selectedEventId) {
+      return;
+    }
+
+    setCommentSubmitting(true);
+    setCommentError('');
+
+    try {
+      const updatedEvent = await createCalendarEventComment(selectedEventId, content, parentId);
+
+      if (!updatedEvent) {
+        throw new Error('댓글 작성 결과를 확인할 수 없습니다.');
+      }
+
+      setEvents((currentEvents) => currentEvents.map((event) => (
+        event.id === updatedEvent.id ? updatedEvent : event
+      )));
+    } catch (error) {
+      setCommentError(error instanceof Error ? error.message : '댓글 작성에 실패했습니다.');
+      throw error;
+    } finally {
+      setCommentSubmitting(false);
+    }
+  }
+
+  async function handleJoinEvent(eventId: string) {
+    setAttendanceSubmitting(true);
+    setAttendanceError('');
+
+    try {
+      const updatedEvent = await joinCalendarEvent(eventId);
+
+      if (!updatedEvent) {
+        throw new Error('참석 결과를 확인할 수 없습니다.');
+      }
+
+      setEvents((currentEvents) => currentEvents.map((event) => (
+        event.id === updatedEvent.id ? updatedEvent : event
+      )));
+    } catch (error) {
+      setAttendanceError(error instanceof Error ? error.message : '참석 처리에 실패했습니다.');
+    } finally {
+      setAttendanceSubmitting(false);
+    }
+  }
+
+  async function handleLeaveEvent(eventId: string) {
+    setAttendanceSubmitting(true);
+    setAttendanceError('');
+
+    try {
+      const updatedEvent = await leaveCalendarEvent(eventId);
+
+      if (!updatedEvent) {
+        throw new Error('불참 결과를 확인할 수 없습니다.');
+      }
+
+      setEvents((currentEvents) => currentEvents.map((event) => (
+        event.id === updatedEvent.id ? updatedEvent : event
+      )));
+    } catch (error) {
+      setAttendanceError(error instanceof Error ? error.message : '불참 처리에 실패했습니다.');
+    } finally {
+      setAttendanceSubmitting(false);
+    }
   }
 
   function updateModalField<Key extends keyof CalendarEventFormValues>(field: Key, value: CalendarEventFormValues[Key]) {
@@ -416,7 +584,7 @@ export function CalendarPage() {
     });
   }
 
-  function handleConfirmDialogConfirm() {
+  async function handleConfirmDialogConfirm() {
     const pendingAction = confirmDialogState.action;
 
     if (!pendingAction) {
@@ -436,44 +604,84 @@ export function CalendarPage() {
     }
 
     if (pendingAction.type === 'delete-event') {
-      setEvents((currentEvents) => currentEvents.filter((event) => event.id !== pendingAction.eventId));
-      setSelectedEventId(null);
-      setShowDetail(false);
-      // TODO: connect delete action to Supabase REST API.
-      openNotice('일정 삭제 완료', '선택한 일정이 삭제되었습니다.');
+      setPageStatus('saving');
+
+      try {
+        await deleteCalendarEvent(pendingAction.eventId);
+        setEvents((currentEvents) => currentEvents.filter((event) => event.id !== pendingAction.eventId));
+        setSelectedEventId(null);
+        setShowDetail(false);
+        setPageStatus('success');
+        openNotice('일정 삭제 완료', '선택한 일정이 삭제되었습니다.');
+      } catch (error) {
+        setPageStatus('error');
+        openNotice('일정 삭제 실패', error instanceof Error ? error.message : '일정 삭제에 실패했습니다.');
+      }
       return;
     }
 
     if (pendingAction.type === 'save-create') {
-      const nextEvent = buildEventFromForm(pendingAction.values);
-      setEvents((currentEvents) => [...currentEvents, nextEvent]);
-      setSelectedDate(parseDateKey(nextEvent.date));
-      setSelectedEventId(nextEvent.id);
-      setShowDetail(true);
-      setCurrentMonth(startOfMonth(parseDateKey(nextEvent.date)));
-      closeModalImmediately();
-      // TODO: connect create action to Supabase REST API.
-      openNotice('일정 생성 완료', '일정을 생성하였습니다.');
+      setPageStatus('saving');
+
+      try {
+        const nextEvent = await createCalendarEvent(pendingAction.values);
+
+        if (!nextEvent) {
+          throw new Error('일정 생성 결과를 확인할 수 없습니다.');
+        }
+
+        setEvents((currentEvents) => [...currentEvents.filter((event) => event.id !== nextEvent.id), nextEvent]);
+        setSelectedDate(parseDateKey(nextEvent.date));
+        setSelectedEventId(nextEvent.id);
+        setShowDetail(true);
+        setCurrentMonth(startOfMonth(parseDateKey(nextEvent.date)));
+        setPageStatus('success');
+        closeModalImmediately();
+        openNotice('일정 생성 완료', '일정을 생성하였습니다.');
+      } catch (error) {
+        setPageStatus('error');
+        openNotice('일정 생성 실패', error instanceof Error ? error.message : '일정 생성에 실패했습니다.');
+      }
       return;
     }
 
     if (pendingAction.type === 'save-edit') {
-      setEvents((currentEvents) => currentEvents.map((event) => (
-        event.id === pendingAction.eventId ? buildEventFromForm(pendingAction.values, event) : event
-      )));
-      setSelectedDate(parseDateKey(pendingAction.values.startDate));
-      setSelectedEventId(pendingAction.eventId);
-      setShowDetail(true);
-      setCurrentMonth(startOfMonth(parseDateKey(pendingAction.values.startDate)));
-      closeModalImmediately();
-      // TODO: connect update action to Supabase REST API.
-      openNotice('일정 수정 완료', '일정이 수정되었습니다.');
+      setPageStatus('saving');
+
+      try {
+        const nextEvent = await updateCalendarEvent(pendingAction.eventId, pendingAction.values);
+
+        if (!nextEvent) {
+          throw new Error('일정 수정 결과를 확인할 수 없습니다.');
+        }
+
+        setEvents((currentEvents) => currentEvents.map((event) => (
+          event.id === pendingAction.eventId ? nextEvent : event
+        )));
+        setSelectedDate(parseDateKey(nextEvent.date));
+        setSelectedEventId(nextEvent.id);
+        setShowDetail(true);
+        setCurrentMonth(startOfMonth(parseDateKey(nextEvent.date)));
+        setPageStatus('success');
+        closeModalImmediately();
+        openNotice('일정 수정 완료', '일정이 수정되었습니다.');
+      } catch (error) {
+        setPageStatus('error');
+        openNotice('일정 수정 실패', error instanceof Error ? error.message : '일정 수정에 실패했습니다.');
+      }
     }
   }
 
   return (
     <PageShell>
       <section className={styles.page} style={pageStyle}>
+        {pageStatus === 'loading' || pageStatus === 'saving' || statusMessage ? (
+          <div className={styles.statusBanner} role={pageStatus === 'error' ? 'alert' : 'status'}>
+            {pageStatus === 'loading' ? '일정을 불러오는 중입니다.' : null}
+            {pageStatus === 'saving' ? '일정을 저장하는 중입니다.' : null}
+            {pageStatus !== 'loading' && pageStatus !== 'saving' ? statusMessage : null}
+          </div>
+        ) : null}
         <div className={`${styles.layout} ${selectedDate && showDetail ? styles.layoutWithDetail : ''}`.trim()}>
           <div className={styles.sidebarColumn}>
             <TodaySidebar
@@ -494,6 +702,7 @@ export function CalendarPage() {
               onSelectDate={handleSelectDate}
               onSelectEvent={handleSelectEvent}
               onPreviousMonth={handlePreviousMonth}
+              onTodayClick={handleTodayClick}
               onNextMonth={handleNextMonth}
             />
           </div>
@@ -507,6 +716,13 @@ export function CalendarPage() {
                 onSelectEvent={handleSelectEvent}
                 onEditEvent={openEditModal}
                 onDeleteEvent={handleDeleteEvent}
+                onJoinEvent={handleJoinEvent}
+                onLeaveEvent={handleLeaveEvent}
+                attendanceSubmitting={attendanceSubmitting}
+                attendanceError={attendanceError}
+                onSubmitComment={handleSubmitComment}
+                commentSubmitting={commentSubmitting}
+                commentError={commentError}
                 onClose={() => {
                   // Only hide the detail panel and clear the selected event.
                   // Do NOT clear `selectedDate` so the left panel and calendar remain focused on the selected date.

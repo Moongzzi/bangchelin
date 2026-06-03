@@ -36,7 +36,7 @@ jobs:
         run: npm ci
 
       - name: Build application
-        run: npm run build -- --base "/${{ github.event.repository.name }}/"
+        run: npm run build -- --base "/"
 
       - name: Add SPA fallback page
         run: cp dist/index.html dist/404.html

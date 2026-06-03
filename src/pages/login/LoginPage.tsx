@@ -1,8 +1,10 @@
 import type { ChangeEvent, CSSProperties, FormEvent } from 'react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
+import { signInWithUsername } from '../../features/auth/auth.api';
 import { InputField } from '../../shared/components/input-field';
+import { Popup, type PopupAction } from '../../shared/components/popup';
 import { ROUTES } from '../../shared/constants/routes';
 import { colors } from '../../shared/styles/tokens/colors';
 import styles from './LoginPage.module.css';
@@ -44,6 +46,7 @@ function hasValidationErrors(errors: LoginFormErrors) {
 
 export function LoginPage() {
   const assetBasePath = import.meta.env.BASE_URL;
+  const navigate = useNavigate();
   const [formValues, setFormValues] = useState<LoginFormValues>(initialFormValues);
   const [formErrors, setFormErrors] = useState<LoginFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -155,102 +158,108 @@ export function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const payload = {
-        username: formValues.username.trim(),
-        password: formValues.password,
-      };
-
-      console.info('Login submit payload', payload);
-      await Promise.resolve(payload);
+      await signInWithUsername(formValues.username.trim(), formValues.password);
 
       setSubmissionState({
         kind: 'success',
-        message: '로그인 요청 구조가 준비되었습니다. 인증 API 연결 전 단계입니다.',
+        message: '로그인되었습니다.',
+      });
+      navigate(ROUTES.home);
+    } catch (error) {
+      setSubmissionState({
+        kind: 'error',
+        message: error instanceof Error ? error.message : '로그인에 실패했습니다.',
       });
     } finally {
       setIsSubmitting(false);
     }
   }
 
+  const loginErrorActions: PopupAction[] = [
+    {
+      label: '확인',
+      variant: 'filled',
+      onClick: () => setSubmissionState({ kind: 'idle', message: '' }),
+    },
+  ];
+
   return (
-    <main className={styles.page} style={pageStyle}>
-      <section className={styles.viewport} aria-labelledby="login-page-title">
-        <div className={styles.card}>
-          <Link to={ROUTES.home} className={styles.brandLink} aria-label="Bangchelin Guide home">
-            <img src={`${assetBasePath}logo.png`} alt="" className={styles.brandImage} />
-            <span className={styles.brandText}>BANGCHELIN GUIDE</span>
-          </Link>
-
-          <div className={styles.content}>
-            <h1 id="login-page-title" className={styles.title}>
-              BANGCHELIN
-            </h1>
-
-            <div className={styles.formPanel}>
-              <form className={styles.form} onSubmit={handleSubmit} noValidate>
-                <div className={styles.fields}>
-                  <InputField
-                    id="login-username"
-                    name="username"
-                    type="text"
-                    autoComplete="username"
-                    label="아이디"
-                    placeholder="아이디 입력"
-                    variant={formErrors.username ? 'error' : 'default'}
-                    value={formValues.username}
-                    onChange={handleFieldChange('username')}
-                    showClearButton
-                    onClear={handleFieldClear('username')}
-                    message={formErrors.username}
-                    hideLabel
-                    className={styles.field}
-                    rootStyle={inputRootStyle}
-                  />
-                  <InputField
-                    id="login-password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    label="비밀번호"
-                    placeholder="비밀번호 입력"
-                    variant={formErrors.password ? 'error' : 'default'}
-                    value={formValues.password}
-                    onChange={handleFieldChange('password')}
-                    showClearButton
-                    onClear={handleFieldClear('password')}
-                    message={formErrors.password}
-                    hideLabel
-                    className={styles.field}
-                    rootStyle={inputRootStyle}
-                  />
-                </div>
-
-                <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
-                  {isSubmitting ? '로그인 중...' : 'Log In'}
-                </button>
-
-                <p
-                  className={`${styles.statusMessage} ${
-                    submissionState.kind === 'error'
-                      ? styles.statusError
-                      : submissionState.kind === 'success'
-                        ? styles.statusSuccess
-                        : ''
-                  }`}
-                  role={submissionState.kind === 'error' ? 'alert' : 'status'}
-                  aria-live="polite"
-                >
-                  {submissionState.message}
-                </p>
-              </form>
-            </div>
-
-            <Link to={ROUTES.register} className={styles.signUpLink}>
-              Sign Up
+    <>
+      <main className={styles.page} style={pageStyle}>
+        <section className={styles.viewport} aria-labelledby="login-page-title">
+          <div className={styles.card}>
+            <Link to={ROUTES.home} className={styles.brandLink} aria-label="Bangchelin Guide home">
+              <img src={`${assetBasePath}logo.png`} alt="" className={styles.brandImage} />
+              <span className={styles.brandText}>BANGCHELIN GUIDE</span>
             </Link>
+
+            <div className={styles.content}>
+              <h1 id="login-page-title" className={styles.title}>
+                BANGCHELIN
+              </h1>
+
+              <div className={styles.formPanel}>
+                <form className={styles.form} onSubmit={handleSubmit} noValidate>
+                  <div className={styles.fields}>
+                    <InputField
+                      id="login-username"
+                      name="username"
+                      type="text"
+                      autoComplete="username"
+                      label="아이디"
+                      placeholder="아이디 입력"
+                      variant={formErrors.username ? 'error' : 'default'}
+                      value={formValues.username}
+                      onChange={handleFieldChange('username')}
+                      showClearButton
+                      onClear={handleFieldClear('username')}
+                      message={formErrors.username}
+                      hideLabel
+                      className={styles.field}
+                      rootStyle={inputRootStyle}
+                    />
+                    <InputField
+                      id="login-password"
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      label="비밀번호"
+                      placeholder="비밀번호 입력"
+                      variant={formErrors.password ? 'error' : 'default'}
+                      value={formValues.password}
+                      onChange={handleFieldChange('password')}
+                      showClearButton
+                      onClear={handleFieldClear('password')}
+                      message={formErrors.password}
+                      hideLabel
+                      className={styles.field}
+                      rootStyle={inputRootStyle}
+                    />
+                  </div>
+
+                  <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
+                    {isSubmitting ? '로그인 중...' : 'Log In'}
+                  </button>
+                </form>
+              </div>
+
+              <Link to={ROUTES.register} className={styles.signUpLink}>
+                Sign Up
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+
+      <Popup
+        open={submissionState.kind === 'error'}
+        onClose={() => setSubmissionState({ kind: 'idle', message: '' })}
+        title="로그인 실패"
+        description={submissionState.message}
+        actions={loginErrorActions}
+        role="alertdialog"
+        maxWidth={366}
+      />
+    </>
   );
 }

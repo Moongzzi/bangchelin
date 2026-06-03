@@ -3,7 +3,6 @@ import type { DropdownOptionData } from '../../shared/components/dropdown';
 export type InquiryCategory = 'general' | 'bug' | 'account' | 'partnership' | 'other';
 
 export type InquiryFormData = {
-  nickname: string;
   category: string;
   subject: string;
   message: string;
@@ -21,7 +20,8 @@ export type InquiryPageStatus =
   | 'awaiting-draft-decision'
   | 'editing'
   | 'saving-draft'
-  | 'submitting';
+  | 'submitting'
+  | 'error';
 
 export const inquiryPageTokens = {
   topRow: {
@@ -85,7 +85,6 @@ export const inquiryDraftMockConfig = {
   hasStoredDraftOnLoad: true,
   networkDelayMs: 200,
   seedDraft: {
-    nickname: 'bangchelin_user',
     category: 'other',
     subject: '저장된 문의 제목',
     message: '이전에 작성하던 문의 내용이 임시 저장되어 있습니다.',

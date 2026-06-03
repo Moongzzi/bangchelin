@@ -2,13 +2,14 @@ import type { ChangeEvent, CSSProperties, FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { checkNicknameAvailable, signUp, type ActivityRegion } from '../../features/auth/auth.api';
 import { InputField } from '../../shared/components/input-field';
+import { Popup, type PopupAction } from '../../shared/components/popup';
 import { ROUTES } from '../../shared/constants/routes';
 import { colors } from '../../shared/styles/tokens/colors';
 import {
   authLayoutTokens,
   emailPattern,
-  nicknamePattern,
   signupFormConfig,
   signupPageTokens,
 } from './registerConfig';
@@ -43,6 +44,22 @@ const initialFormValues: RegisterFormValues = {
   email: '',
 };
 
+const regionValues: ActivityRegion[] = [
+  'seoul',
+  'incheon',
+  'gyeonggi',
+  'chungcheong',
+  'gyeongsang',
+  'jeolla',
+  'gangwon',
+  'jeju',
+];
+
+function getActivityRegion(label: string) {
+  const index = signupFormConfig.regions.findIndex((region) => region === label);
+  return regionValues[index] ?? null;
+}
+
 function validateRegisterForm(values: RegisterFormValues) {
   const errors: RegisterFormErrors = {};
 
@@ -50,8 +67,6 @@ function validateRegisterForm(values: RegisterFormValues) {
     errors.nickname = '닉네임을 입력해주세요.';
   } else if (values.nickname.length > signupFormConfig.nicknameMaxLength) {
     errors.nickname = `닉네임은 ${signupFormConfig.nicknameMaxLength}자 이내여야 합니다.`;
-  } else if (!nicknamePattern.test(values.nickname)) {
-    errors.nickname = '닉네임은 공백 없이 한글, 영어, 숫자, 특수문자만 사용할 수 있습니다.';
   }
 
   if (!values.username.trim()) {
@@ -60,6 +75,8 @@ function validateRegisterForm(values: RegisterFormValues) {
 
   if (!values.password) {
     errors.password = '비밀번호를 입력해주세요.';
+  } else if (values.password.length < 6) {
+    errors.password = '비밀번호는 6자 이상이어야 합니다.';
   }
 
   if (!values.confirmPassword) {
@@ -92,6 +109,8 @@ export function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<StatusState>({ kind: 'idle', message: '' });
   const [nicknameStatus, setNicknameStatus] = useState<StatusState>({ kind: 'idle', message: '' });
+  const [checkedNickname, setCheckedNickname] = useState('');
+  const [profileFile, setProfileFile] = useState<File | null>(null);
   const [profilePreviewUrl, setProfilePreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -174,6 +193,7 @@ export function RegisterPage() {
 
     if (field === 'nickname' && nicknameStatus.kind !== 'idle') {
       setNicknameStatus({ kind: 'idle', message: '' });
+      setCheckedNickname('');
     }
 
     if (submitStatus.kind !== 'idle') {
@@ -203,7 +223,7 @@ export function RegisterPage() {
     updateField('birthDate', event.target.value);
   }
 
-  function handleNicknameCheck() {
+  async function handleNicknameCheck() {
     const trimmedNickname = formValues.nickname.trim();
 
     if (!trimmedNickname) {
@@ -211,12 +231,31 @@ export function RegisterPage() {
       return;
     }
 
-    if (trimmedNickname.length > signupFormConfig.nicknameMaxLength || !nicknamePattern.test(trimmedNickname)) {
+    if (trimmedNickname.length > signupFormConfig.nicknameMaxLength) {
       setNicknameStatus({ kind: 'error', message: '닉네임 형식을 먼저 맞춰주세요.' });
       return;
     }
 
-    setNicknameStatus({ kind: 'success', message: '사용 가능한 닉네임입니다. (mock)' });
+    setNicknameStatus({ kind: 'idle', message: '확인 중입니다...' });
+
+    try {
+      const isAvailable = await checkNicknameAvailable(trimmedNickname);
+
+      if (!isAvailable) {
+        setCheckedNickname('');
+        setNicknameStatus({ kind: 'error', message: '이미 사용 중인 닉네임입니다.' });
+        return;
+      }
+
+      setCheckedNickname(trimmedNickname);
+      setNicknameStatus({ kind: 'success', message: '사용 가능한 닉네임입니다.' });
+    } catch (error) {
+      setCheckedNickname('');
+      setNicknameStatus({
+        kind: 'error',
+        message: error instanceof Error ? error.message : '닉네임 중복 확인에 실패했습니다.',
+      });
+    }
   }
 
   function handleProfileButtonClick() {
@@ -230,6 +269,7 @@ export function RegisterPage() {
       return;
     }
 
+    setProfileFile(nextFile);
     setProfilePreviewUrl((currentUrl) => {
       if (currentUrl) {
         URL.revokeObjectURL(currentUrl);
@@ -250,25 +290,47 @@ export function RegisterPage() {
       return;
     }
 
+    if (checkedNickname !== formValues.nickname.trim()) {
+      setNicknameStatus({ kind: 'error', message: '닉네임 중복 확인을 먼저 완료해주세요.' });
+      setSubmitStatus({ kind: 'error', message: '닉네임 중복 확인이 필요합니다.' });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const payload = {
-        ...formValues,
+      await signUp({
+        username: formValues.username.trim(),
+        password: formValues.password,
         email: formValues.email.trim(),
         nickname: formValues.nickname.trim(),
-        username: formValues.username.trim(),
-      };
+        avatarFile: profileFile,
+        birthDate: formValues.birthDate,
+        introduction: formValues.introduction,
+        activityRegion: getActivityRegion(formValues.region),
+      });
 
-      console.info('Register submit payload', payload);
-      await Promise.resolve(payload);
       navigate(ROUTES.login, { replace: true });
+    } catch (error) {
+      setSubmitStatus({
+        kind: 'error',
+        message: error instanceof Error ? error.message : '회원가입에 실패했습니다.',
+      });
     } finally {
       setIsSubmitting(false);
     }
   }
 
+  const submitErrorActions: PopupAction[] = [
+    {
+      label: '확인',
+      variant: 'filled',
+      onClick: () => setSubmitStatus({ kind: 'idle', message: '' }),
+    },
+  ];
+
   return (
+    <>
     <main className={styles.page} style={pageStyle}>
       <section className={styles.viewport} aria-labelledby="register-page-title">
         <div className={styles.card}>
@@ -501,15 +563,6 @@ export function RegisterPage() {
                   <Link to={ROUTES.login} className={styles.backLink}>
                     로그인으로 돌아가기
                   </Link>
-                  <p
-                    className={`${styles.submitStatus} ${
-                      submitStatus.kind === 'error' ? styles.submitStatusError : ''
-                    }`}
-                    role={submitStatus.kind === 'error' ? 'alert' : 'status'}
-                    aria-live="polite"
-                  >
-                    {submitStatus.message}
-                  </p>
                 </div>
                 <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
                   {isSubmitting ? 'Submitting...' : 'Sign Up'}
@@ -520,5 +573,15 @@ export function RegisterPage() {
         </div>
       </section>
     </main>
+    <Popup
+      open={submitStatus.kind === 'error'}
+      onClose={() => setSubmitStatus({ kind: 'idle', message: '' })}
+      title="회원가입 실패"
+      description={submitStatus.message}
+      actions={submitErrorActions}
+      role="alertdialog"
+      maxWidth={366}
+    />
+    </>
   );
 }

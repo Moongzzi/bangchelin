@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type Keyboard
 
 import { Dropdown } from '../../../shared/components/dropdown/Dropdown';
 import { InputField } from '../../../shared/components/input-field/InputField';
+import { searchCalendarParticipants, type CalendarParticipantSearchResult } from '../calendar.api';
 import { ToggleSwitch } from './ToggleSwitch';
 import type {
   CalendarEventCategory,
@@ -62,6 +63,8 @@ export function EventCreateModal({
   const [activeTimeField, setActiveTimeField] = useState<'startTime' | 'endTime'>('startTime');
   const [displayMonth, setDisplayMonth] = useState<Date>(() => startOfMonth(values.startDate ? parseDateKey(values.startDate) : new Date()));
   const [participantSearchValue, setParticipantSearchValue] = useState('');
+  const [participantSearchResults, setParticipantSearchResults] = useState<CalendarParticipantSearchResult[]>([]);
+  const [participantSearchStatus, setParticipantSearchStatus] = useState<'idle' | 'loading' | 'error'>('idle');
 
   const selectedStartDate = useMemo(
     () => (values.startDate ? parseDateKey(values.startDate) : null),
@@ -132,6 +135,7 @@ export function EventCreateModal({
   const participantLimit = useMemo(() => Number(values.participantLimit || '0'), [values.participantLimit]);
   const externalGuestCount = useMemo(() => Number(values.externalGuestCount || '0'), [values.externalGuestCount]);
   const participantCount = values.participantNames.length + externalGuestCount;
+  const todayKey = useMemo(() => formatDateKey(new Date()), []);
   const canIncreaseExternalGuests = participantCount < participantLimit;
   const participantExceeded = participantLimit > 0 && participantCount > participantLimit;
   const compactDropdownStyle = useMemo(() => ({
@@ -149,6 +153,8 @@ export function EventCreateModal({
       setIsTimePickerOpen(false);
       setActiveTimeField('startTime');
       setParticipantSearchValue('');
+      setParticipantSearchResults([]);
+      setParticipantSearchStatus('idle');
       return undefined;
     }
 
@@ -171,6 +177,42 @@ export function EventCreateModal({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isDatePickerOpen, isTimePickerOpen, open, onRequestClose]);
+
+  useEffect(() => {
+    if (!open || participantSearchValue.trim().length < 1) {
+      setParticipantSearchResults([]);
+      setParticipantSearchStatus('idle');
+      return undefined;
+    }
+
+    let isMounted = true;
+    const timerId = window.setTimeout(() => {
+      setParticipantSearchStatus('loading');
+
+      searchCalendarParticipants(participantSearchValue)
+        .then((results) => {
+          if (!isMounted) {
+            return;
+          }
+
+          setParticipantSearchResults(results);
+          setParticipantSearchStatus('idle');
+        })
+        .catch(() => {
+          if (!isMounted) {
+            return;
+          }
+
+          setParticipantSearchResults([]);
+          setParticipantSearchStatus('error');
+        });
+    }, 250);
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(timerId);
+    };
+  }, [open, participantSearchValue]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -252,6 +294,10 @@ export function EventCreateModal({
   function handleSelectDate(nextDate: Date) {
     const nextDateKey = formatDateKey(nextDate);
 
+    if (nextDateKey < todayKey) {
+      return;
+    }
+
     if (activeDateField === 'startDate') {
       onChange('startDate', nextDateKey);
 
@@ -314,8 +360,8 @@ export function EventCreateModal({
     onChange('externalGuestCount', `${clampedValue}`);
   }
 
-  function addParticipantName(rawValue: string) {
-    const nextName = rawValue.trim();
+  function addParticipant(participant: CalendarParticipantSearchResult) {
+    const nextName = participant.nickname.trim();
 
     if (!nextName || values.participantNames.includes(nextName) || participantCount >= participantLimit) {
       return;
@@ -323,6 +369,8 @@ export function EventCreateModal({
 
     onChange('participantNames', [...values.participantNames, nextName]);
     setParticipantSearchValue('');
+    setParticipantSearchResults([]);
+    setParticipantSearchStatus('idle');
   }
 
   function removeParticipantName(targetName: string) {
@@ -335,7 +383,22 @@ export function EventCreateModal({
     }
 
     event.preventDefault();
-    addParticipantName(participantSearchValue);
+
+    if (participantSearchStatus !== 'idle') {
+      return;
+    }
+
+    const availableResults = participantSearchResults.filter((participant) => (
+      !values.participantNames.includes(participant.nickname) && participantCount < participantLimit
+    ));
+    const exactMatch = availableResults.find((participant) => (
+      participant.nickname.trim().toLowerCase() === participantSearchValue.trim().toLowerCase()
+    ));
+    const nextParticipant = exactMatch ?? availableResults[0];
+
+    if (nextParticipant) {
+      addParticipant(nextParticipant);
+    }
   }
 
   return (
@@ -459,7 +522,8 @@ export function EventCreateModal({
                     <div className={styles.datePickerGrid}>
                       {monthCells.map((cell) => {
                         const isSelected = (activeDateField === 'startDate' ? values.startDate : values.endDate) === cell.dateKey;
-                        const isDisabled = activeDateField === 'endDate' && cell.dateKey < values.startDate;
+                        const isPastDate = cell.dateKey < todayKey;
+                        const isDisabled = isPastDate || (activeDateField === 'endDate' && cell.dateKey < values.startDate);
                         const dayButtonClassName = [
                           styles.datePickerDayButton,
                           !cell.inCurrentMonth ? styles.datePickerDayOutside : '',
@@ -647,6 +711,33 @@ export function EventCreateModal({
                   </button>
                 </div>
               </div>
+
+              {participantSearchValue.trim().length >= 1 ? (
+                <div className={styles.participantSearchResultDropdown} role="listbox" aria-label="참석자 검색 결과">
+                  {participantSearchStatus === 'loading' ? (
+                    <p className={styles.fieldHint}>검색 중입니다.</p>
+                  ) : null}
+                  {participantSearchStatus === 'error' ? (
+                    <p className={`${styles.fieldHint} ${styles.helperError}`}>참석자 검색에 실패했습니다.</p>
+                  ) : null}
+                  {participantSearchStatus === 'idle' && participantSearchResults.length === 0 ? (
+                    <p className={styles.fieldHint}>검색 결과가 없습니다.</p>
+                  ) : null}
+                  {participantSearchResults.map((participant) => (
+                    <button
+                      key={participant.id}
+                      type="button"
+                      className={styles.participantSearchResultButton}
+                      role="option"
+                      aria-selected={values.participantNames.includes(participant.nickname)}
+                      onClick={() => addParticipant(participant)}
+                      disabled={values.participantNames.includes(participant.nickname) || participantCount >= participantLimit}
+                    >
+                      {participant.nickname}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
 
               <div className={styles.participantChipList}>
                 {values.participantNames.map((participantName) => (

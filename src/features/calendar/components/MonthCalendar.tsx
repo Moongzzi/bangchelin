@@ -12,6 +12,7 @@ type MonthCalendarProps = {
   onSelectDate: (date: Date) => void;
   onSelectEvent: (eventId: string) => void;
   onPreviousMonth: () => void;
+  onTodayClick: () => void;
   onNextMonth: () => void;
 };
 
@@ -141,6 +142,7 @@ export function MonthCalendar({
   onSelectDate,
   onSelectEvent,
   onPreviousMonth,
+  onTodayClick,
   onNextMonth,
 }: MonthCalendarProps) {
   const monthWeeks = chunkWeekCells(monthCells);
@@ -156,6 +158,9 @@ export function MonthCalendar({
         <div className={styles.monthNav}>
           <button type="button" className={styles.monthNavButton} onClick={onPreviousMonth} aria-label="이전 달 보기">
             <ChevronLeftIcon />
+          </button>
+          <button type="button" className={styles.monthTodayButton} onClick={onTodayClick} aria-label="오늘로 이동">
+            Today
           </button>
           <button type="button" className={styles.monthNavButton} onClick={onNextMonth} aria-label="다음 달 보기">
             <ChevronRightIcon />

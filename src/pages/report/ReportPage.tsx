@@ -6,7 +6,12 @@ import { PageShell } from '../../shared/components/layout/PageShell';
 import { Popup, type PopupAction } from '../../shared/components/popup';
 import { colors } from '../../shared/styles/tokens/colors';
 import {
-  inquiryDraftMockConfig,
+  clearInquiryDraft,
+  getInquiryDraft,
+  saveInquiryDraft,
+  submitInquiry,
+} from '../../features/report/report.api';
+import {
   inquiryFormConfig,
   inquiryModalTokens,
   inquiryPageTokens,
@@ -17,16 +22,9 @@ import {
   type InquiryModalState,
   type InquiryPageStatus,
 } from './reportConfig';
-import {
-  clearInquiryDraft,
-  getInquiryDraft,
-  saveInquiryDraft,
-  submitInquiry,
-} from './reportDraft.mock';
 import styles from './ReportPage.module.css';
 
 const initialFormData: InquiryFormData = {
-  nickname: '',
   category: '',
   subject: '',
   message: '',
@@ -34,10 +32,6 @@ const initialFormData: InquiryFormData = {
 
 function validateInquiryForm(formData: InquiryFormData): InquiryFieldErrors {
   const nextErrors: InquiryFieldErrors = {};
-
-  if (!formData.nickname.trim()) {
-    nextErrors.nickname = '닉네임을 입력해주세요.';
-  }
 
   if (!formData.category) {
     nextErrors.category = '문의 종류를 선택해주세요.';
@@ -78,21 +72,30 @@ export function ReportPage() {
     let isMounted = true;
 
     async function hydrateDraft() {
-      setPageStatus('checking-draft');
-      const existingDraft = await getInquiryDraft(inquiryDraftMockConfig.mockUserKey);
+      try {
+        setPageStatus('checking-draft');
+        const existingDraft = await getInquiryDraft();
 
-      if (!isMounted) {
-        return;
+        if (!isMounted) {
+          return;
+        }
+
+        if (existingDraft) {
+          setPendingDraft(existingDraft);
+          setModalState('draft-restore');
+          setPageStatus('awaiting-draft-decision');
+          return;
+        }
+
+        setPageStatus('editing');
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setFeedbackMessage(error instanceof Error ? error.message : '임시 저장 내용을 확인하지 못했습니다.');
+        setPageStatus('error');
       }
-
-      if (existingDraft) {
-        setPendingDraft(existingDraft);
-        setModalState('draft-restore');
-        setPageStatus('awaiting-draft-decision');
-        return;
-      }
-
-      setPageStatus('editing');
     }
 
     void hydrateDraft();
@@ -169,7 +172,6 @@ export function ReportPage() {
     '--input-element-background': colors.background.elevated,
   } as CSSProperties;
 
-  const dropdownClassName = styles.fieldDropdown;
   const isBusy = pageStatus === 'checking-draft' || pageStatus === 'saving-draft' || pageStatus === 'submitting';
   const isFormLocked = pageStatus === 'awaiting-draft-decision' || pageStatus === 'checking-draft';
 
@@ -212,17 +214,29 @@ export function ReportPage() {
   function handleDismissDraftRestore() {
     setPendingDraft(null);
     setModalState(null);
+    setFeedbackMessage('');
     setPageStatus('editing');
+
+    void clearInquiryDraft().catch((error) => {
+      console.warn('Failed to clear inquiry draft after dismissing restore popup.', error);
+    });
+  }
+
+  async function handleClearDraftBeforeSubmit() {
+    try {
+      await clearInquiryDraft();
+    } catch (error) {
+      console.warn('Failed to clear inquiry draft after submitting inquiry.', error);
+    }
   }
 
   function handleRestoreDraft() {
     if (!pendingDraft) {
-      handleDismissDraftRestore();
+      void handleDismissDraftRestore();
       return;
     }
 
     setFormData({
-      nickname: pendingDraft.nickname,
       category: pendingDraft.category,
       subject: pendingDraft.subject,
       message: pendingDraft.message,
@@ -244,14 +258,15 @@ export function ReportPage() {
 
     setPageStatus('saving-draft');
 
-    await saveInquiryDraft(inquiryDraftMockConfig.mockUserKey, {
-      ...formData,
-      updatedAt: new Date().toISOString(),
-    });
-
-    setFeedbackMessage('작성중이던 내용을 임시 저장하였습니다.');
-    setModalState('draft-saved');
-    setPageStatus('editing');
+    try {
+      await saveInquiryDraft(formData);
+      setFeedbackMessage('작성중이던 내용을 임시 저장하였습니다.');
+      setModalState('draft-saved');
+      setPageStatus('editing');
+    } catch (error) {
+      setFeedbackMessage(error instanceof Error ? error.message : '임시 저장에 실패했습니다.');
+      setPageStatus('error');
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -265,11 +280,17 @@ export function ReportPage() {
     }
 
     setPageStatus('submitting');
-    await submitInquiry(formData);
-    await clearInquiryDraft(inquiryDraftMockConfig.mockUserKey);
-    setFeedbackMessage('작성하신 문의를 전송하였습니다. 문의가 처리되기까지는 시간이 소요될 수 있습니다.');
-    setModalState('submit-complete');
-    setPageStatus('editing');
+    try {
+      await submitInquiry(formData);
+      await handleClearDraftBeforeSubmit();
+      setFeedbackMessage('작성하신 문의를 전송하였습니다. 문의가 처리되기까지는 시간이 소요될 수 있습니다.');
+      setFormData(initialFormData);
+      setModalState('submit-complete');
+      setPageStatus('editing');
+    } catch (error) {
+      setFeedbackMessage(error instanceof Error ? error.message : '문의 전송에 실패했습니다.');
+      setPageStatus('error');
+    }
   }
 
   const restoreActions: PopupAction[] = [
@@ -311,38 +332,6 @@ export function ReportPage() {
           </header>
 
           <form className={styles.form} onSubmit={handleSubmit}>
-            <div className={styles.topRow}>
-              <div className={styles.nicknameField}>
-                <InputField
-                  label="닉네임"
-                  value={formData.nickname}
-                  onChange={handleInputChange('nickname')}
-                  placeholder="자신의 닉네임을 입력해주세요."
-                  variant={getInputVariant(fieldErrors.nickname)}
-                  message={fieldErrors.nickname}
-                  messageType="error"
-                  required
-                  disabled={isFormLocked}
-                  rootStyle={inputRootStyle}
-                />
-              </div>
-
-              <div className={styles.categoryField}>
-                <Dropdown
-                  label="문의 종류"
-                  options={inquiryTypeOptions}
-                  value={formData.category}
-                  onChange={(value) => updateField('category', value)}
-                  placeholder="문의 종류를 선택해주세요."
-                  invalid={Boolean(fieldErrors.category)}
-                  helperText={fieldErrors.category}
-                  required
-                  disabled={isFormLocked}
-                  className={dropdownClassName}
-                />
-              </div>
-            </div>
-
             <div className={styles.card}>
               <div className={styles.cardFields}>
                 <Dropdown
@@ -422,6 +411,7 @@ export function ReportPage() {
           actions={restoreActions}
           closeOnOverlayClick={false}
           closeOnEscape={false}
+          preventScrollLock
           maxWidth={inquiryModalTokens.maxWidth}
         />
 
@@ -431,6 +421,7 @@ export function ReportPage() {
           title={inquiryModalTokens.saved.title}
           description={inquiryModalTokens.saved.description}
           actions={draftSavedActions}
+          preventScrollLock
           maxWidth={inquiryModalTokens.maxWidth}
         />
 
@@ -440,6 +431,7 @@ export function ReportPage() {
           title={inquiryModalTokens.submitted.title}
           description={inquiryModalTokens.submitted.description}
           actions={submitCompleteActions}
+          preventScrollLock
           maxWidth={inquiryModalTokens.maxWidth}
         />
       </section>

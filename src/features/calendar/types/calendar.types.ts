@@ -4,10 +4,25 @@ export type CalendarEventCategory = 'escape' | 'theater' | 'boardgame' | 'etc';
 
 export type CalendarLocationRegion = 'seoul' | 'gyeonggi' | 'incheon';
 
+export type CalendarParticipantStatus = 'confirmed' | 'waitlisted';
+
+export type CalendarEventParticipant = {
+  id: string;
+  profileId?: string | null;
+  displayName: string;
+  status: CalendarParticipantStatus;
+};
+
 export type CalendarEventComment = {
   id: string;
+  eventId?: string;
+  parentId?: string | null;
+  userId?: string;
   author: string;
   content: string;
+  createdAt?: string;
+  updatedAt?: string;
+  replies?: CalendarEventComment[];
 };
 
 export type CalendarEvent = {
@@ -19,12 +34,17 @@ export type CalendarEvent = {
   endTime: string;
   status: CalendarEventStatus;
   category: CalendarEventCategory;
+  locationRegion?: CalendarLocationRegion | '';
   location: string;
   capacity: number;
   currentParticipants: number;
+  participantsDetail?: CalendarEventParticipant[];
   description?: string;
   organizer?: string;
   participants?: string[];
+  waitlistedParticipants?: string[];
+  isCurrentUserParticipant?: boolean;
+  isCurrentUserWaitlisted?: boolean;
   comments?: CalendarEventComment[];
   isAllDay?: boolean;
 };

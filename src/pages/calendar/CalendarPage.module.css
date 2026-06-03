@@ -3,6 +3,18 @@
   background: var(--calendar-page-background);
 }
 
+.statusBanner {
+  width: min(100%, calc(var(--calendar-sidebar-width) + var(--calendar-center-width)));
+  min-height: 36px;
+  margin: 0 auto;
+  border-bottom: 1px solid var(--calendar-border-default);
+  background: var(--calendar-panel-background);
+  color: var(--calendar-text-secondary);
+  display: grid;
+  place-items: center;
+  font-size: 0.875rem;
+}
+
 .layout {
   display: grid;
   width: min(100%, calc(var(--calendar-sidebar-width) + var(--calendar-center-width)));

@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
 import { Link, NavLink, type To } from 'react-router-dom';
 
@@ -25,6 +25,13 @@ export type HeaderLogoData = {
   icon?: ReactNode;
   imageSrc?: string;
   imageAlt?: string;
+};
+
+export type HeaderProfileMenuItem = {
+  key: string;
+  label: string;
+  to?: To;
+  onClick?: () => void;
 };
 
 type HeaderBaseLinkProps = {
@@ -73,6 +80,8 @@ type HeaderActionsProps = {
   onMenuClick?: () => void;
   profileLabel?: string;
   profileInitial?: string;
+  profileTo?: To;
+  profileMenuItems?: HeaderProfileMenuItem[];
   loginTo?: To;
   rightActions?: ReactNode;
 };
@@ -92,6 +101,8 @@ export type HeaderProps = {
   actionType: HeaderActionType;
   profileLabel?: string;
   profileInitial?: string;
+  profileTo?: To;
+  profileMenuItems?: HeaderProfileMenuItem[];
   onMenuClick?: () => void;
   loginTo?: To;
   className?: string;
@@ -276,9 +287,40 @@ export function HeaderActions({
   onMenuClick,
   profileLabel,
   profileInitial,
+  profileTo,
+  profileMenuItems,
   loginTo,
   rightActions,
 }: HeaderActionsProps) {
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isProfileMenuOpen) {
+      return undefined;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!profileMenuRef.current?.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isProfileMenuOpen]);
+
   return (
     <div className={styles.actions}>
       {actionType === 'hamburger' ? (
@@ -298,14 +340,72 @@ export function HeaderActions({
         )
       ) : null}
       {actionType === 'profile' ? (
-        <button
-          type="button"
-          className={styles.profileBadge}
-          aria-label={profileLabel ?? 'Open profile menu'}
-          title={profileLabel}
-        >
-          {profileInitial ?? 'B'}
-        </button>
+        profileMenuItems?.length ? (
+          <div className={styles.profileMenuWrap} ref={profileMenuRef}>
+            <button
+              type="button"
+              className={styles.profileBadge}
+              aria-label={profileLabel ?? 'Open profile menu'}
+              title={profileLabel}
+              aria-haspopup="menu"
+              aria-expanded={isProfileMenuOpen}
+              onClick={() => setIsProfileMenuOpen((isOpen) => !isOpen)}
+            >
+              {profileInitial ?? 'B'}
+            </button>
+            {isProfileMenuOpen ? (
+              <div className={styles.profileMenu} role="menu">
+                {profileMenuItems.map((item) => (
+                  item.to ? (
+                    <Link
+                      key={item.key}
+                      to={item.to}
+                      className={styles.profileMenuItem}
+                      role="menuitem"
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        item.onClick?.();
+                      }}
+                    >
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <button
+                      key={item.key}
+                      type="button"
+                      className={styles.profileMenuItem}
+                      role="menuitem"
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        item.onClick?.();
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  )
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : profileTo ? (
+            <Link
+              to={profileTo}
+              className={styles.profileBadge}
+              aria-label={profileLabel ?? 'Open profile'}
+              title={profileLabel}
+            >
+              {profileInitial ?? 'B'}
+            </Link>
+          ) : (
+          <button
+            type="button"
+            className={styles.profileBadge}
+            aria-label={profileLabel ?? 'Open profile menu'}
+            title={profileLabel}
+          >
+            {profileInitial ?? 'B'}
+          </button>
+        )
       ) : null}
       {rightActions ? <div className={styles.actionSlot}>{rightActions}</div> : null}
     </div>
@@ -318,6 +418,8 @@ export function Header({
   actionType,
   profileLabel,
   profileInitial,
+  profileTo,
+  profileMenuItems,
   onMenuClick,
   loginTo,
   className,
@@ -373,6 +475,8 @@ export function Header({
                 onMenuClick={onMenuClick}
                 profileLabel={profileLabel}
                 profileInitial={profileInitial}
+                profileTo={profileTo}
+                profileMenuItems={profileMenuItems}
                 loginTo={loginTo}
                 rightActions={rightActions}
               />
