@@ -46,6 +46,13 @@ function buildHeaders(token?: string | null, headers?: Record<string, string>) {
 
 async function readResponse<T>(response: Response) {
   const text = await response.text();
+  const contentType = response.headers.get('content-type') || '';
+  const expectsJson = contentType.includes('application/json') || contentType.includes('application/vnd.pgrst');
+
+  if (text && !expectsJson) {
+    throw new Error('Supabase API response was not JSON. Check VITE_SUPABASE_URL in the deployment environment.');
+  }
+
   const data = text ? JSON.parse(text) : null;
 
   if (!response.ok) {

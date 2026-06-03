@@ -94,6 +94,28 @@ function normalizeSession(response: AuthResponse) {
   return response as SupabaseSession;
 }
 
+function toSignInErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : '';
+
+  if (message.includes('invalid login credentials') || message.includes('invalid credentials')) {
+    return '비밀번호가 올바르지 않습니다.';
+  }
+
+  if (message.includes('email not confirmed')) {
+    return '이 계정은 아직 인증이 완료되지 않았습니다.';
+  }
+
+  if (message.includes('too many requests') || message.includes('rate limit')) {
+    return '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.';
+  }
+
+  if (message.includes('network') || message.includes('failed to fetch')) {
+    return '네트워크 연결을 확인한 뒤 다시 시도해주세요.';
+  }
+
+  return '로그인에 실패했습니다. 잠시 후 다시 시도해주세요.';
+}
+
 export async function checkNicknameAvailable(nickname: string) {
   const [result] = await restRequest<Array<{ is_available: boolean }>>('/rpc/is_nickname_available', {
     method: 'POST',
@@ -163,13 +185,19 @@ export async function signInWithUsername(username: string, password: string) {
   });
 
   if (!loginInfo?.auth_email) {
-    throw new Error('아이디 또는 비밀번호가 올바르지 않습니다.');
+    throw new Error('존재하지 않는 아이디입니다.');
   }
 
-  const session = await authRequest<SupabaseSession>('/token?grant_type=password', {
-    email: loginInfo.auth_email,
-    password,
-  });
+  let session: SupabaseSession;
+
+  try {
+    session = await authRequest<SupabaseSession>('/token?grant_type=password', {
+      email: loginInfo.auth_email,
+      password,
+    });
+  } catch (error) {
+    throw new Error(toSignInErrorMessage(error));
+  }
 
   saveSession(session);
   return session;

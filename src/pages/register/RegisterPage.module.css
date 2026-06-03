@@ -109,6 +109,13 @@
   font-weight: 700;
 }
 
+.requiredHint {
+  margin: -14px 0 0;
+  color: var(--register-muted-color);
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
 .fieldGroup {
   display: flex;
   flex-direction: column;
@@ -120,6 +127,11 @@
   color: var(--register-label-color);
   font-size: 0.9375rem;
   line-height: 1.3;
+  font-weight: 700;
+}
+
+.requiredMark {
+  color: var(--register-error-color);
   font-weight: 700;
 }
 

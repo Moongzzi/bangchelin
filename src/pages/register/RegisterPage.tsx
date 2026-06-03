@@ -1,4 +1,4 @@
-import type { ChangeEvent, CSSProperties, FormEvent } from 'react';
+import type { ChangeEvent, CSSProperties, FocusEvent, FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -98,6 +98,16 @@ function validateRegisterForm(values: RegisterFormValues) {
 
 function hasErrors(errors: RegisterFormErrors) {
   return Object.values(errors).some(Boolean);
+}
+
+function getEmailError(email: string) {
+  const trimmedEmail = email.trim();
+
+  if (trimmedEmail && !emailPattern.test(trimmedEmail)) {
+    return '이메일 형식을 확인해주세요.';
+  }
+
+  return undefined;
 }
 
 export function RegisterPage() {
@@ -209,6 +219,15 @@ export function RegisterPage() {
 
   function handleTextAreaChange(event: ChangeEvent<HTMLTextAreaElement>) {
     updateField('introduction', event.target.value);
+  }
+
+  function handleEmailBlur(event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    const nextEmailError = getEmailError(event.target.value);
+
+    setFormErrors((currentErrors) => ({
+      ...currentErrors,
+      email: nextEmailError,
+    }));
   }
 
   function handleSelectChange(event: ChangeEvent<HTMLSelectElement>) {
@@ -346,9 +365,12 @@ export function RegisterPage() {
                   <h1 id="register-page-title" className={styles.heading}>
                     회원가입
                   </h1>
+                  <p className={styles.requiredHint}>* 표시는 필수 입력입니다.</p>
 
                   <div className={styles.fieldGroup}>
-                    <span className={styles.fieldLabel}>닉네임</span>
+                    <span className={styles.fieldLabel}>
+                      닉네임 <span className={styles.requiredMark} aria-hidden="true">*</span>
+                    </span>
                     <div className={styles.nicknameRow}>
                       <InputField
                         id="register-nickname"
@@ -380,7 +402,9 @@ export function RegisterPage() {
                   </div>
 
                   <div className={styles.fieldGroup}>
-                    <span className={styles.fieldLabel}>아이디</span>
+                    <span className={styles.fieldLabel}>
+                      아이디 <span className={styles.requiredMark} aria-hidden="true">*</span>
+                    </span>
                     <InputField
                       id="register-username"
                       name="username"
@@ -402,7 +426,9 @@ export function RegisterPage() {
                   </div>
 
                   <div className={styles.fieldGroup}>
-                    <span className={styles.fieldLabel}>비밀번호</span>
+                    <span className={styles.fieldLabel}>
+                      비밀번호 <span className={styles.requiredMark} aria-hidden="true">*</span>
+                    </span>
                     <InputField
                       id="register-password"
                       name="password"
@@ -424,7 +450,9 @@ export function RegisterPage() {
                   </div>
 
                   <div className={styles.fieldGroup}>
-                    <span className={styles.fieldLabel}>비밀번호 확인</span>
+                    <span className={styles.fieldLabel}>
+                      비밀번호 확인 <span className={styles.requiredMark} aria-hidden="true">*</span>
+                    </span>
                     <InputField
                       id="register-confirm-password"
                       name="confirmPassword"
@@ -506,7 +534,7 @@ export function RegisterPage() {
                       name="introduction"
                       value={formValues.introduction}
                       onChange={handleTextAreaChange}
-                      placeholder="아이디 입력"
+                      placeholder="한 줄 소개를 입력해주세요."
                       maxLength={signupFormConfig.introductionMaxLength}
                       className={styles.introInput}
                       rows={2}
@@ -541,16 +569,19 @@ export function RegisterPage() {
                         name="email"
                         type="email"
                         label="이메일"
-                        placeholder="아이디 입력"
+                        placeholder="example@bangchelin.com"
                         variant={formErrors.email ? 'error' : 'default'}
                         value={formValues.email}
                         onChange={handleInputChange('email')}
+                        onBlur={handleEmailBlur}
                         showClearButton
                         onClear={handleFieldClear('email')}
                         hideLabel
                         className={styles.emailField}
                         rootStyle={inputRootStyle}
                         autoComplete="email"
+                        inputMode="email"
+                        pattern={emailPattern.source}
                       />
                       <p className={styles.inlineError}>{formErrors.email ?? ''}</p>
                     </div>
