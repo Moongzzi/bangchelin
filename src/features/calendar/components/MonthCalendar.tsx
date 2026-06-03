@@ -1,6 +1,6 @@
 import { calendarConfig } from '../constants/calendar.constants';
 import type { CalendarEvent, CalendarEventInCell, CalendarMonthCell } from '../types/calendar.types';
-import { formatMonthLabel, formatYearLabel } from '../utils/calendarDate.utils';
+import { formatEnglishMonthLabel, formatMonthLabel, formatYearLabel } from '../utils/calendarDate.utils';
 import { CalendarDayCell } from './CalendarDayCell';
 import styles from './CalendarShared.module.css';
 
@@ -152,7 +152,10 @@ export function MonthCalendar({
       <div className={styles.monthHeader}>
         <div className={styles.monthLabelWrap}>
           <p className={styles.monthYearLabel}>{formatYearLabel(currentMonth)}</p>
-          <h1 className={styles.monthTitle}>{formatMonthLabel(currentMonth)}</h1>
+          <h1 className={styles.monthTitle}>
+            {formatMonthLabel(currentMonth)}
+            <span className={styles.monthTitleEnglish}>({formatEnglishMonthLabel(currentMonth)})</span>
+          </h1>
         </div>
 
         <div className={styles.monthNav}>

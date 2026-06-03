@@ -467,6 +467,7 @@ export function AboutPage() {
   const [draftMarkdownByDocument, setDraftMarkdownByDocument] = useState<Record<string, string>>(() => buildDocumentMarkdownMap(initialDocuments));
   const [isEditMode, setIsEditMode] = useState(false);
   const [isEditorHelpOpen, setIsEditorHelpOpen] = useState(false);
+  const [isGuideMenuOpen, setIsGuideMenuOpen] = useState(false);
   const [pageStatus, setPageStatus] = useState<GuidePageStatus>('loading');
   const [statusMessage, setStatusMessage] = useState('');
 
@@ -680,6 +681,7 @@ export function AboutPage() {
 
     const targetId = node.targetId ?? node.id;
     setActiveLeafId(targetId);
+    setIsGuideMenuOpen(false);
 
     if (!isEditMode) {
       scrollToLeaf(targetId);
@@ -984,7 +986,25 @@ export function AboutPage() {
   return (
     <PageShell>
       <section className={styles.page} style={pageStyle}>
-        <aside className={styles.sidebar}>
+        <button
+          type="button"
+          className={styles.mobileMenuButton}
+          onClick={() => setIsGuideMenuOpen(true)}
+          aria-label="가이드 메뉴 열기"
+        >
+          <span className={styles.mobileMenuIcon} aria-hidden="true" />
+        </button>
+
+        {isGuideMenuOpen ? (
+          <button
+            type="button"
+            className={styles.menuBackdrop}
+            onClick={() => setIsGuideMenuOpen(false)}
+            aria-label="가이드 메뉴 닫기"
+          />
+        ) : null}
+
+        <aside className={`${styles.sidebar} ${isGuideMenuOpen ? styles.sidebarOpen : ''}`.trim()}>
           <nav className={styles.tree} aria-label="가이드 트리 메뉴">
             {renderTree(sanitizedTree)}
           </nav>

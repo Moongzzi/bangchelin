@@ -217,6 +217,13 @@
   font-weight: 500;
 }
 
+.monthTitleEnglish {
+  margin-left: 10px;
+  font-size: 0.58em;
+  color: var(--calendar-text-secondary);
+  vertical-align: baseline;
+}
+
 .monthNav {
   display: flex;
   gap: 10px;
@@ -1440,6 +1447,11 @@
 @media (max-width: 767px) {
   .calendarShell {
     --calendar-day-cell-height: 72px;
+  }
+
+  .detailPanel {
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .monthTitle {

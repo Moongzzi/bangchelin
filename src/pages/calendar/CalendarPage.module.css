@@ -1,6 +1,7 @@
 .page {
   min-height: var(--calendar-page-min-height);
   background: var(--calendar-page-background);
+  position: relative;
 }
 
 .statusBanner {
@@ -54,6 +55,11 @@
   overflow: hidden;
 }
 
+.mobileSidebarButton,
+.overlayBackdrop {
+  display: none;
+}
+
 @media (max-width: 1439px) {
   .layout,
   .layoutWithDetail {
@@ -62,8 +68,16 @@
   }
 
   .detailColumn {
-    grid-column: 1 / -1;
-    border-top: 1px solid var(--calendar-border-default);
+    position: fixed;
+    inset: 0 0 0 auto;
+    z-index: 60;
+    width: min(var(--calendar-detail-width), calc(100vw - 40px));
+    max-width: 420px;
+    box-shadow: -18px 0 36px rgba(20, 20, 20, 0.18);
+  }
+
+  .detailBackdrop {
+    display: block;
   }
 }
 
@@ -71,6 +85,120 @@
   .layout,
   .layoutWithDetail {
     width: 100%;
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .statusBanner {
+    width: 100%;
+  }
+
+  .layout,
+  .layoutWithDetail {
     grid-template-columns: 1fr;
   }
+
+  .centerColumn {
+    min-width: 0;
+  }
+
+  .sidebarColumn {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 70;
+    width: min(320px, calc(100vw - 56px));
+    max-width: 86vw;
+    box-shadow: 18px 0 36px rgba(20, 20, 20, 0.18);
+    transform: translateX(-100%);
+    transition: transform 180ms ease;
+  }
+
+  .sidebarColumnOpen {
+    transform: translateX(0);
+  }
+
+  .mobileSidebarButton {
+    position: fixed;
+    z-index: 50;
+    top: 82px;
+    left: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    min-height: 42px;
+    border: 1px solid var(--calendar-border-subtle);
+    border-radius: 999px;
+    background: var(--calendar-surface-elevated);
+    color: var(--calendar-text-primary);
+    box-shadow: 0 10px 24px rgba(20, 20, 20, 0.12);
+    cursor: pointer;
+  }
+
+  .mobileSidebarIcon,
+  .mobileSidebarIcon::before,
+  .mobileSidebarIcon::after {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  .mobileSidebarIcon {
+    position: relative;
+  }
+
+  .mobileSidebarIcon::before,
+  .mobileSidebarIcon::after {
+    content: '';
+    position: absolute;
+    left: 0;
+  }
+
+  .mobileSidebarIcon::before {
+    top: -6px;
+  }
+
+  .mobileSidebarIcon::after {
+    top: 6px;
+  }
+
+  .sidebarBackdrop {
+    display: block;
+  }
+
+  :global(body.header-mobile-menu-open) .mobileSidebarButton {
+    display: none;
+  }
+
+  .detailColumn {
+    inset: auto 0 0 0;
+    width: 100vw;
+    max-width: 100vw;
+    max-height: min(82vh, 720px);
+    box-sizing: border-box;
+    border-radius: 0;
+    box-shadow: 0 -18px 36px rgba(20, 20, 20, 0.18);
+  }
+}
+
+@media (min-width: 1440px) {
+  .detailBackdrop {
+    display: none;
+  }
+}
+
+.overlayBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  border: 0;
+  background: rgba(20, 20, 20, 0.28);
+  cursor: pointer;
+}
+
+.sidebarBackdrop {
+  z-index: 65;
 }

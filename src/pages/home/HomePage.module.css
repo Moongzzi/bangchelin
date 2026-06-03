@@ -270,6 +270,10 @@
     padding-top: 1.5rem;
   }
 
+  .symbolSection {
+    display: none;
+  }
+
   .ruleItem,
   .ruleSectionTitle {
     font-size: 0.9rem;

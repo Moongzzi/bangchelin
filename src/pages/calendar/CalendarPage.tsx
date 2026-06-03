@@ -231,6 +231,7 @@ export function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(today);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
+  const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
   const [modalHelperMessage, setModalHelperMessage] = useState<string | undefined>(undefined);
   const [pageStatus, setPageStatus] = useState<CalendarPageStatus>('loading');
   const [statusMessage, setStatusMessage] = useState('');
@@ -420,6 +421,23 @@ export function CalendarPage() {
     } catch {
       // The cached month data already has enough fields for the detail panel.
     }
+  }
+
+  async function handleSelectEventFromSidebar(eventId: string) {
+    setIsSidebarDrawerOpen(false);
+    await handleSelectEvent(eventId);
+  }
+
+  function handleCreateFromSidebar() {
+    setIsSidebarDrawerOpen(false);
+    openCreateModal();
+  }
+
+  function closeDetailPanel() {
+    // Only hide the detail panel and clear the selected event.
+    // Do NOT clear `selectedDate` so the left panel and calendar remain focused on the selected date.
+    setShowDetail(false);
+    setSelectedEventId(null);
   }
 
   async function handleSubmitComment(content: string, parentId?: string | null) {
@@ -682,13 +700,40 @@ export function CalendarPage() {
             {pageStatus !== 'loading' && pageStatus !== 'saving' ? statusMessage : null}
           </div>
         ) : null}
+        <button
+          type="button"
+          className={styles.mobileSidebarButton}
+          onClick={() => setIsSidebarDrawerOpen(true)}
+          aria-label="오늘 일정 패널 열기"
+        >
+          <span className={styles.mobileSidebarIcon} aria-hidden="true" />
+        </button>
+
+        {isSidebarDrawerOpen ? (
+          <button
+            type="button"
+            className={`${styles.overlayBackdrop} ${styles.sidebarBackdrop}`}
+            onClick={() => setIsSidebarDrawerOpen(false)}
+            aria-label="오늘 일정 패널 닫기"
+          />
+        ) : null}
+
+        {selectedDate && showDetail ? (
+          <button
+            type="button"
+            className={`${styles.overlayBackdrop} ${styles.detailBackdrop}`}
+            onClick={closeDetailPanel}
+            aria-label="일정 상세 패널 닫기"
+          />
+        ) : null}
+
         <div className={`${styles.layout} ${selectedDate && showDetail ? styles.layoutWithDetail : ''}`.trim()}>
-          <div className={styles.sidebarColumn}>
+          <div className={`${styles.sidebarColumn} ${isSidebarDrawerOpen ? styles.sidebarColumnOpen : ''}`.trim()}>
             <TodaySidebar
               selectedDate={selectedDate ?? today}
               selectedDateEvents={selectedDateEvents}
-              onCreateClick={openCreateModal}
-              onSelectEvent={handleSelectEvent}
+              onCreateClick={handleCreateFromSidebar}
+              onSelectEvent={handleSelectEventFromSidebar}
               selectedEventId={selectedEventId}
             />
           </div>
@@ -723,12 +768,7 @@ export function CalendarPage() {
                 onSubmitComment={handleSubmitComment}
                 commentSubmitting={commentSubmitting}
                 commentError={commentError}
-                onClose={() => {
-                  // Only hide the detail panel and clear the selected event.
-                  // Do NOT clear `selectedDate` so the left panel and calendar remain focused on the selected date.
-                  setShowDetail(false);
-                  setSelectedEventId(null);
-                }}
+                onClose={closeDetailPanel}
               />
             </div>
           ) : null}

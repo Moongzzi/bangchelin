@@ -123,6 +123,10 @@ export function getEventsForDate(events: CalendarEvent[], dateKey: string) {
 }
 
 export function formatMonthLabel(date: Date) {
+  return `${date.getMonth() + 1}월`;
+}
+
+export function formatEnglishMonthLabel(date: Date) {
   return new Intl.DateTimeFormat('en-US', { month: 'long' }).format(date);
 }
 

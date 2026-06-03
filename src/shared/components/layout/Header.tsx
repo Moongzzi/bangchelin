@@ -79,6 +79,14 @@ export function Header() {
   }, [pathname]);
 
   useEffect(() => {
+    document.body.classList.toggle('header-mobile-menu-open', isMobileMenuOpen);
+
+    return () => {
+      document.body.classList.remove('header-mobile-menu-open');
+    };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
     let isMounted = true;
 
     async function loadProfile() {
