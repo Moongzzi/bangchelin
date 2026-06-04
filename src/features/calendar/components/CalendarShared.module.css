@@ -175,6 +175,54 @@
   font-weight: 600;
 }
 
+.eventAuthorRow {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: 6px;
+  color: var(--calendar-text-secondary);
+}
+
+.eventAuthorAvatar,
+.detailAuthorAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--calendar-brand-primary) 12%, var(--calendar-surface-elevated));
+  color: var(--calendar-brand-primary);
+  font-weight: 700;
+}
+
+.eventAuthorAvatar {
+  width: 24px;
+  height: 24px;
+  font-size: 0.7rem;
+}
+
+.eventAuthorAvatarImage,
+.detailAuthorAvatarImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.eventAuthorName {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--calendar-text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.3;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .eventCardDescription,
 .eventCardMeta,
 .detailMetaText,
@@ -480,6 +528,48 @@
   gap: 20px;
   overflow-y: auto;
   padding-right: 4px;
+}
+
+.detailAuthorProfile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--calendar-border-subtle);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--calendar-surface-elevated) 76%, transparent);
+}
+
+.detailAuthorAvatar {
+  width: 42px;
+  height: 42px;
+  font-size: 0.95rem;
+}
+
+.detailAuthorTextGroup {
+  min-width: 0;
+}
+
+.detailAuthorLabel,
+.detailAuthorName {
+  margin: 0;
+}
+
+.detailAuthorLabel {
+  color: var(--calendar-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.detailAuthorName {
+  overflow: hidden;
+  color: var(--calendar-text-primary);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .detailMetaList {

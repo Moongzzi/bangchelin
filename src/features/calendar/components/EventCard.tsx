@@ -23,6 +23,10 @@ function getBadgeStyle(background: string, text: string, border: string) {
   } as CSSProperties;
 }
 
+function getAuthorInitial(nickname?: string) {
+  return nickname?.trim().slice(0, 1).toUpperCase() || 'B';
+}
+
 export function EventCard({ event, isActive = false, onClick }: EventCardProps) {
   const statusTone = calendarStatusTone[event.status];
   const categoryTone = calendarCategoryTone[event.category];
@@ -44,6 +48,16 @@ export function EventCard({ event, isActive = false, onClick }: EventCardProps) 
       </div>
 
       <p className={styles.eventCardTitle}>{event.title}</p>
+      <div className={styles.eventAuthorRow}>
+        <span className={styles.eventAuthorAvatar} aria-hidden="true">
+          {event.author?.avatarUrl ? (
+            <img src={event.author.avatarUrl} alt="" className={styles.eventAuthorAvatarImage} />
+          ) : (
+            getAuthorInitial(event.author?.nickname ?? event.organizer)
+          )}
+        </span>
+        <span className={styles.eventAuthorName}>{event.author?.nickname ?? event.organizer ?? '작성자 정보 없음'}</span>
+      </div>
       <p className={styles.eventCardDescription}>{event.description ?? '모집 일정 제목이 입력되는 공간입니다.'}</p>
 
       <div className={styles.eventCardFooter}>

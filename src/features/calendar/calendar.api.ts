@@ -26,8 +26,15 @@ type CalendarEventRow = {
   description: string | null;
   is_all_day: boolean;
   comments: Array<{ id: string; author: string; content: string }>;
+  profiles?: CalendarEventAuthorRow | null;
   calendar_event_participants?: CalendarEventParticipantRow[];
   calendar_event_comments?: CalendarEventCommentRow[];
+};
+
+type CalendarEventAuthorRow = {
+  id: string;
+  nickname: string | null;
+  avatar_url: string | null;
 };
 
 type CalendarEventParticipantRow = {
@@ -151,6 +158,11 @@ function toCalendarEvent(row: CalendarEventRow): CalendarEvent {
     location: row.location_detail,
     capacity: row.capacity,
     currentParticipants,
+    author: row.profiles ? {
+      id: row.profiles.id,
+      nickname: row.profiles.nickname?.trim() || '탈퇴한 사용자',
+      avatarUrl: row.profiles.avatar_url ?? null,
+    } : null,
     participantsDetail: participantRows.map((participant) => ({
       id: participant.id,
       profileId: participant.profile_id,
@@ -242,6 +254,7 @@ const eventSelect = [
   'description',
   'is_all_day',
   'comments',
+  'profiles!calendar_events_created_by_profiles_fkey(id,nickname,avatar_url)',
   'calendar_event_participants(id,profile_id,display_name,status,sort_order,created_at,profiles(avatar_url))',
   'calendar_event_comments(id,event_id,parent_id,user_id,content,created_at,updated_at,profiles(nickname))',
 ].join(',');
@@ -273,6 +286,21 @@ function isMissingParticipantStatusError(error: unknown) {
     && error.message.includes('does not exist');
 }
 
+function isMissingAuthorProfileRelationshipError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return message.includes('calendar_events')
+    && message.includes('profiles')
+    && (
+      message.includes('relationship')
+      || message.includes('schema cache')
+      || message.includes('calendar_events_created_by_profiles_fkey')
+    );
+}
+
 export async function getCalendarEventsByRange(startDate: string, endDate: string) {
   const session = getRequiredSession();
 
@@ -286,6 +314,16 @@ export async function getCalendarEventsByRange(startDate: string, endDate: strin
       },
     );
   } catch (error) {
+    if (isMissingAuthorProfileRelationshipError(error)) {
+      rows = await restRequest<CalendarEventRow[]>(
+        `/calendar_events?start_date=lte.${endDate}&end_date=gte.${startDate}&select=${legacyEventSelect}&order=start_date.asc,start_time.asc`,
+        {
+          token: session.access_token,
+        },
+      );
+      return rows.map(toCalendarEvent);
+    }
+
     if (!isMissingParticipantStatusError(error)) {
       throw error;
     }
@@ -313,6 +351,17 @@ export async function getCalendarEvent(eventId: string) {
       },
     );
   } catch (error) {
+    if (isMissingAuthorProfileRelationshipError(error)) {
+      rows = await restRequest<CalendarEventRow[]>(
+        `/calendar_events?id=eq.${eventId}&select=${legacyEventSelect}`,
+        {
+          token: session.access_token,
+        },
+      );
+      const [row] = rows;
+      return row ? toCalendarEvent(row) : null;
+    }
+
     if (!isMissingParticipantStatusError(error)) {
       throw error;
     }

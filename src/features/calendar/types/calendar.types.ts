@@ -14,6 +14,12 @@ export type CalendarEventParticipant = {
   status: CalendarParticipantStatus;
 };
 
+export type CalendarEventAuthor = {
+  id: string;
+  nickname: string;
+  avatarUrl?: string | null;
+};
+
 export type CalendarEventComment = {
   id: string;
   eventId?: string;
@@ -39,6 +45,7 @@ export type CalendarEvent = {
   location: string;
   capacity: number;
   currentParticipants: number;
+  author?: CalendarEventAuthor | null;
   participantsDetail?: CalendarEventParticipant[];
   description?: string;
   organizer?: string;

@@ -88,6 +88,26 @@ function toFallbackParticipant(displayName: string, status: CalendarEventPartici
   };
 }
 
+function renderAuthorProfile(event: CalendarEvent) {
+  const authorName = event.author?.nickname ?? event.organizer ?? '작성자 정보 없음';
+
+  return (
+    <div className={styles.detailAuthorProfile}>
+      <span className={styles.detailAuthorAvatar} aria-hidden="true">
+        {event.author?.avatarUrl ? (
+          <img src={event.author.avatarUrl} alt="" className={styles.detailAuthorAvatarImage} />
+        ) : (
+          getParticipantInitial(authorName)
+        )}
+      </span>
+      <div className={styles.detailAuthorTextGroup}>
+        <p className={styles.detailAuthorLabel}>업로드한 유저</p>
+        <p className={styles.detailAuthorName}>{authorName}</p>
+      </div>
+    </div>
+  );
+}
+
 export function EventDetailPanel({
   selectedDateKey,
   selectedEvent,
@@ -217,6 +237,8 @@ export function EventDetailPanel({
       </div>
 
       <div className={styles.detailPanelBody}>
+        {renderAuthorProfile(selectedEvent)}
+
         <div className={styles.detailSection}>
           <div className={styles.detailMetaList}>
             <p className={styles.detailLabel}>제목</p>
