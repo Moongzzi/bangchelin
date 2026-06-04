@@ -139,7 +139,9 @@ export function ProfilePage() {
     () => avatarPreviewUrl ?? profile?.avatar_url ?? '',
     [avatarPreviewUrl, profile?.avatar_url],
   );
-  const hasUnsavedChanges = Boolean(avatarFile) || !isSameProfileFormValues(formValues, savedValues);
+  const hasAvatarChange = avatarFile !== null;
+  const hasProfileFieldChanges = !isSameProfileFormValues(formValues, savedValues);
+  const hasUnsavedChanges = hasAvatarChange || hasProfileFieldChanges;
   const isSaving = status === 'saving';
   const canSave = hasUnsavedChanges && !isSaving;
 
@@ -256,6 +258,7 @@ export function ProfilePage() {
       setAvatarPreviewUrl(null);
       setStatus('success');
       setMessage('프로필이 저장되었습니다.');
+      window.dispatchEvent(new Event('bangchelin:profile-updated'));
     } catch (error) {
       setStatus('error');
       setMessage(error instanceof Error ? error.message : '프로필 저장에 실패했습니다.');
@@ -264,8 +267,8 @@ export function ProfilePage() {
 
   return (
     <PageShell>
-      <section className="mx-auto w-full max-w-[1120px] px-4 py-16">
-        <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-8 shadow-[var(--shadow-soft)]">
+      <section className="mx-auto w-full max-w-[1120px] min-w-0 px-4 py-16">
+        <div className="min-w-0 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-soft)] sm:p-8">
           <p className="text-sm uppercase tracking-[0.22em] text-[var(--color-accent)]">Profile</p>
           <h1 className="mt-4 font-[var(--font-display)] text-4xl">프로필</h1>
 
@@ -283,11 +286,11 @@ export function ProfilePage() {
           ) : null}
 
           {status !== 'loading' && status !== 'empty' ? (
-            <form id="profile-form" className="mt-8 grid max-w-3xl gap-5" onSubmit={handleSubmit} noValidate>
-              <label className="grid gap-2 text-sm font-semibold">
+            <form id="profile-form" className="mt-8 grid w-full max-w-3xl min-w-0 gap-5" onSubmit={handleSubmit} noValidate>
+              <label className="grid min-w-0 gap-2 text-sm font-semibold">
                 프로필 이미지
-                <div className="flex items-center gap-4">
-                  <div className="grid size-24 place-items-center overflow-hidden rounded-full border border-[var(--color-border)] bg-white">
+                <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row sm:items-center">
+                  <div className="grid size-24 shrink-0 place-items-center overflow-hidden rounded-full border border-[var(--color-border)] bg-white">
                     {avatarSrc ? (
                       <img src={avatarSrc} alt="프로필 이미지" className="size-full object-cover" />
                     ) : (
@@ -296,7 +299,13 @@ export function ProfilePage() {
                       </span>
                     )}
                   </div>
-                  <input type="file" accept="image/*" onChange={handleAvatarChange} disabled={isSaving} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="w-full min-w-0 max-w-full text-sm"
+                    onChange={handleAvatarChange}
+                    disabled={isSaving}
+                  />
                 </div>
               </label>
 
@@ -312,6 +321,7 @@ export function ProfilePage() {
                 showClearButton
                 onClear={handleFieldClear('nickname')}
                 rootStyle={inputRootStyle}
+                className="min-w-0"
                 message={formErrors.nickname}
                 required
                 disabled={isSaving}
@@ -327,6 +337,7 @@ export function ProfilePage() {
                 value={formValues.birthDate}
                 onChange={handleInputChange('birthDate')}
                 rootStyle={inputRootStyle}
+                className="min-w-0"
                 disabled={isSaving}
               />
 
@@ -342,6 +353,7 @@ export function ProfilePage() {
                 showClearButton
                 onClear={handleFieldClear('introduction')}
                 rootStyle={introductionInputRootStyle}
+                className="min-w-0"
                 message={
                   formErrors.introduction ??
                   `${formValues.introduction.length}/${signupFormConfig.introductionMaxLength}`
@@ -352,10 +364,10 @@ export function ProfilePage() {
                 disabled={isSaving}
               />
 
-              <label className="grid gap-2 text-sm font-semibold">
+              <label className="grid min-w-0 gap-2 text-sm font-semibold">
                 활동지역
                 <select
-                  className="h-11 rounded border border-[var(--color-border)] bg-white px-3"
+                  className="h-11 w-full min-w-0 rounded border border-[var(--color-border)] bg-white px-3"
                   value={formValues.activityRegion}
                   onChange={(event) => updateField('activityRegion', event.target.value as ActivityRegion | '')}
                   disabled={isSaving}
@@ -381,6 +393,7 @@ export function ProfilePage() {
                 showClearButton
                 onClear={handleFieldClear('email')}
                 rootStyle={inputRootStyle}
+                className="min-w-0"
                 message={formErrors.email}
                 autoComplete="email"
                 inputMode="email"
@@ -397,10 +410,10 @@ export function ProfilePage() {
                 </p>
               ) : null}
 
-              <div className="flex justify-end pt-2">
+              <div className="flex w-full min-w-0 justify-stretch pt-2 sm:justify-end">
                 <button
                   type="submit"
-                  className="h-11 w-36 rounded-full bg-[var(--color-accent)] text-white transition-colors hover:bg-[var(--color-accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="h-11 w-full min-w-0 rounded-full bg-[var(--color-accent)] text-white transition-colors hover:bg-[var(--color-accent-strong)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-36"
                   disabled={!canSave}
                 >
                   {isSaving ? '저장 중...' : '저장'}

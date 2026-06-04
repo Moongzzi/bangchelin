@@ -4,7 +4,7 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { PageShell } from '../../shared/components/layout/PageShell';
-import { getGuideDocuments, updateGuideDocument } from '../../features/guide/guide.api';
+import { getGuideDocuments, unpublishGuideDocuments, updateGuideDocument, upsertGuideDocument } from '../../features/guide/guide.api';
 import { colors } from '../../shared/styles/tokens/colors';
 import {
   buildGuideTree,
@@ -205,7 +205,9 @@ function serializeDocumentToMarkdown(document: EditableGuideDocument): string {
     blocks.push(`## ${category.title}`);
 
     category.sections.forEach((section) => {
-      blocks.push(`### ${section.title}`);
+      if (!isImplicitCategorySection(category, section)) {
+        blocks.push(`### ${section.title}`);
+      }
       blocks.push(section.markdown.trim() ? section.markdown : '');
     });
   });
@@ -220,6 +222,22 @@ function buildDocumentMarkdownMap(documents: EditableGuideDocument[]) {
   }, {});
 }
 
+function isImplicitCategorySection(category: EditableGuideCategory, section: EditableGuideLeafSection) {
+  return category.sections.length === 1 && section.title.trim() === category.title.trim();
+}
+
+function getEditedDocuments(documents: EditableGuideDocument[], markdownByDocument: Record<string, string>) {
+  return documents.map((document) => {
+    const nextMarkdown = markdownByDocument[document.id] ?? serializeDocumentToMarkdown(document);
+    return parseMarkdownToDocument(document, nextMarkdown);
+  });
+}
+
+function isDocumentMarkdownChanged(document: EditableGuideDocument, markdownByDocument: Record<string, string>) {
+  const draftMarkdown = markdownByDocument[document.id];
+  return draftMarkdown !== undefined && draftMarkdown !== serializeDocumentToMarkdown(document);
+}
+
 function slugify(value: string, fallback: string) {
   const slug = value
     .toLowerCase()
@@ -228,6 +246,100 @@ function slugify(value: string, fallback: string) {
     .replace(/^-+|-+$/g, '');
 
   return slug || fallback;
+}
+
+function slugifyAscii(value: string, fallback: string) {
+  const slug = value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return slug || fallback;
+}
+
+function getDocumentContentPayload(document: EditableGuideDocument) {
+  return document.categories.map((category) => ({
+    id: category.id,
+    title: category.title,
+    sections: category.sections.map((section) => ({
+      id: section.id,
+      title: section.title,
+      body: [section.markdown],
+    })),
+  }));
+}
+
+function countTopLevelHeadings(markdown: string) {
+  return markdown.split(/\r?\n/).filter((line) => /^#\s+/.test(line.trim()) && !/^##\s+/.test(line.trim())).length;
+}
+
+function splitMarkdownByTopLevelHeading(markdown: string) {
+  const lines = markdown.split(/\r?\n/);
+  const blocks: string[] = [];
+  let currentBlock: string[] = [];
+  let isInCodeBlock = false;
+
+  lines.forEach((rawLine) => {
+    const line = rawLine.trim();
+
+    if (line.startsWith('```')) {
+      currentBlock.push(rawLine);
+      isInCodeBlock = !isInCodeBlock;
+      return;
+    }
+
+    if (!isInCodeBlock && /^#\s+/.test(line) && !/^##\s+/.test(line) && currentBlock.length) {
+      blocks.push(currentBlock.join('\n').trim());
+      currentBlock = [rawLine];
+      return;
+    }
+
+    currentBlock.push(rawLine);
+  });
+
+  if (currentBlock.some((line) => line.trim())) {
+    blocks.push(currentBlock.join('\n').trim());
+  }
+
+  return blocks;
+}
+
+function getUniqueDocumentId(title: string, index: number, usedIds: Set<string>) {
+  const baseId = slugifyAscii(title, `guide-document-${index + 1}`);
+  let nextId = baseId;
+  let suffix = 2;
+
+  while (usedIds.has(nextId)) {
+    nextId = `${baseId}-${suffix}`;
+    suffix += 1;
+  }
+
+  usedIds.add(nextId);
+  return nextId;
+}
+
+function parseMarkdownToDocuments(existingDocuments: EditableGuideDocument[], markdown: string) {
+  const usedIds = new Set<string>();
+  const existingByTitle = new Map(existingDocuments.map((document) => [document.title.trim(), document]));
+
+  return splitMarkdownByTopLevelHeading(markdown).map((block, index) => {
+    const title = block.split(/\r?\n/).find((line) => /^#\s+/.test(line.trim()) && !/^##\s+/.test(line.trim()))
+      ?.replace(/^#\s+/, '')
+      .trim() || `가이드 문서 ${index + 1}`;
+    const existingDocument = existingByTitle.get(title) ?? existingDocuments[index];
+    const fallbackDocument: EditableGuideDocument = {
+      id: existingDocument?.id ?? getUniqueDocumentId(title, index, usedIds),
+      title,
+      categories: existingDocument?.categories ?? [],
+    };
+
+    if (existingDocument) {
+      usedIds.add(existingDocument.id);
+    }
+
+    return parseMarkdownToDocument(fallbackDocument, block);
+  });
 }
 
 function trimBoundaryEmptyLines(lines: string[]) {
@@ -252,6 +364,7 @@ function parseMarkdownToDocument(existingDocument: EditableGuideDocument, markdo
   let currentCategory: ParsedCategory | undefined;
   let currentSection: ParsedSection | undefined;
   let isInCodeBlock = false;
+  let hasDocumentTitle = false;
 
   function ensureCategory() {
     if (!currentCategory) {
@@ -270,8 +383,11 @@ function parseMarkdownToDocument(existingDocument: EditableGuideDocument, markdo
 
     if (!currentSection) {
       const categoryIndex = parsedCategories.length - 1;
+      const isFirstSectionInCategory = category.sections.length === 0;
       currentSection = {
-        title: existingDocument.categories[categoryIndex]?.sections[category.sections.length]?.title ?? '새 항목',
+        title: isFirstSectionInCategory
+          ? category.title
+          : existingDocument.categories[categoryIndex]?.sections[category.sections.length]?.title ?? '새 항목',
         lines: [],
       };
       category.sections.push(currentSection);
@@ -291,8 +407,21 @@ function parseMarkdownToDocument(existingDocument: EditableGuideDocument, markdo
 
     if (!isInCodeBlock) {
       if (/^#\s+/.test(line) && !/^##\s+/.test(line)) {
-        nextTitle = line.replace(/^#\s+/, '').trim() || existingDocument.title;
-        currentCategory = undefined;
+        const headingTitle = line.replace(/^#\s+/, '').trim();
+
+        if (!hasDocumentTitle) {
+          nextTitle = headingTitle || existingDocument.title;
+          hasDocumentTitle = true;
+          currentCategory = undefined;
+          currentSection = undefined;
+          return;
+        }
+
+        currentCategory = {
+          title: headingTitle || `섹션 ${parsedCategories.length + 1}`,
+          sections: [],
+        };
+        parsedCategories.push(currentCategory);
         currentSection = undefined;
         return;
       }
@@ -331,7 +460,7 @@ function parseMarkdownToDocument(existingDocument: EditableGuideDocument, markdo
     id: existingDocument.categories[categoryIndex]?.id ?? slugify(category.title, `category-${categoryIndex + 1}`),
     title: category.title,
     sections: (category.sections.length > 0 ? category.sections : [{
-      title: existingDocument.categories[categoryIndex]?.sections[0]?.title ?? '새 항목',
+      title: category.title,
       lines: [],
     }]).map((section, sectionIndex) => ({
       id:
@@ -501,6 +630,21 @@ export function AboutPage() {
     () => (activeDocumentId ? draftMarkdownByDocument[activeDocumentId] : undefined)
       ?? (activeSavedDocument ? serializeDocumentToMarkdown(activeSavedDocument) : ''),
     [activeDocumentId, activeSavedDocument, draftMarkdownByDocument],
+  );
+
+  const editedDocuments = useMemo(
+    () => getEditedDocuments(savedDocuments, draftMarkdownByDocument),
+    [draftMarkdownByDocument, savedDocuments],
+  );
+
+  const activeEditedDocument = useMemo(
+    () => editedDocuments.find((document) => document.id === activeDocumentId),
+    [activeDocumentId, editedDocuments],
+  );
+
+  const changedDocumentCount = useMemo(
+    () => savedDocuments.filter((document) => isDocumentMarkdownChanged(document, draftMarkdownByDocument)).length,
+    [draftMarkdownByDocument, savedDocuments],
   );
 
   const editorLineCount = useMemo(
@@ -814,10 +958,21 @@ export function AboutPage() {
   }
 
   async function handleApplyEditing() {
-    const nextDocuments = savedDocuments.map((document) => {
-      const nextMarkdown = draftMarkdownByDocument[document.id] ?? serializeDocumentToMarkdown(document);
-      return parseMarkdownToDocument(document, nextMarkdown);
-    });
+    const shouldReplaceDocumentSet = countTopLevelHeadings(activeDraftMarkdown) > 1;
+    const nextDocuments = shouldReplaceDocumentSet
+      ? parseMarkdownToDocuments(savedDocuments, activeDraftMarkdown)
+      : getEditedDocuments(savedDocuments, draftMarkdownByDocument);
+    const changedDocuments = shouldReplaceDocumentSet
+      ? nextDocuments
+      : nextDocuments.filter((document) => {
+        const savedDocument = savedDocuments.find((candidate) => candidate.id === document.id);
+        return savedDocument ? isDocumentMarkdownChanged(savedDocument, draftMarkdownByDocument) : true;
+      });
+    const removedDocumentIds = shouldReplaceDocumentSet
+      ? savedDocuments
+        .map((document) => document.id)
+        .filter((documentId) => !nextDocuments.some((document) => document.id === documentId))
+      : [];
 
     const nextActiveDocument = nextDocuments.find((document) => document.id === activeDocumentId) ?? nextDocuments[0];
     const nextLeafId = findFirstLeafIdInDocument(nextActiveDocument) ?? findFirstLeafIdInDocuments(nextDocuments);
@@ -828,28 +983,40 @@ export function AboutPage() {
       return;
     }
 
+    if (!changedDocuments.length && !removedDocumentIds.length) {
+      setDraftMarkdownByDocument(buildDocumentMarkdownMap(savedDocuments));
+      setPageStatus('ready');
+      setStatusMessage('변경된 내용이 없습니다.');
+      setIsEditorHelpOpen(false);
+      setIsEditMode(false);
+      return;
+    }
+
     setPageStatus('saving');
     setStatusMessage('');
 
     try {
-      const savedDocument = await updateGuideDocument({
-        slug: nextActiveDocument.id,
-        title: nextActiveDocument.title,
-        content: nextActiveDocument.categories.map((category) => ({
-          id: category.id,
-          title: category.title,
-          sections: category.sections.map((section) => ({
-            id: section.id,
-            title: section.title,
-            body: [section.markdown],
-          })),
-        })),
-      });
+      const savedDocumentResults = await Promise.all(changedDocuments.map((document, index) => (
+        shouldReplaceDocumentSet ? upsertGuideDocument({
+          slug: document.id,
+          title: document.title,
+          content: getDocumentContentPayload(document),
+          sortOrder: (index + 1) * 10,
+        }) : updateGuideDocument({
+          slug: document.id,
+          title: document.title,
+          content: getDocumentContentPayload(document),
+        })
+      )));
 
-      const editableSavedDocument = createEditableDocuments([savedDocument])[0]!;
-      const nextSavedDocuments = nextDocuments.map((document) => (
-        document.id === savedDocument.id ? editableSavedDocument : document
-      ));
+      await unpublishGuideDocuments(removedDocumentIds);
+
+      const savedDocumentMap = new Map(
+        createEditableDocuments(savedDocumentResults).map((document) => [document.id, document]),
+      );
+      const nextSavedDocuments = shouldReplaceDocumentSet
+        ? nextDocuments.map((document) => savedDocumentMap.get(document.id) ?? document)
+        : nextDocuments.map((document) => savedDocumentMap.get(document.id) ?? document);
 
       setSavedDocuments(nextSavedDocuments);
       setDraftMarkdownByDocument(buildDocumentMarkdownMap(nextSavedDocuments));
@@ -857,7 +1024,7 @@ export function AboutPage() {
         setActiveLeafId(nextLeafId);
       }
       setPageStatus('success');
-      setStatusMessage('가이드 문서가 저장되었습니다.');
+      setStatusMessage(`${savedDocumentResults.length}개 가이드 문서가 저장되었습니다.`);
       setIsEditorHelpOpen(false);
       setIsEditMode(false);
     } catch (error) {
@@ -1055,6 +1222,7 @@ export function AboutPage() {
                     <div className={styles.editorMetrics} aria-label="문서 통계">
                       <span className={styles.editorMetric}>줄 {editorLineCount}</span>
                       <span className={styles.editorMetric}>문자 {editorCharacterCount}</span>
+                      <span className={styles.editorMetric}>변경 문서 {changedDocumentCount}</span>
                     </div>
                     <div className={styles.editActions}>
                       <button type="button" className={styles.editorActionButtonSecondary} onClick={handleCancelEditing}>
@@ -1076,6 +1244,29 @@ export function AboutPage() {
                   <div className={styles.editorHelpPanel} role="note" aria-label="편집 도움말">
                     <p className={styles.editorHelpText}>현재 선택된 1depth 문서 전체를 하나의 markdown 문서로 편집합니다.</p>
                     <p className={styles.editorHelpText}>저장 시 # / ## / ### 구조를 다시 1depth / 2depth / 3depth 데이터로 변환합니다.</p>
+                  </div>
+                ) : null}
+
+                {activeEditedDocument ? (
+                  <div className={styles.editorOutlinePanel} aria-label="Markdown 구조 미리보기">
+                    <div className={styles.editorOutlineHeader}>
+                      <p className={styles.editorEyebrow}>Structure</p>
+                      <strong className={styles.editorOutlineTitle}>{activeEditedDocument.title}</strong>
+                    </div>
+                    <div className={styles.editorOutlineList}>
+                      {activeEditedDocument.categories.map((category) => (
+                        <div key={category.id} className={styles.editorOutlineGroup}>
+                          <span className={styles.editorOutlineCategory}>{category.title}</span>
+                          {category.sections.some((section) => !isImplicitCategorySection(category, section)) ? (
+                            <div className={styles.editorOutlineSectionList}>
+                              {category.sections.filter((section) => !isImplicitCategorySection(category, section)).map((section) => (
+                                <span key={section.id} className={styles.editorOutlineSection}>{section.title}</span>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : null}
 
@@ -1196,11 +1387,13 @@ export function AboutPage() {
                             sectionRefs.current.set(section.id, element);
                           }}
                           className={styles.leafSection}
-                          aria-labelledby={`${section.id}-title`}
+                          aria-labelledby={isImplicitCategorySection(category, section) ? `${category.id}-title` : `${section.id}-title`}
                         >
-                          <h3 id={`${section.id}-title`} className={styles.leafTitle}>
-                            {section.title}
-                          </h3>
+                          {!isImplicitCategorySection(category, section) ? (
+                            <h3 id={`${section.id}-title`} className={styles.leafTitle}>
+                              {section.title}
+                            </h3>
+                          ) : null}
                           {renderMarkdownPreview(section.markdown, styles.paragraph)}
                         </section>
                       ))}

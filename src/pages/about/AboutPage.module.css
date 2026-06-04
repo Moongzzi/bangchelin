@@ -297,6 +297,83 @@
   line-height: 1.65;
 }
 
+.editorOutlinePanel {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  padding: 18px 20px;
+  border: 1px solid rgba(104, 87, 74, 0.12);
+  border-radius: 22px;
+  background: rgba(255, 251, 246, 0.92);
+  box-shadow: 0 14px 30px rgba(76, 60, 46, 0.06);
+}
+
+.editorOutlineHeader {
+  min-width: 0;
+}
+
+.editorOutlineTitle {
+  display: block;
+  overflow: hidden;
+  color: var(--about-tree-default-text);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editorOutlineList {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.editorOutlineGroup {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid rgba(104, 87, 74, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.editorOutlineCategory,
+.editorOutlineSection {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editorOutlineCategory {
+  max-width: 150px;
+  color: var(--about-tree-default-text);
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.editorOutlineSectionList {
+  display: inline-flex;
+  min-width: 0;
+  gap: 6px;
+}
+
+.editorOutlineSection {
+  max-width: 130px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(110, 81, 53, 0.08);
+  color: var(--about-content-paragraph);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
 .editorMetrics {
   display: flex;
   flex-wrap: wrap;
@@ -911,6 +988,10 @@
   .editorToolbar {
     align-items: stretch;
   }
+
+  .editorOutlinePanel {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 767px) {
@@ -933,6 +1014,22 @@
   .editorHelpPanel {
     padding: 16px 18px;
     border-radius: 20px;
+  }
+
+  .editorOutlinePanel {
+    padding: 16px 18px;
+    border-radius: 20px;
+  }
+
+  .editorOutlineList,
+  .editorOutlineGroup,
+  .editorOutlineSectionList {
+    width: 100%;
+  }
+
+  .editorOutlineGroup,
+  .editorOutlineSectionList {
+    flex-wrap: wrap;
   }
 
   .editorPanel,

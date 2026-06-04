@@ -118,6 +118,39 @@ export function Header() {
     };
   }, [pathname]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function reloadProfile() {
+      const session = getSession();
+      setIsLoggedIn(Boolean(session));
+
+      if (!session) {
+        setProfile(null);
+        return;
+      }
+
+      try {
+        const nextProfile = await getMyProfile();
+
+        if (isMounted) {
+          setProfile(nextProfile);
+        }
+      } catch {
+        if (isMounted) {
+          setProfile(null);
+        }
+      }
+    }
+
+    window.addEventListener('bangchelin:profile-updated', reloadProfile);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('bangchelin:profile-updated', reloadProfile);
+    };
+  }, []);
+
   const profileName = profile?.nickname || profile?.username || 'Profile';
   const navItems = getNavigationItems(isLoggedIn);
 

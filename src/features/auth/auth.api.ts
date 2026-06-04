@@ -65,6 +65,11 @@ type AuthResponse = {
 
 const avatarBucket = 'profile-avatars';
 
+function getAvatarObjectPath(userId: string, file: File) {
+  const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+  return `${userId}/avatar-${Date.now()}-${crypto.randomUUID()}.${extension}`;
+}
+
 function getAuthEmail(username: string) {
   const normalizedUsername = username
     .trim()
@@ -156,8 +161,7 @@ export async function signUp(input: SignUpInput) {
 
   let avatarUrl: string | null = null;
   if (input.avatarFile) {
-    const extension = input.avatarFile.name.split('.').pop() || 'png';
-    avatarUrl = await uploadStorageObject(avatarBucket, `${session.user.id}/avatar.${extension}`, input.avatarFile, session.access_token);
+    avatarUrl = await uploadStorageObject(avatarBucket, getAvatarObjectPath(session.user.id, input.avatarFile), input.avatarFile, session.access_token);
   }
 
   const [profile] = await restRequest<Profile[]>(`/profiles?id=eq.${session.user.id}`, {
@@ -230,8 +234,7 @@ export async function updateMyProfile(input: UpdateProfileInput) {
 
   let avatarUrl: string | null | undefined;
   if (input.avatarFile) {
-    const extension = input.avatarFile.name.split('.').pop() || 'png';
-    avatarUrl = await uploadStorageObject(avatarBucket, `${session.user.id}/avatar.${extension}`, input.avatarFile, session.access_token);
+    avatarUrl = await uploadStorageObject(avatarBucket, getAvatarObjectPath(session.user.id, input.avatarFile), input.avatarFile, session.access_token);
   }
 
   const payload = toProfilePayload(input, avatarUrl);

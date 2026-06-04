@@ -243,17 +243,31 @@ export function buildGuideTree(documents: GuideDocument[]): GuideTreeNode[] {
     id: document.id,
     label: document.title,
     depth: 1,
-    children: document.categories.map((category) => ({
-      id: category.id,
-      label: category.title,
-      depth: 2,
-      children: category.sections.map((section) => ({
-        id: section.id,
-        label: section.title,
-        depth: 3,
-        targetId: section.id,
-      })),
-    })),
+    children: document.categories.map((category) => {
+      const [onlySection] = category.sections;
+      const isImplicitCategorySection = category.sections.length === 1 && onlySection?.title.trim() === category.title.trim();
+
+      if (isImplicitCategorySection && onlySection) {
+        return {
+          id: category.id,
+          label: category.title,
+          depth: 2,
+          targetId: onlySection.id,
+        };
+      }
+
+      return {
+        id: category.id,
+        label: category.title,
+        depth: 2,
+        children: category.sections.map((section) => ({
+          id: section.id,
+          label: section.title,
+          depth: 3,
+          targetId: section.id,
+        })),
+      };
+    }),
   }));
 }
 
