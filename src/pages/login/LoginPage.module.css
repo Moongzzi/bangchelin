@@ -45,6 +45,7 @@
 
 .brandLink:focus-visible,
 .submitButton:focus-visible,
+.keepSignedInInput:focus-visible + .keepSignedInIndicator,
 .signUpLink:focus-visible {
   outline: 2px solid rgba(255, 248, 242, 0.9);
   outline-offset: 3px;
@@ -138,6 +139,52 @@
   transform: none;
 }
 
+.keepSignedInOption {
+  width: min(250px, 100%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--login-text);
+  font-size: 0.875rem;
+  line-height: 1.2;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.keepSignedInInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.keepSignedInIndicator {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border: 2px solid rgba(94, 19, 30, 0.52);
+  border-radius: 50%;
+  background: rgba(255, 248, 242, 0.72);
+  box-shadow: inset 0 0 0 3px var(--login-form-panel);
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.keepSignedInInput:checked + .keepSignedInIndicator {
+  border-color: var(--login-button);
+  background: var(--login-button);
+}
+
+.keepSignedInText {
+  transform: translateY(1px);
+}
+
 .statusMessage {
   min-height: 1.25rem;
   width: min(250px, 100%);
@@ -212,6 +259,7 @@
 
   .field,
   .submitButton,
+  .keepSignedInOption,
   .statusMessage {
     width: 100%;
   }

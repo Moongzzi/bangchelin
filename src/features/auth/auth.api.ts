@@ -176,7 +176,7 @@ export async function signUp(input: SignUpInput) {
   };
 }
 
-export async function signInWithUsername(username: string, password: string) {
+export async function signInWithUsername(username: string, password: string, keepSignedIn = false) {
   const [loginInfo] = await restRequest<Array<{ auth_email: string }>>('/rpc/get_login_email', {
     method: 'POST',
     body: {
@@ -199,7 +199,7 @@ export async function signInWithUsername(username: string, password: string) {
     throw new Error(toSignInErrorMessage(error));
   }
 
-  saveSession(session);
+  saveSession(session, keepSignedIn);
   return session;
 }
 

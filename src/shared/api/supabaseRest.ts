@@ -23,6 +23,8 @@ type RequestOptions = {
 const sessionStorageKey = 'bangchelin.supabase.session';
 const tokenExpiryLeewaySeconds = 30;
 
+type SessionPersistence = 'local' | 'session';
+
 function assertSupabaseConfig() {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Supabase 환경변수 VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY를 설정해주세요.');
@@ -80,6 +82,7 @@ function isAccessTokenExpired(session: SupabaseSession) {
 
 async function refreshStoredSession() {
   const currentSession = getSession();
+  const currentPersistence = getSessionPersistence();
 
   if (!currentSession?.refresh_token) {
     return null;
@@ -98,7 +101,7 @@ async function refreshStoredSession() {
   });
 
   const nextSession = await readResponse<SupabaseSession>(response);
-  saveSession(nextSession);
+  saveSession(nextSession, currentPersistence === 'local');
   return getSession();
 }
 
@@ -201,12 +204,8 @@ export async function uploadStorageObject(bucket: string, path: string, file: Fi
   return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
 }
 
-export function saveSession(session: SupabaseSession) {
-  window.localStorage.setItem(sessionStorageKey, JSON.stringify(normalizeSession(session)));
-}
-
-export function getSession() {
-  const rawSession = window.localStorage.getItem(sessionStorageKey);
+function getStoredSession(storage: Storage) {
+  const rawSession = storage.getItem(sessionStorageKey);
 
   if (!rawSession) {
     return null;
@@ -215,11 +214,36 @@ export function getSession() {
   try {
     return normalizeSession(JSON.parse(rawSession) as SupabaseSession);
   } catch {
-    window.localStorage.removeItem(sessionStorageKey);
+    storage.removeItem(sessionStorageKey);
     return null;
   }
 }
 
+function getSessionPersistence(): SessionPersistence | null {
+  if (window.localStorage.getItem(sessionStorageKey)) {
+    return 'local';
+  }
+
+  if (window.sessionStorage.getItem(sessionStorageKey)) {
+    return 'session';
+  }
+
+  return null;
+}
+
+export function saveSession(session: SupabaseSession, keepSignedIn = false) {
+  const storage = keepSignedIn ? window.localStorage : window.sessionStorage;
+  const inactiveStorage = keepSignedIn ? window.sessionStorage : window.localStorage;
+
+  storage.setItem(sessionStorageKey, JSON.stringify(normalizeSession(session)));
+  inactiveStorage.removeItem(sessionStorageKey);
+}
+
+export function getSession() {
+  return getStoredSession(window.localStorage) ?? getStoredSession(window.sessionStorage);
+}
+
 export function clearSession() {
   window.localStorage.removeItem(sessionStorageKey);
+  window.sessionStorage.removeItem(sessionStorageKey);
 }

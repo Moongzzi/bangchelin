@@ -49,6 +49,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [formValues, setFormValues] = useState<LoginFormValues>(initialFormValues);
   const [formErrors, setFormErrors] = useState<LoginFormErrors>({});
+  const [keepSignedIn, setKeepSignedIn] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionState, setSubmissionState] = useState<SubmissionState>({
     kind: 'idle',
@@ -158,7 +159,7 @@ export function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      await signInWithUsername(formValues.username.trim(), formValues.password);
+      await signInWithUsername(formValues.username.trim(), formValues.password, keepSignedIn);
 
       setSubmissionState({
         kind: 'success',
@@ -240,6 +241,17 @@ export function LoginPage() {
                   <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
                     {isSubmitting ? '로그인 중...' : 'Log In'}
                   </button>
+
+                  <label className={styles.keepSignedInOption}>
+                    <input
+                      type="checkbox"
+                      className={styles.keepSignedInInput}
+                      checked={keepSignedIn}
+                      onChange={(event) => setKeepSignedIn(event.target.checked)}
+                    />
+                    <span className={styles.keepSignedInIndicator} aria-hidden="true" />
+                    <span className={styles.keepSignedInText}>자동 로그인</span>
+                  </label>
                 </form>
               </div>
 
