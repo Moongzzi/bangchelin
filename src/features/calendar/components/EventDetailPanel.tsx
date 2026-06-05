@@ -207,6 +207,7 @@ export function EventDetailPanel({
   const statusTone = calendarStatusTone[selectedEvent.status];
   const categoryTone = calendarCategoryTone[selectedEvent.category];
   const isRecruiting = selectedEvent.status === 'recruiting';
+  const canManageEvent = Boolean(selectedEvent.isCurrentUserAuthor);
   const isAlreadyJoined = Boolean(selectedEvent.isCurrentUserParticipant || selectedEvent.isCurrentUserWaitlisted);
   const attendanceLabel = selectedEvent.currentParticipants >= selectedEvent.capacity ? '대기 참석' : '참석';
   const participantDetails = selectedEvent.participantsDetail ?? [];
@@ -224,12 +225,16 @@ export function EventDetailPanel({
           <h2 className={styles.detailTitle}>{selectedEvent.title}</h2>
         </div>
         <div className={styles.detailActionRow}>
-          <button type="button" className={styles.detailCloseButton} onClick={() => onEditEvent(selectedEvent)} aria-label="일정 수정">
-            <PencilIcon />
-          </button>
-          <button type="button" className={styles.detailCloseButton} onClick={() => onDeleteEvent(selectedEvent.id)} aria-label="일정 삭제">
-            <TrashIcon />
-          </button>
+          {canManageEvent ? (
+            <>
+              <button type="button" className={styles.detailCloseButton} onClick={() => onEditEvent(selectedEvent)} aria-label="일정 수정">
+                <PencilIcon />
+              </button>
+              <button type="button" className={styles.detailCloseButton} onClick={() => onDeleteEvent(selectedEvent.id)} aria-label="일정 삭제">
+                <TrashIcon />
+              </button>
+            </>
+          ) : null}
           <button type="button" className={styles.detailCloseButton} onClick={onClose} aria-label="상세 패널 닫기">
             <CloseIcon />
           </button>

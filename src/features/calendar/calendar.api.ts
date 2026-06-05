@@ -12,6 +12,7 @@ import type {
 
 type CalendarEventRow = {
   id: string;
+  created_by: string;
   title: string;
   start_date: string;
   end_date: string;
@@ -174,6 +175,7 @@ function toCalendarEvent(row: CalendarEventRow): CalendarEvent {
     organizer: participants[0] ?? '',
     participants,
     waitlistedParticipants,
+    isCurrentUserAuthor: row.created_by === session?.user.id,
     isCurrentUserParticipant: currentUserParticipant?.status === 'confirmed',
     isCurrentUserWaitlisted: currentUserParticipant?.status === 'waitlisted',
     comments: commentTree.length ? commentTree : row.comments ?? [],
@@ -240,6 +242,7 @@ async function replaceParticipants(eventId: string, participantNames: string[], 
 
 const eventSelect = [
   'id',
+  'created_by',
   'title',
   'start_date',
   'end_date',
@@ -261,6 +264,7 @@ const eventSelect = [
 
 const legacyEventSelect = [
   'id',
+  'created_by',
   'title',
   'start_date',
   'end_date',

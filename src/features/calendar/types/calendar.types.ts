@@ -51,6 +51,7 @@ export type CalendarEvent = {
   organizer?: string;
   participants?: string[];
   waitlistedParticipants?: string[];
+  isCurrentUserAuthor?: boolean;
   isCurrentUserParticipant?: boolean;
   isCurrentUserWaitlisted?: boolean;
   comments?: CalendarEventComment[];

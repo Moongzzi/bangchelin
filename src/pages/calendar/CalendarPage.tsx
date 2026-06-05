@@ -531,6 +531,11 @@ export function CalendarPage() {
   }
 
   function openEditModal(event: CalendarEvent) {
+    if (!event.isCurrentUserAuthor) {
+      openNotice('일정 수정 불가', '본인이 생성한 일정만 수정할 수 있습니다.');
+      return;
+    }
+
     const initialValues = mapEventToFormValues(event);
     setModalHelperMessage(undefined);
     setModalState({
@@ -591,6 +596,13 @@ export function CalendarPage() {
   }
 
   function handleDeleteEvent(eventId: string) {
+    const targetEvent = events.find((event) => event.id === eventId);
+
+    if (!targetEvent?.isCurrentUserAuthor) {
+      openNotice('일정 삭제 불가', '본인이 생성한 일정만 삭제할 수 있습니다.');
+      return;
+    }
+
     setConfirmDialogState({
       open: true,
       title: '일정 삭제',
