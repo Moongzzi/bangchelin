@@ -12,6 +12,8 @@ export type {
   HeaderLogoData,
   HeaderMobileMenu,
   HeaderNavItemData,
+  HeaderNotificationItem,
+  HeaderNotifications,
   HeaderProps,
 } from './Header';
 export { headerFoundation } from './headerFoundation';

@@ -2,9 +2,18 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { getMyProfile, signOut, type Profile } from '../../../features/auth/auth.api';
+import {
+  getNotifications,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+} from '../../../features/notification/notification.service';
 import { getSession } from '../../api/supabaseRest';
 import { ROUTES } from '../../constants/routes';
-import { Header as HeaderRoot, type HeaderNavItemData } from '../header';
+import {
+  Header as HeaderRoot,
+  type HeaderNavItemData,
+  type HeaderNotificationItem,
+} from '../header';
 import { Popup, type PopupAction } from '../popup';
 
 const logo = {
@@ -72,6 +81,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(() => Boolean(getSession()));
+  const [notifications, setNotifications] = useState<HeaderNotificationItem[]>([]);
   const [logoutNoticeOpen, setLogoutNoticeOpen] = useState(false);
 
   useEffect(() => {
@@ -95,14 +105,19 @@ export function Header() {
 
       if (!session) {
         setProfile(null);
+        setNotifications([]);
         return;
       }
 
       try {
-        const nextProfile = await getMyProfile();
+        const [nextProfile, nextNotifications] = await Promise.all([
+          getMyProfile(),
+          getNotifications(),
+        ]);
 
         if (isMounted) {
           setProfile(nextProfile);
+          setNotifications(nextNotifications);
         }
       } catch {
         if (isMounted) {
@@ -127,14 +142,19 @@ export function Header() {
 
       if (!session) {
         setProfile(null);
+        setNotifications([]);
         return;
       }
 
       try {
-        const nextProfile = await getMyProfile();
+        const [nextProfile, nextNotifications] = await Promise.all([
+          getMyProfile(),
+          getNotifications(),
+        ]);
 
         if (isMounted) {
           setProfile(nextProfile);
+          setNotifications(nextNotifications);
         }
       } catch {
         if (isMounted) {
@@ -151,6 +171,36 @@ export function Header() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isLoggedIn) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    async function reloadNotifications() {
+      try {
+        const nextNotifications = await getNotifications();
+
+        if (isMounted) {
+          setNotifications(nextNotifications);
+        }
+      } catch {
+        if (isMounted && !getSession()) {
+          setNotifications([]);
+          setIsLoggedIn(false);
+        }
+      }
+    }
+
+    const intervalId = window.setInterval(reloadNotifications, 30000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, [isLoggedIn]);
+
   const profileName = profile?.nickname || profile?.username || 'Profile';
   const navItems = getNavigationItems(isLoggedIn);
 
@@ -160,6 +210,7 @@ export function Header() {
     signOut();
     setProfile(null);
     setIsLoggedIn(false);
+    setNotifications([]);
     navigate(ROUTES.home);
 
     if (shouldShowProtectedPageNotice) {
@@ -174,6 +225,32 @@ export function Header() {
       onClick: () => setLogoutNoticeOpen(false),
     },
   ];
+
+  async function handleNotificationClick(notification: HeaderNotificationItem) {
+    try {
+      await markNotificationAsRead(notification.id);
+      setNotifications((currentNotifications) =>
+        currentNotifications.map((currentNotification) =>
+          currentNotification.id === notification.id
+            ? { ...currentNotification, read: true }
+            : currentNotification,
+        ),
+      );
+    } catch {
+      setNotifications([]);
+    }
+  }
+
+  async function handleMarkAllNotificationsAsRead() {
+    try {
+      await markAllNotificationsAsRead(notifications.map((notification) => notification.id));
+      setNotifications((currentNotifications) =>
+        currentNotifications.map((notification) => ({ ...notification, read: true })),
+      );
+    } catch {
+      setNotifications([]);
+    }
+  }
 
   return (
     <>
@@ -190,6 +267,15 @@ export function Header() {
           { key: 'logout', label: '로그아웃', onClick: handleLogout },
           { key: 'profile', label: '프로필', to: ROUTES.profile },
         ]}
+        notifications={
+          isLoggedIn
+            ? {
+                items: notifications,
+                onItemClick: handleNotificationClick,
+                onMarkAllRead: handleMarkAllNotificationsAsRead,
+              }
+            : undefined
+        }
         navAriaLabel="Global navigation"
         activeNavKey={getActiveNavKey(pathname)}
         mobileMenu={{

@@ -34,6 +34,24 @@ export type HeaderProfileMenuItem = {
   onClick?: () => void;
 };
 
+export type HeaderNotificationItem = {
+  id: string;
+  title: string;
+  description: string;
+  createdAtLabel: string;
+  read?: boolean;
+  tone?: 'info' | 'success' | 'warning';
+  to?: To;
+};
+
+export type HeaderNotifications = {
+  items: HeaderNotificationItem[];
+  unreadCount?: number;
+  emptyMessage?: string;
+  onItemClick?: (notification: HeaderNotificationItem) => void;
+  onMarkAllRead?: () => void;
+};
+
 type HeaderBaseLinkProps = {
   to: To;
   className?: string;
@@ -87,6 +105,10 @@ type HeaderActionsProps = {
   rightActions?: ReactNode;
 };
 
+type HeaderNotificationCenterProps = {
+  notifications: HeaderNotifications;
+};
+
 export type HeaderMobileMenu = {
   isOpen: boolean;
   onToggle: () => void;
@@ -109,6 +131,7 @@ export type HeaderProps = {
   loginTo?: To;
   className?: string;
   rightActions?: ReactNode;
+  notifications?: HeaderNotifications;
   isCompact?: boolean;
   showBottomBorder?: boolean;
   maxWidth?: number | string;
@@ -224,6 +247,17 @@ function CloseIcon() {
   );
 }
 
+function BellIcon() {
+  return (
+    <svg viewBox="0 0 44 44" fill="none" aria-hidden="true">
+      <g stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M15.5 19.8c0-4.5 2.7-7.6 6.5-7.6s6.5 3.1 6.5 7.6v4.8l2.2 3.4H13.3l2.2-3.4v-4.8Z" />
+        <path d="M19.5 31.1c.5 1.2 1.4 1.9 2.5 1.9s2-.7 2.5-1.9" />
+      </g>
+    </svg>
+  );
+}
+
 export function HeaderLogo({ logo }: HeaderLogoProps) {
   return (
     <HeaderTextLink
@@ -281,6 +315,135 @@ export function IconLink({ to, ariaLabel, className, children }: IconLinkProps) 
     <Link to={to} className={joinClassNames(styles.iconButton, className)} aria-label={ariaLabel}>
       {children}
     </Link>
+  );
+}
+
+function HeaderNotificationCenter({ notifications }: HeaderNotificationCenterProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const notificationRef = useRef<HTMLDivElement | null>(null);
+  const unreadCount =
+    notifications.unreadCount ?? notifications.items.filter((item) => !item.read).length;
+  const displayUnreadCount = unreadCount > 99 ? '99+' : String(unreadCount);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (!notificationRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  function handleNotificationClick(notification: HeaderNotificationItem) {
+    notifications.onItemClick?.(notification);
+    setIsOpen(false);
+  }
+
+  return (
+    <div className={styles.notificationWrap} ref={notificationRef}>
+      <IconButton
+        ariaLabel={`알림 ${unreadCount > 0 ? `${unreadCount}개 읽지 않음` : '목록 열기'}`}
+        className={styles.notificationButton}
+        onClick={() => setIsOpen((open) => !open)}
+      >
+        <BellIcon />
+        {unreadCount > 0 ? (
+          <span className={styles.notificationBadge}>{displayUnreadCount}</span>
+        ) : null}
+      </IconButton>
+      {isOpen ? (
+        <section className={styles.notificationPanel} aria-label="알림 목록">
+          <div className={styles.notificationHeader}>
+            <div>
+              <strong className={styles.notificationTitle}>알림</strong>
+              <p className={styles.notificationSummary}>
+                {unreadCount > 0 ? `읽지 않은 알림 ${unreadCount}개` : '새 알림이 없습니다'}
+              </p>
+            </div>
+            {notifications.items.length > 0 && notifications.onMarkAllRead ? (
+              <button
+                type="button"
+                className={styles.notificationReadAll}
+                onClick={notifications.onMarkAllRead}
+              >
+                모두 읽음
+              </button>
+            ) : null}
+          </div>
+          <div className={styles.notificationList}>
+            {notifications.items.length > 0 ? (
+              notifications.items.map((notification) => {
+                const content = (
+                  <>
+                    <span
+                      className={joinClassNames(
+                        styles.notificationTone,
+                        notification.tone === 'success' && styles.notificationToneSuccess,
+                        notification.tone === 'warning' && styles.notificationToneWarning,
+                      )}
+                      aria-hidden="true"
+                    />
+                    <span className={styles.notificationContent}>
+                      <span className={styles.notificationItemTitle}>{notification.title}</span>
+                      <span className={styles.notificationDescription}>{notification.description}</span>
+                      <span className={styles.notificationTime}>{notification.createdAtLabel}</span>
+                    </span>
+                    {!notification.read ? <span className={styles.notificationUnreadDot} /> : null}
+                  </>
+                );
+
+                return notification.to ? (
+                  <Link
+                    key={notification.id}
+                    to={notification.to}
+                    className={joinClassNames(
+                      styles.notificationItem,
+                      notification.read && styles.notificationItemRead,
+                    )}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    {content}
+                  </Link>
+                ) : (
+                  <button
+                    key={notification.id}
+                    type="button"
+                    className={joinClassNames(
+                      styles.notificationItem,
+                      notification.read && styles.notificationItemRead,
+                    )}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    {content}
+                  </button>
+                );
+              })
+            ) : (
+              <p className={styles.notificationEmpty}>
+                {notifications.emptyMessage ?? '아직 도착한 알림이 없습니다.'}
+              </p>
+            )}
+          </div>
+        </section>
+      ) : null}
+    </div>
   );
 }
 
@@ -434,6 +597,7 @@ export function Header({
   loginTo,
   className,
   rightActions,
+  notifications,
   isCompact = false,
   showBottomBorder = true,
   maxWidth,
@@ -478,6 +642,9 @@ export function Header({
                   ))}
                 </div>
               </nav>
+            ) : null}
+            {notifications ? (
+              <HeaderNotificationCenter notifications={notifications} />
             ) : null}
             <div className={styles.desktopActions}>
               <HeaderActions
