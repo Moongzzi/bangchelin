@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { calendarConfig } from '../constants/calendar.constants';
 import type { CalendarEvent, CalendarEventInCell, CalendarMonthCell } from '../types/calendar.types';
 import { formatEnglishMonthLabel, formatMonthLabel, formatYearLabel } from '../utils/calendarDate.utils';
@@ -14,6 +16,7 @@ type MonthCalendarProps = {
   onPreviousMonth: () => void;
   onTodayClick: () => void;
   onNextMonth: () => void;
+  filterControls?: ReactNode;
 };
 
 type WeekEventSegment = {
@@ -144,6 +147,7 @@ export function MonthCalendar({
   onPreviousMonth,
   onTodayClick,
   onNextMonth,
+  filterControls,
 }: MonthCalendarProps) {
   const monthWeeks = chunkWeekCells(monthCells);
 
@@ -170,6 +174,8 @@ export function MonthCalendar({
           </button>
         </div>
       </div>
+
+      {filterControls ? filterControls : null}
 
       <div className={styles.weekdayRow} role="row">
         {calendarConfig.weekDays.map((weekDay) => (

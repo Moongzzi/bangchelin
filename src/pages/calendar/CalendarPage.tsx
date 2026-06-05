@@ -28,7 +28,9 @@ import {
 import { calendarEventsMock } from '../../features/calendar/mock/calendarEvents.mock';
 import type {
   CalendarEvent,
+  CalendarEventCategory,
   CalendarEventFormValues,
+  CalendarEventStatus,
   CalendarLocationRegion,
   ConfirmDialogTone,
 } from '../../features/calendar/types/calendar.types';
@@ -42,6 +44,7 @@ import {
   startOfMonth,
 } from '../../features/calendar/utils/calendarDate.utils';
 import { PageShell } from '../../shared/components/layout/PageShell';
+import { Dropdown } from '../../shared/components/dropdown/Dropdown';
 import styles from './CalendarPage.module.css';
 
 const seoulLocationKeywords = ['강남', '건대', '대학로', '성수', '송파', '잠실', '연남', '합정', '홍대', '혜화'];
@@ -84,6 +87,14 @@ type ModalState = {
 
 type CalendarPageStatus = 'loading' | 'ready' | 'saving' | 'error' | 'success' | 'empty';
 
+type CalendarFilterValue = 'all';
+
+type CalendarFilters = {
+  locationRegion: CalendarLocationRegion | CalendarFilterValue;
+  status: CalendarEventStatus | CalendarFilterValue;
+  category: CalendarEventCategory | CalendarFilterValue;
+};
+
 type ConfirmAction =
   | { type: 'save-create'; values: CalendarEventFormValues }
   | { type: 'save-edit'; eventId: string; values: CalendarEventFormValues }
@@ -101,6 +112,24 @@ type ConfirmDialogState = {
   tone: ConfirmDialogTone;
   action: ConfirmAction;
 };
+
+const defaultCalendarFilters: CalendarFilters = {
+  locationRegion: 'all',
+  status: 'all',
+  category: 'all',
+};
+
+const allFilterOption = { value: 'all', label: '전체' };
+
+const calendarFilterDropdownStyle = {
+  '--dropdown-trigger-min-height': '32px',
+  '--dropdown-trigger-padding-x': '12px',
+  '--dropdown-option-min-height': '32px',
+  '--dropdown-option-padding-x': '12px',
+  '--dropdown-menu-offset': '6px',
+  '--dropdown-trigger-background': 'var(--calendar-surface-elevated)',
+  '--dropdown-menu-background': 'var(--calendar-surface-elevated)',
+} as CSSProperties;
 
 function createDefaultFormValues(dateKey: string): CalendarEventFormValues {
   return {
@@ -177,6 +206,14 @@ function isEventInDateRange(event: CalendarEvent, startDate: string, endDate: st
   return event.date <= endDate && (event.endDate ?? event.date) >= startDate;
 }
 
+function filterCalendarEvents(events: CalendarEvent[], filters: CalendarFilters) {
+  return events.filter((event) => (
+    (filters.locationRegion === 'all' || event.locationRegion === filters.locationRegion)
+    && (filters.status === 'all' || event.status === filters.status)
+    && (filters.category === 'all' || event.category === filters.category)
+  ));
+}
+
 function getValidationMessage(values: CalendarEventFormValues) {
   const todayKey = formatDateKey(new Date());
 
@@ -239,6 +276,7 @@ export function CalendarPage() {
   const [commentError, setCommentError] = useState('');
   const [attendanceSubmitting, setAttendanceSubmitting] = useState(false);
   const [attendanceError, setAttendanceError] = useState('');
+  const [filters, setFilters] = useState<CalendarFilters>(defaultCalendarFilters);
   const [modalState, setModalState] = useState<ModalState>(() => {
     const defaultValues = createDefaultFormValues(todayKey);
     return {
@@ -260,15 +298,20 @@ export function CalendarPage() {
   });
 
   const selectedDateKey = selectedDate ? formatDateKey(selectedDate) : null;
-  const eventsByDate = useMemo(() => groupEventsByDate(events), [events]);
+  const filteredEvents = useMemo(() => filterCalendarEvents(events, filters), [events, filters]);
+  const eventsByDate = useMemo(() => groupEventsByDate(filteredEvents), [filteredEvents]);
   const selectedDateEvents = useMemo(
-    () => (selectedDateKey ? getEventsForDate(events, selectedDateKey) : []),
-    [events, selectedDateKey],
+    () => (selectedDateKey ? getEventsForDate(filteredEvents, selectedDateKey) : []),
+    [filteredEvents, selectedDateKey],
   );
   const selectedEvent = useMemo(
-    () => events.find((event) => event.id === selectedEventId) ?? null,
-    [events, selectedEventId],
+    () => filteredEvents.find((event) => event.id === selectedEventId) ?? null,
+    [filteredEvents, selectedEventId],
   );
+  const hasActiveFilters = filters.locationRegion !== 'all' || filters.status !== 'all' || filters.category !== 'all';
+  const locationFilterOptions = useMemo(() => [allFilterOption, ...calendarLocationRegionOptions], []);
+  const statusFilterOptions = useMemo(() => [allFilterOption, ...calendarStatusOptions], []);
+  const categoryFilterOptions = useMemo(() => [allFilterOption, ...calendarCategoryOptions], []);
   const monthCells = useMemo(
     () => buildMonthGrid(currentMonth, todayKey),
     [currentMonth, todayKey],
@@ -323,10 +366,11 @@ export function CalendarPage() {
   }, [visibleRange.endDate, visibleRange.startDate]);
 
   useEffect(() => {
-    if (selectedEventId && !events.some((event) => event.id === selectedEventId)) {
-      setSelectedEventId(selectedDateEvents[0]?.id ?? null);
+    if (selectedEventId && !filteredEvents.some((event) => event.id === selectedEventId)) {
+      setSelectedEventId(null);
+      setShowDetail(false);
     }
-  }, [events, selectedDateEvents, selectedEventId]);
+  }, [filteredEvents, selectedEventId]);
 
   const pageStyle = {
     '--calendar-page-background': calendarStyleTokens.pageBackground,
@@ -386,6 +430,17 @@ export function CalendarPage() {
     setCurrentMonth(startOfMonth(today));
     setShowDetail(false);
     setSelectedEventId(null);
+  }
+
+  function updateFilter<Key extends keyof CalendarFilters>(field: Key, value: CalendarFilters[Key]) {
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      [field]: value,
+    }));
+  }
+
+  function resetFilters() {
+    setFilters(defaultCalendarFilters);
   }
 
   function handleSelectDate(date: Date) {
@@ -761,6 +816,48 @@ export function CalendarPage() {
               onPreviousMonth={handlePreviousMonth}
               onTodayClick={handleTodayClick}
               onNextMonth={handleNextMonth}
+              filterControls={(
+                <div className={styles.filterBar} aria-label="일정 필터">
+                  <Dropdown
+                    label="장소 필터"
+                    hideLabel
+                    placeholder="장소"
+                    options={locationFilterOptions}
+                    value={filters.locationRegion}
+                    onChange={(value) => updateFilter('locationRegion', value as CalendarFilters['locationRegion'])}
+                    rootStyle={calendarFilterDropdownStyle}
+                    className={styles.filterDropdown}
+                  />
+                  <Dropdown
+                    label="모집 상태 필터"
+                    hideLabel
+                    placeholder="상태"
+                    options={statusFilterOptions}
+                    value={filters.status}
+                    onChange={(value) => updateFilter('status', value as CalendarFilters['status'])}
+                    rootStyle={calendarFilterDropdownStyle}
+                    className={styles.filterDropdown}
+                  />
+                  <Dropdown
+                    label="카테고리 필터"
+                    hideLabel
+                    placeholder="카테고리"
+                    options={categoryFilterOptions}
+                    value={filters.category}
+                    onChange={(value) => updateFilter('category', value as CalendarFilters['category'])}
+                    rootStyle={calendarFilterDropdownStyle}
+                    className={styles.filterDropdown}
+                  />
+                  <button
+                    type="button"
+                    className={styles.filterResetButton}
+                    onClick={resetFilters}
+                    disabled={!hasActiveFilters}
+                  >
+                    초기화
+                  </button>
+                </div>
+              )}
             />
           </div>
 
