@@ -1,6 +1,6 @@
 import type { ChangeEvent, CSSProperties, FocusEvent, FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { checkNicknameAvailable, signUp, type ActivityRegion } from '../../features/auth/auth.api';
 import { InputField } from '../../shared/components/input-field';
@@ -112,11 +112,11 @@ function getEmailError(email: string) {
 
 export function RegisterPage() {
   const assetBasePath = import.meta.env.BASE_URL;
-  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [formValues, setFormValues] = useState<RegisterFormValues>(initialFormValues);
   const [formErrors, setFormErrors] = useState<RegisterFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRequestSubmitted, setIsRequestSubmitted] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<StatusState>({ kind: 'idle', message: '' });
   const [nicknameStatus, setNicknameStatus] = useState<StatusState>({ kind: 'idle', message: '' });
   const [checkedNickname, setCheckedNickname] = useState('');
@@ -329,7 +329,7 @@ export function RegisterPage() {
         activityRegion: getActivityRegion(formValues.region),
       });
 
-      navigate(ROUTES.login, { replace: true });
+      setIsRequestSubmitted(true);
     } catch (error) {
       setSubmitStatus({
         kind: 'error',
@@ -359,6 +359,19 @@ export function RegisterPage() {
           </Link>
 
           <div className={styles.content}>
+            {isRequestSubmitted ? (
+              <div className={styles.successPanel} role="status" aria-live="polite">
+                <h1 id="register-page-title" className={styles.successTitle}>
+                  회원가입 요청이 전송되었습니다.
+                </h1>
+                <p className={styles.successMessage}>
+                  관리자 승인 이후 커뮤니티 이용이 가능합니다. 관리자 승인은 최대 3일까지 걸릴 수 있습니다.
+                </p>
+                <Link to={ROUTES.login} className={styles.successLink}>
+                  로그인으로 돌아가기
+                </Link>
+              </div>
+            ) : (
             <form className={styles.form} onSubmit={handleSubmit} noValidate>
               <div className={styles.columns}>
                 <div className={styles.leftColumn}>
@@ -600,6 +613,7 @@ export function RegisterPage() {
                 </button>
               </div>
             </form>
+            )}
           </div>
         </div>
       </section>

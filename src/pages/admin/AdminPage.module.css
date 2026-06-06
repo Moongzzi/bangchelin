@@ -1,0 +1,182 @@
+.page {
+  --admin-account-background: var(--color-bg);
+  --admin-account-text: var(--color-text);
+  --admin-account-muted: var(--color-text-muted);
+  --admin-account-header-background: var(--color-surface-strong);
+  --admin-account-button: var(--color-brand);
+  --admin-account-button-hover: var(--color-brand-hover);
+  --admin-account-button-text: var(--color-text-inverse);
+  --admin-account-border: var(--color-border);
+  --admin-account-error: #9b3442;
+  min-height: 60vh;
+  background: var(--admin-account-background);
+  color: var(--admin-account-text);
+}
+
+.inner {
+  width: min(1100px, calc(100vw - 48px));
+  margin: 0 auto;
+  padding: 94px 0 108px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.title {
+  margin: 0;
+  color: var(--admin-account-text);
+  font-family: var(--font-sans);
+  font-size: 32px;
+  line-height: 1.25;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.countBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--admin-account-border);
+  border-radius: 999px;
+  color: var(--admin-account-muted);
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.tableWrap {
+  margin-top: 50px;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 940px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  padding: 0 24px;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table th {
+  height: 40px;
+  background: var(--admin-account-header-background);
+  color: var(--admin-account-muted);
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.table td {
+  height: 62px;
+  overflow: hidden;
+  color: var(--admin-account-text);
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+
+.mutedCell {
+  color: var(--admin-account-muted);
+  font-weight: 600;
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.approveButton,
+.rejectButton {
+  min-width: 58px;
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 140ms ease, opacity 140ms ease;
+}
+
+.approveButton {
+  background: var(--admin-account-button);
+  color: var(--admin-account-button-text);
+}
+
+.approveButton:hover {
+  background: var(--admin-account-button-hover);
+}
+
+.rejectButton {
+  border-color: var(--admin-account-border);
+  background: transparent;
+  color: var(--admin-account-text);
+}
+
+.approveButton:disabled,
+.rejectButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.nicknameColumn {
+  width: 17%;
+}
+
+.usernameColumn {
+  width: 17%;
+}
+
+.emailColumn {
+  width: 24%;
+}
+
+.dateColumn {
+  width: 15%;
+}
+
+.statusColumn {
+  width: 13%;
+}
+
+.actionColumn {
+  width: 14%;
+}
+
+.message,
+.errorMessage {
+  margin: 50px 0 0;
+  color: var(--admin-account-muted);
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.errorMessage {
+  color: var(--admin-account-error);
+}
+
+@media (max-width: 767px) {
+  .inner {
+    width: calc(100vw - 32px);
+    padding: 56px 0 72px;
+  }
+
+  .tableWrap {
+    margin-top: 36px;
+  }
+}

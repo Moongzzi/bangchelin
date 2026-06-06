@@ -28,6 +28,7 @@ export type Profile = {
   activity_region: ActivityRegion | null;
   email: string | null;
   role: 'user' | 'admin';
+  approval_status?: 'pending' | 'approved' | 'rejected';
   created_at: string;
   updated_at: string;
 };
@@ -61,6 +62,43 @@ type AuthResponse = {
     id: string;
     email?: string;
   };
+};
+
+type LoginAuthStatus = {
+  auth_email: string | null;
+  approval_status: 'pending' | 'approved' | 'rejected' | null;
+};
+
+type SignUpRequestRow = {
+  id: string;
+  user_id: string;
+  username: string;
+  nickname: string;
+  email: string | null;
+  birth_date: string | null;
+  introduction: string | null;
+  activity_region: ActivityRegion | null;
+  avatar_url: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  requested_at: string;
+  reviewed_at: string | null;
+  rejection_reason: string | null;
+};
+
+export type AdminSignUpRequest = {
+  id: string;
+  userId: string;
+  username: string;
+  nickname: string;
+  email: string;
+  birthDate: string;
+  introduction: string;
+  activityRegion: ActivityRegion | null;
+  avatarUrl: string | null;
+  status: SignUpRequestRow['status'];
+  requestedAt: string;
+  reviewedAt: string;
+  rejectionReason: string;
 };
 
 const avatarBucket = 'profile-avatars';
@@ -121,6 +159,24 @@ function toSignInErrorMessage(error: unknown) {
   return '로그인에 실패했습니다. 잠시 후 다시 시도해주세요.';
 }
 
+function toAdminSignUpRequest(row: SignUpRequestRow): AdminSignUpRequest {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    username: row.username,
+    nickname: row.nickname,
+    email: row.email ?? '',
+    birthDate: row.birth_date ?? '',
+    introduction: row.introduction ?? '',
+    activityRegion: row.activity_region,
+    avatarUrl: row.avatar_url,
+    status: row.status,
+    requestedAt: row.requested_at,
+    reviewedAt: row.reviewed_at ?? '',
+    rejectionReason: row.rejection_reason ?? '',
+  };
+}
+
 export async function checkNicknameAvailable(nickname: string) {
   const [result] = await restRequest<Array<{ is_available: boolean }>>('/rpc/is_nickname_available', {
     method: 'POST',
@@ -170,18 +226,31 @@ export async function signUp(input: SignUpInput) {
     body: {
       username: input.username.trim(),
       auth_email: authEmail,
+      approval_status: 'pending',
       ...toProfilePayload(input, avatarUrl),
     },
   });
 
+  await restRequest<SignUpRequestRow[]>(`/signup_requests?user_id=eq.${session.user.id}`, {
+    method: 'PATCH',
+    token: session.access_token,
+    body: {
+      username: input.username.trim(),
+      auth_email: authEmail,
+      ...toProfilePayload(input, avatarUrl),
+    },
+  });
+
+  clearSession();
+
   return {
-    session,
+    session: null,
     profile,
   };
 }
 
 export async function signInWithUsername(username: string, password: string, keepSignedIn = false) {
-  const [loginInfo] = await restRequest<Array<{ auth_email: string }>>('/rpc/get_login_email', {
+  const [loginInfo] = await restRequest<LoginAuthStatus[]>('/rpc/get_login_auth_status', {
     method: 'POST',
     body: {
       p_username: username.trim(),
@@ -190,6 +259,18 @@ export async function signInWithUsername(username: string, password: string, kee
 
   if (!loginInfo?.auth_email) {
     throw new Error('존재하지 않는 아이디입니다.');
+  }
+
+  if (loginInfo.approval_status === 'pending') {
+    throw new Error('관리자 승인 대기 중인 계정입니다.');
+  }
+
+  if (loginInfo.approval_status === 'rejected') {
+    throw new Error('회원가입 요청이 반려된 계정입니다.');
+  }
+
+  if (loginInfo.approval_status !== 'approved') {
+    throw new Error('계정 승인 상태를 확인할 수 없습니다.');
   }
 
   let session: SupabaseSession;
@@ -209,6 +290,46 @@ export async function signInWithUsername(username: string, password: string, kee
 
 export function signOut() {
   clearSession();
+}
+
+export async function getAdminSignUpRequests() {
+  const session = getSession();
+
+  if (!session) {
+    throw new Error('로그인이 필요한 기능입니다.');
+  }
+
+  const rows = await restRequest<SignUpRequestRow[]>(
+    '/signup_requests?select=id,user_id,username,nickname,email,birth_date,introduction,activity_region,avatar_url,status,requested_at,reviewed_at,rejection_reason&order=requested_at.desc',
+    {
+      token: session.access_token,
+    },
+  );
+
+  return rows.map(toAdminSignUpRequest);
+}
+
+export async function updateSignUpRequestStatus(requestId: string, status: 'approved' | 'rejected', rejectionReason = '') {
+  const session = getSession();
+
+  if (!session) {
+    throw new Error('로그인이 필요한 기능입니다.');
+  }
+
+  const [row] = await restRequest<SignUpRequestRow[]>(`/signup_requests?id=eq.${requestId}`, {
+    method: 'PATCH',
+    token: session.access_token,
+    body: {
+      status,
+      rejection_reason: status === 'rejected' ? rejectionReason.trim() || null : null,
+    },
+  });
+
+  if (!row) {
+    throw new Error('회원가입 요청 처리 결과를 확인할 수 없습니다.');
+  }
+
+  return toAdminSignUpRequest(row);
 }
 
 export async function getMyProfile() {
