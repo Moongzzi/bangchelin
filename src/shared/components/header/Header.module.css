@@ -40,6 +40,7 @@
 .left {
   display: flex;
   align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -92,6 +93,16 @@
   font-weight: 500;
 }
 
+.afterLogo {
+  flex: 0 0 auto;
+  color: var(--header-text);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.2;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .nav {
   display: flex;
   align-items: center;
@@ -122,6 +133,14 @@
   color: var(--header-text-hover);
 }
 
+.navItemPrimary {
+  color: var(--header-nav-primary);
+}
+
+.navItemPrimary.navItemActive {
+  color: var(--header-nav-primary);
+}
+
 .mobileNavItem {
   display: inline-flex;
   align-items: center;
@@ -132,6 +151,10 @@
   font-size: 0.9375rem;
   line-height: 1.2;
   font-weight: 600;
+}
+
+.mobileNavItemPrimary {
+  color: var(--header-nav-primary);
 }
 
 .navIcon {
@@ -503,6 +526,10 @@
 .navItem:hover,
 .iconButton:hover {
   color: var(--header-text-hover);
+}
+
+.navItemPrimary:hover {
+  color: var(--header-nav-primary);
 }
 
 .logo:hover {

@@ -1,0 +1,194 @@
+.page {
+  --admin-inquiry-background: var(--color-bg);
+  --admin-inquiry-text: var(--color-text);
+  --admin-inquiry-muted: var(--color-text-muted);
+  --admin-inquiry-header-background: var(--color-surface-strong);
+  min-height: 60vh;
+  background: var(--admin-inquiry-background);
+  color: var(--admin-inquiry-text);
+}
+
+.inner {
+  width: min(1100px, calc(100vw - 48px));
+  margin: 0 auto;
+  padding: 94px 0 108px;
+}
+
+.title {
+  margin: 0;
+  color: var(--admin-inquiry-text);
+  font-family: var(--font-sans);
+  font-size: 32px;
+  line-height: 1.25;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 42px;
+}
+
+.searchBox {
+  width: 320px;
+  max-width: 100%;
+  min-height: 40px;
+  padding: 0 14px;
+  gap: 12px;
+}
+
+.searchBox input {
+  color: var(--admin-inquiry-text);
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.searchBox > span,
+.searchBox > button {
+  width: 28px;
+  height: 28px;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.filterDropdown {
+  width: 160px;
+  gap: 0;
+}
+
+.filterDropdown button {
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.filterDropdown ul {
+  top: calc(100% + 6px);
+}
+
+.filterDropdown li {
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.tableWrap {
+  margin-top: 50px;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  padding: 0 30px;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table th {
+  height: 40px;
+  background: var(--admin-inquiry-header-background);
+  color: var(--admin-inquiry-muted);
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.table td {
+  height: 56px;
+  color: var(--admin-inquiry-text);
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.table .dateCell {
+  color: var(--admin-inquiry-muted);
+  font-weight: 600;
+}
+
+.rowLink {
+  display: block;
+  overflow: hidden;
+  color: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table tbody tr:hover .rowLink,
+.rowLink:focus-visible {
+  color: var(--color-brand);
+}
+
+.typeColumn {
+  width: 18%;
+}
+
+.titleColumn {
+  width: 27%;
+}
+
+.reporterColumn {
+  width: 18%;
+}
+
+.dateColumn {
+  width: 20%;
+}
+
+.statusColumn {
+  width: 17%;
+}
+
+.message {
+  margin: 50px 0 0;
+  color: var(--admin-inquiry-muted);
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+@media (max-width: 767px) {
+  .inner {
+    width: calc(100vw - 32px);
+    padding: 56px 0 72px;
+  }
+
+  .toolbar {
+    margin-top: 28px;
+  }
+
+  .searchBox {
+    width: 100%;
+  }
+
+  .filterGroup {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filterDropdown {
+    width: 100%;
+  }
+
+  .tableWrap {
+    margin-top: 36px;
+  }
+}

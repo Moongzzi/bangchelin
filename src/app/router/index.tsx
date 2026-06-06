@@ -1,10 +1,14 @@
-import { lazy, Suspense, type CSSProperties } from 'react';
+import { lazy, Suspense, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
+import { getMyProfile } from '../../features/auth/auth.api';
 import { HomePage } from '../../pages/home/HomePage';
 import { getSession } from '../../shared/api/supabaseRest';
 import { ROUTES } from '../../shared/constants/routes';
 
+const AdminPage = lazy(() => import('../../pages/admin/AdminPage').then((module) => ({ default: module.AdminPage })));
+const AdminInquiryPage = lazy(() => import('../../pages/admin/AdminInquiryPage').then((module) => ({ default: module.AdminInquiryPage })));
+const AdminInquiryDetailPage = lazy(() => import('../../pages/admin/AdminInquiryDetailPage').then((module) => ({ default: module.AdminInquiryDetailPage })));
 const AboutPage = lazy(() => import('../../pages/about/AboutPage').then((module) => ({ default: module.AboutPage })));
 const CalendarPage = lazy(() => import('../../pages/calendar/CalendarPage').then((module) => ({ default: module.CalendarPage })));
 const DropdownPreviewPage = lazy(() => import('../../pages/dropdown-preview/DropdownPreviewPage').then((module) => ({ default: module.DropdownPreviewPage })));
@@ -24,12 +28,55 @@ const routeFallbackStyle = {
   fontSize: '0.95rem',
 } satisfies CSSProperties;
 
-function LazyRoute({ children }: { children: React.ReactNode }) {
+function LazyRoute({ children }: { children: ReactNode }) {
   return <Suspense fallback={<div style={routeFallbackStyle}>페이지를 불러오는 중입니다.</div>}>{children}</Suspense>;
 }
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children }: { children: ReactNode }) {
   if (!getSession()) {
+    return <Navigate replace to={ROUTES.home} />;
+  }
+
+  return children;
+}
+
+function AdminRoute({ children }: { children: ReactNode }) {
+  const [status, setStatus] = useState<'loading' | 'allowed' | 'denied'>('loading');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function verifyAdmin() {
+      if (!getSession()) {
+        setStatus('denied');
+        return;
+      }
+
+      try {
+        const profile = await getMyProfile();
+
+        if (isMounted) {
+          setStatus(profile?.role === 'admin' ? 'allowed' : 'denied');
+        }
+      } catch {
+        if (isMounted) {
+          setStatus('denied');
+        }
+      }
+    }
+
+    void verifyAdmin();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (status === 'loading') {
+    return <div style={routeFallbackStyle}>페이지를 불러오는 중입니다.</div>;
+  }
+
+  if (status === 'denied') {
     return <Navigate replace to={ROUTES.home} />;
   }
 
@@ -44,6 +91,9 @@ export function AppRouter() {
       <Route path={ROUTES.register} element={<LazyRoute><RegisterPage /></LazyRoute>} />
       <Route path={ROUTES.about} element={<LazyRoute><AboutPage /></LazyRoute>} />
       <Route path={ROUTES.calendar} element={<ProtectedRoute><LazyRoute><CalendarPage /></LazyRoute></ProtectedRoute>} />
+      <Route path={ROUTES.admin} element={<AdminRoute><LazyRoute><AdminPage /></LazyRoute></AdminRoute>} />
+      <Route path={ROUTES.adminInquiries} element={<AdminRoute><LazyRoute><AdminInquiryPage /></LazyRoute></AdminRoute>} />
+      <Route path={ROUTES.adminInquiryDetail} element={<AdminRoute><LazyRoute><AdminInquiryDetailPage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.dropdownPreview} element={<LazyRoute><DropdownPreviewPage /></LazyRoute>} />
       <Route path={ROUTES.inputPreview} element={<LazyRoute><InputPreviewPage /></LazyRoute>} />
       <Route path={ROUTES.popupPreview} element={<LazyRoute><PopupPreviewPage /></LazyRoute>} />

@@ -16,6 +16,7 @@ export type HeaderNavItemData = {
   to: To;
   icon?: ReactNode;
   end?: boolean;
+  tone?: 'primary';
 };
 
 export type HeaderLogoData = {
@@ -120,6 +121,7 @@ export type HeaderMobileMenu = {
 
 export type HeaderProps = {
   logo: HeaderLogoData;
+  afterLogo?: ReactNode;
   navItems: HeaderNavItemData[];
   actionType: HeaderActionType;
   profileLabel?: string;
@@ -287,7 +289,7 @@ export function NavItem({ item, isActive }: NavItemProps) {
     <HeaderTextNavLink
       to={item.to}
       end={item.end}
-      className={styles.navItem}
+      className={joinClassNames(styles.navItem, item.tone === 'primary' && styles.navItemPrimary)}
       isActive={isActive}
       ariaLabel={item.label}
     >
@@ -586,6 +588,7 @@ export function HeaderActions({
 
 export function Header({
   logo,
+  afterLogo,
   navItems,
   actionType,
   profileLabel,
@@ -613,6 +616,7 @@ export function Header({
     '--header-brand': colors.brand.primary,
     '--header-text': colors.text.primary,
     '--header-text-hover': colors.text.primary,
+    '--header-nav-primary': colors.brand.primary,
     '--header-profile-background': colors.accent.rose,
     '--header-profile-text': colors.text.primary,
     '--header-focus-ring': colors.accent.rose,
@@ -632,6 +636,7 @@ export function Header({
         <div className={joinClassNames(styles.row, compact && styles.compactRow)}>
           <div className={styles.left}>
             <HeaderLogo logo={logo} />
+            {afterLogo ? <div className={styles.afterLogo}>{afterLogo}</div> : null}
           </div>
           <div className={styles.right}>
             {!compact && navItems.length > 0 ? (
@@ -689,7 +694,10 @@ export function Header({
                   key={item.key}
                   to={item.to}
                   end={item.end}
-                  className={styles.mobileNavItem}
+                  className={joinClassNames(
+                    styles.mobileNavItem,
+                    item.tone === 'primary' && styles.mobileNavItemPrimary,
+                  )}
                   isActive={activeNavKey === item.key}
                   ariaLabel={item.label}
                   onNavigate={mobileMenu.onClose}

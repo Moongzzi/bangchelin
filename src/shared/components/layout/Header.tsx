@@ -34,13 +34,26 @@ const protectedNavigationItems: HeaderNavItemData[] = [
   { key: 'report', label: '문의/제보', to: ROUTES.report },
 ];
 
-function getNavigationItems(isLoggedIn: boolean): HeaderNavItemData[] {
-  return isLoggedIn ? [...publicNavigationItems, ...protectedNavigationItems] : publicNavigationItems;
+const adminNavigationItem: HeaderNavItemData = {
+  key: 'admin',
+  label: '관리자',
+  to: ROUTES.admin,
+  tone: 'primary',
+};
+
+function getNavigationItems(isLoggedIn: boolean, isAdmin: boolean): HeaderNavItemData[] {
+  if (!isLoggedIn) {
+    return publicNavigationItems;
+  }
+
+  return isAdmin
+    ? [...publicNavigationItems, ...protectedNavigationItems, adminNavigationItem]
+    : [...publicNavigationItems, ...protectedNavigationItems];
 }
 
-function getMobileNavigationItems(isLoggedIn: boolean): HeaderNavItemData[] {
+function getMobileNavigationItems(isLoggedIn: boolean, isAdmin: boolean): HeaderNavItemData[] {
   return [
-    ...getNavigationItems(isLoggedIn),
+    ...getNavigationItems(isLoggedIn, isAdmin),
     isLoggedIn
       ? { key: 'profile', label: '프로필', to: ROUTES.profile }
       : { key: 'login', label: '로그인', to: ROUTES.login },
@@ -64,6 +77,10 @@ function getActiveNavKey(pathname: string) {
     return 'report';
   }
 
+  if (pathname.startsWith(ROUTES.admin)) {
+    return 'admin';
+  }
+
   if (pathname.startsWith(ROUTES.profile)) {
     return 'profile';
   }
@@ -72,7 +89,9 @@ function getActiveNavKey(pathname: string) {
 }
 
 function isProtectedPath(pathname: string) {
-  return pathname.startsWith(ROUTES.calendar) || pathname.startsWith(ROUTES.report);
+  return pathname.startsWith(ROUTES.calendar)
+    || pathname.startsWith(ROUTES.report)
+    || pathname.startsWith(ROUTES.admin);
 }
 
 export function Header() {
@@ -202,7 +221,8 @@ export function Header() {
   }, [isLoggedIn]);
 
   const profileName = profile?.nickname || profile?.username || 'Profile';
-  const navItems = getNavigationItems(isLoggedIn);
+  const isAdmin = profile?.role === 'admin';
+  const navItems = getNavigationItems(isLoggedIn, isAdmin);
 
   function handleLogout() {
     const shouldShowProtectedPageNotice = isProtectedPath(pathname);
@@ -283,7 +303,7 @@ export function Header() {
           onToggle: () => setIsMobileMenuOpen((open) => !open),
           onClose: () => setIsMobileMenuOpen(false),
           navAriaLabel: 'Mobile navigation',
-          items: getMobileNavigationItems(isLoggedIn),
+          items: getMobileNavigationItems(isLoggedIn, isAdmin),
         }}
         showBottomBorder
       />

@@ -17,12 +17,49 @@ type InquiryRow = {
   subject: string;
   message: string;
   status: 'submitted' | 'reviewing' | 'resolved' | 'rejected';
+  admin_note?: string | null;
+  handled_by?: string | null;
+  handled_at?: string | null;
   created_at: string;
   updated_at: string;
 };
 
+export type AdminInquiryListItem = {
+  id: string;
+  category: string;
+  subject: string;
+  nickname: string;
+  status: InquiryRow['status'];
+  createdAt: string;
+};
+
+export type AdminInquiryDetail = AdminInquiryListItem & {
+  message: string;
+  adminNote: string;
+  handledBy: string;
+};
+
+export type AdminProfileOption = {
+  id: string;
+  nickname: string;
+  username: string;
+};
+
+export type UpdateAdminInquiryInput = {
+  id: string;
+  handledBy: string;
+  status: Exclude<InquiryRow['status'], 'submitted'>;
+  adminNote: string;
+};
+
 type ProfileNicknameRow = {
   nickname: string | null;
+};
+
+type AdminProfileRow = {
+  id: string;
+  nickname: string | null;
+  username: string | null;
 };
 
 function getRequiredSession() {
@@ -126,6 +163,86 @@ export async function submitInquiry(formData: InquiryFormData) {
 
   if (!row) {
     throw new Error('문의 전송 결과를 확인할 수 없습니다.');
+  }
+
+  return row;
+}
+
+export async function getAdminInquiries() {
+  const session = getRequiredSession();
+  const rows = await restRequest<InquiryRow[]>(
+    '/inquiries?select=id,category,subject,nickname,status,created_at,updated_at&order=created_at.desc',
+    {
+      token: session.access_token,
+    },
+  );
+
+  return rows.map<AdminInquiryListItem>((row) => ({
+    id: row.id,
+    category: row.category,
+    subject: row.subject,
+    nickname: row.nickname,
+    status: row.status,
+    createdAt: row.created_at,
+  }));
+}
+
+export async function getAdminInquiry(inquiryId: string) {
+  const session = getRequiredSession();
+  const [row] = await restRequest<InquiryRow[]>(
+    `/inquiries?id=eq.${inquiryId}&select=id,category,subject,nickname,message,status,admin_note,handled_by,created_at,updated_at`,
+    {
+      token: session.access_token,
+    },
+  );
+
+  if (!row) {
+    throw new Error('문의 상세 정보를 찾을 수 없습니다.');
+  }
+
+  return {
+    id: row.id,
+    category: row.category,
+    subject: row.subject,
+    nickname: row.nickname,
+    message: row.message,
+    status: row.status,
+    adminNote: row.admin_note ?? '',
+    handledBy: row.handled_by ?? '',
+    createdAt: row.created_at,
+  } satisfies AdminInquiryDetail;
+}
+
+export async function getAdminProfiles() {
+  const session = getRequiredSession();
+  const rows = await restRequest<AdminProfileRow[]>(
+    '/profiles?role=eq.admin&select=id,nickname,username&order=nickname.asc',
+    {
+      token: session.access_token,
+    },
+  );
+
+  return rows.map<AdminProfileOption>((row) => ({
+    id: row.id,
+    nickname: row.nickname?.trim() || row.username?.trim() || '관리자',
+    username: row.username?.trim() || '',
+  }));
+}
+
+export async function updateAdminInquiry(input: UpdateAdminInquiryInput) {
+  const session = getRequiredSession();
+  const [row] = await restRequest<InquiryRow[]>(`/inquiries?id=eq.${input.id}`, {
+    method: 'PATCH',
+    token: session.access_token,
+    body: {
+      handled_by: input.handledBy,
+      status: input.status,
+      admin_note: input.adminNote.trim(),
+    },
+  });
+
+  if (!row) {
+    throw new Error('문의 처리 상태를 저장하지 못했습니다.');
   }
 
   return row;
