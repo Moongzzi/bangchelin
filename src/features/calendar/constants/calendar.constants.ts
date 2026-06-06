@@ -50,15 +50,23 @@ export const calendarStatusLabels: Record<CalendarEventStatus, string> = {
 
 export const calendarCategoryLabels: Record<CalendarEventCategory, string> = {
   escape: '방탈출',
-  theater: '연극',
   boardgame: '보드게임',
+  theater: '연극',
+  murder_mystery: '머더 미스터리',
+  game: '게임',
   etc: '기타',
 };
 
 export const calendarLocationRegionLabels: Record<CalendarLocationRegion, string> = {
   seoul: '서울',
-  gyeonggi: '경기',
-  incheon: '인천',
+  gyeonggi_incheon: '경기/인천',
+  gyeonggi: '경기/인천',
+  incheon: '경기/인천',
+  chungcheong: '충청',
+  gyeongsang: '경상',
+  jeolla: '전라',
+  gangwon: '강원',
+  jeju: '제주',
 };
 
 export const calendarStatusTone: Record<
@@ -101,6 +109,16 @@ export const calendarCategoryTone: Record<
     text: colors.semantic.success,
     border: colors.semantic.success,
   },
+  murder_mystery: {
+    background: colors.semantic.warningSoft,
+    text: colors.semantic.warning,
+    border: colors.semantic.warning,
+  },
+  game: {
+    background: colors.semantic.infoSoft,
+    text: colors.accent.navy,
+    border: colors.accent.navy,
+  },
   etc: {
     background: colors.background.secondary,
     text: colors.text.secondary,
@@ -133,7 +151,12 @@ export const calendarCategoryOptions = Object.entries(calendarCategoryLabels).ma
   label,
 }));
 
-export const calendarLocationRegionOptions = Object.entries(calendarLocationRegionLabels).map(([value, label]) => ({
-  value: value as CalendarLocationRegion,
-  label,
-}));
+export const calendarLocationRegionOptions: Array<{ value: CalendarLocationRegion; label: string }> = [
+  { value: 'seoul', label: calendarLocationRegionLabels.seoul },
+  { value: 'gyeonggi_incheon', label: calendarLocationRegionLabels.gyeonggi_incheon },
+  { value: 'chungcheong', label: calendarLocationRegionLabels.chungcheong },
+  { value: 'gyeongsang', label: calendarLocationRegionLabels.gyeongsang },
+  { value: 'jeolla', label: calendarLocationRegionLabels.jeolla },
+  { value: 'gangwon', label: calendarLocationRegionLabels.gangwon },
+  { value: 'jeju', label: calendarLocationRegionLabels.jeju },
+];

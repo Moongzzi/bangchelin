@@ -10,6 +10,7 @@ import {
 
 export type ActivityRegion =
   | 'seoul'
+  | 'gyeonggi_incheon'
   | 'incheon'
   | 'gyeonggi'
   | 'chungcheong'

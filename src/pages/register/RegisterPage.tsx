@@ -46,8 +46,7 @@ const initialFormValues: RegisterFormValues = {
 
 const regionValues: ActivityRegion[] = [
   'seoul',
-  'incheon',
-  'gyeonggi',
+  'gyeonggi_incheon',
   'chungcheong',
   'gyeongsang',
   'jeolla',

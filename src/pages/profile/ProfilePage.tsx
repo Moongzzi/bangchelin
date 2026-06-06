@@ -28,8 +28,7 @@ type PageStatus = 'loading' | 'editing' | 'saving' | 'error' | 'success' | 'empt
 
 const regionValues: ActivityRegion[] = [
   'seoul',
-  'incheon',
-  'gyeonggi',
+  'gyeonggi_incheon',
   'chungcheong',
   'gyeongsang',
   'jeolla',
@@ -38,11 +37,15 @@ const regionValues: ActivityRegion[] = [
 ];
 
 function createInitialValues(profile?: Profile | null): ProfileFormValues {
+  const activityRegion = profile?.activity_region === 'incheon' || profile?.activity_region === 'gyeonggi'
+    ? 'gyeonggi_incheon'
+    : profile?.activity_region ?? '';
+
   return {
     nickname: profile?.nickname ?? '',
     birthDate: profile?.birth_date ?? '',
     introduction: profile?.introduction ?? '',
-    activityRegion: profile?.activity_region ?? '',
+    activityRegion,
     email: profile?.email ?? '',
   };
 }

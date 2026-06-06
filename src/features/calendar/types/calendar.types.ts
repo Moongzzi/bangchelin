@@ -1,8 +1,17 @@
 export type CalendarEventStatus = 'recruiting' | 'closed' | 'done';
 
-export type CalendarEventCategory = 'escape' | 'theater' | 'boardgame' | 'etc';
+export type CalendarEventCategory = 'escape' | 'boardgame' | 'theater' | 'murder_mystery' | 'game' | 'etc';
 
-export type CalendarLocationRegion = 'seoul' | 'gyeonggi' | 'incheon';
+export type CalendarLocationRegion =
+  | 'seoul'
+  | 'gyeonggi_incheon'
+  | 'gyeonggi'
+  | 'incheon'
+  | 'chungcheong'
+  | 'gyeongsang'
+  | 'jeolla'
+  | 'gangwon'
+  | 'jeju';
 
 export type CalendarParticipantStatus = 'confirmed' | 'waitlisted';
 

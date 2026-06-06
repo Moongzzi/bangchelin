@@ -1,6 +1,6 @@
 import type { DropdownOptionData } from '../../shared/components/dropdown';
 
-export type InquiryCategory = 'general' | 'bug' | 'account' | 'partnership' | 'other';
+export type InquiryCategory = 'service' | 'incident' | 'suggestion' | 'other';
 
 export type InquiryFormData = {
   category: string;
@@ -98,9 +98,8 @@ export const inquiryDraftMockConfig = {
 };
 
 export const inquiryTypeOptions: DropdownOptionData[] = [
-  { value: 'general', label: '일반 문의' },
-  { value: 'bug', label: '오류 제보' },
-  { value: 'account', label: '계정 문의' },
-  { value: 'partnership', label: '제휴 문의' },
+  { value: 'service', label: '방슐랭 서비스 문의' },
+  { value: 'incident', label: '사건/사고 제보' },
+  { value: 'suggestion', label: '건의' },
   { value: 'other', label: '기타' },
 ];

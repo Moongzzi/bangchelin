@@ -57,11 +57,11 @@ function detectLocationRegion(location: string): CalendarLocationRegion | '' {
   }
 
   if (gyeonggiLocationKeywords.some((keyword) => location.includes(keyword))) {
-    return 'gyeonggi';
+    return 'gyeonggi_incheon';
   }
 
   if (incheonLocationKeywords.some((keyword) => location.includes(keyword))) {
-    return 'incheon';
+    return 'gyeonggi_incheon';
   }
 
   return '';

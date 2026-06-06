@@ -36,7 +36,7 @@ export const signupPageTokens = {
 export const signupFormConfig = {
   nicknameMaxLength: 8,
   introductionMaxLength: 30,
-  regions: ['서울', '인천', '경기', '충청', '경상', '전라', '강원', '제주'],
+  regions: ['서울', '경기/인천', '충청', '경상', '전라', '강원', '제주'],
 } as const;
 
 export const nicknamePattern = /^[A-Za-z0-9가-힣!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]+$/;
