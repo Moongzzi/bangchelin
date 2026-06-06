@@ -131,6 +131,11 @@ const calendarFilterDropdownStyle = {
   '--dropdown-menu-background': 'var(--calendar-surface-elevated)',
 } as CSSProperties;
 
+function isMobileCalendarViewport() {
+  return typeof window !== 'undefined'
+    && window.matchMedia('(max-width: 767px)').matches;
+}
+
 function createDefaultFormValues(dateKey: string): CalendarEventFormValues {
   return {
     title: '',
@@ -430,6 +435,10 @@ export function CalendarPage() {
     setCurrentMonth(startOfMonth(today));
     setShowDetail(false);
     setSelectedEventId(null);
+
+    if (isMobileCalendarViewport()) {
+      setIsSidebarDrawerOpen(true);
+    }
   }
 
   function updateFilter<Key extends keyof CalendarFilters>(field: Key, value: CalendarFilters[Key]) {
@@ -448,6 +457,10 @@ export function CalendarPage() {
     setCurrentMonth((previousMonth) => (previousMonth.getMonth() === date.getMonth() && previousMonth.getFullYear() === date.getFullYear()
       ? previousMonth
       : startOfMonth(date)));
+
+    if (isMobileCalendarViewport()) {
+      setIsSidebarDrawerOpen(true);
+    }
   }
 
   async function handleSelectEvent(eventId: string) {
