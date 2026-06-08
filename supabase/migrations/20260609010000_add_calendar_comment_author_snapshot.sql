@@ -1,8 +1,14 @@
 alter table public.calendar_event_comments
   add column if not exists author_nickname text;
 
+alter table public.calendar_event_comments
+  add column if not exists author_avatar_url text;
+
 comment on column public.calendar_event_comments.author_nickname
   is 'Nickname snapshot used to render calendar comments even when profile embedding is unavailable.';
+
+comment on column public.calendar_event_comments.author_avatar_url
+  is 'Profile avatar URL snapshot used to render calendar comments.';
 
 create or replace function public.resolve_calendar_comment_author_nickname(p_user_id uuid)
 returns text
@@ -38,6 +44,18 @@ begin
 end;
 $$;
 
+create or replace function public.resolve_calendar_comment_author_avatar_url(p_user_id uuid)
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+  select nullif(trim(p.avatar_url), '')
+  from public.profiles p
+  where p.id = p_user_id
+  limit 1;
+$$;
+
 create or replace function public.set_calendar_event_comment_owner()
 returns trigger
 language plpgsql
@@ -47,6 +65,7 @@ as $$
 begin
   new.user_id = auth.uid();
   new.author_nickname = public.resolve_calendar_comment_author_nickname(new.user_id);
+  new.author_avatar_url = public.resolve_calendar_comment_author_avatar_url(new.user_id);
   return new;
 end;
 $$;
@@ -55,5 +74,10 @@ update public.calendar_event_comments c
 set author_nickname = public.resolve_calendar_comment_author_nickname(c.user_id)
 where c.author_nickname is null
    or length(trim(c.author_nickname)) = 0;
+
+update public.calendar_event_comments c
+set author_avatar_url = public.resolve_calendar_comment_author_avatar_url(c.user_id)
+where c.author_avatar_url is null
+   or length(trim(c.author_avatar_url)) = 0;
 
 notify pgrst, 'reload schema';

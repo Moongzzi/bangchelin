@@ -682,7 +682,7 @@
 
 .commentItem {
   display: grid;
-  grid-template-columns: 16px minmax(0, 1fr);
+  grid-template-columns: 18px minmax(0, 1fr);
   gap: 8px;
   align-items: start;
 }
@@ -722,12 +722,27 @@
   margin-top: 10px;
 }
 
-.commentDot {
-  width: 16px;
-  height: 16px;
-  margin-top: 4px;
+.commentAvatar {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-top: 3px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--calendar-text-primary) 68%, white);
+  background: color-mix(in srgb, var(--calendar-brand-primary) 12%, var(--calendar-surface-elevated));
+  color: var(--calendar-brand-primary);
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.commentAvatarImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .commentComposer {

@@ -300,7 +300,13 @@ export function EventDetailPanel({
   function renderComment(comment: CalendarEventComment, depth = 0) {
     return (
       <div key={comment.id} className={`${styles.commentItem} ${depth > 0 ? styles.commentReplyItem : ''}`.trim()}>
-        <span className={styles.commentDot} aria-hidden="true" />
+        <span className={styles.commentAvatar} aria-hidden="true">
+          {comment.avatarUrl ? (
+            <img src={comment.avatarUrl} alt="" className={styles.commentAvatarImage} />
+          ) : (
+            getParticipantInitial(comment.author)
+          )}
+        </span>
         <div className={styles.commentBody}>
           <div className={styles.commentHeader}>
             <p className={styles.detailMetaText}>{comment.author}</p>

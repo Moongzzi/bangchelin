@@ -56,6 +56,7 @@ type CalendarEventCommentRow = {
   parent_id: string | null;
   user_id: string;
   author_nickname?: string | null;
+  author_avatar_url?: string | null;
   content: string;
   created_at: string;
   updated_at: string;
@@ -105,6 +106,7 @@ function toFlatComment(row: CalendarEventCommentRow): CalendarEventComment {
     parentId: row.parent_id,
     userId: row.user_id,
     author: row.author_nickname?.trim() || row.profiles?.nickname?.trim() || '알 수 없는 사용자',
+    avatarUrl: row.author_avatar_url ?? null,
     content: row.content,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -260,7 +262,7 @@ const eventSelect = [
   'comments',
   'profiles!calendar_events_created_by_profiles_fkey(id,nickname,avatar_url)',
   'calendar_event_participants(id,profile_id,display_name,status,sort_order,created_at,profiles(avatar_url))',
-  'calendar_event_comments(id,event_id,parent_id,user_id,author_nickname,content,created_at,updated_at)',
+  'calendar_event_comments(id,event_id,parent_id,user_id,author_nickname,author_avatar_url,content,created_at,updated_at)',
 ].join(',');
 
 const legacyEventSelect = [
@@ -309,7 +311,7 @@ function isMissingAuthorProfileRelationshipError(error: unknown) {
 function isMissingCommentAuthorSnapshotError(error: unknown) {
   return error instanceof Error
     && error.message.includes('calendar_event_comments')
-    && error.message.includes('author_nickname')
+    && (error.message.includes('author_nickname') || error.message.includes('author_avatar_url'))
     && error.message.includes('does not exist');
 }
 

@@ -35,6 +35,7 @@ export type CalendarEventComment = {
   parentId?: string | null;
   userId?: string;
   author: string;
+  avatarUrl?: string | null;
   content: string;
   createdAt?: string;
   updatedAt?: string;
