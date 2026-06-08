@@ -13,7 +13,8 @@ export type HeaderActionType = 'hamburger' | 'profile' | 'loginIcon' | 'none';
 export type HeaderNavItemData = {
   key: string;
   label: string;
-  to: To;
+  to?: To;
+  onClick?: () => void;
   icon?: ReactNode;
   end?: boolean;
   tone?: 'primary';
@@ -285,6 +286,10 @@ export function HeaderLogo({ logo }: HeaderLogoProps) {
 }
 
 export function NavItem({ item, isActive }: NavItemProps) {
+  if (!item.to) {
+    return null;
+  }
+
   return (
     <HeaderTextNavLink
       to={item.to}
@@ -689,23 +694,44 @@ export function Header({
               className={styles.mobileNav}
               aria-label={mobileMenu.navAriaLabel ?? navAriaLabel}
             >
-              {mobileNavItems.map((item) => (
-                <HeaderTextNavLink
-                  key={item.key}
-                  to={item.to}
-                  end={item.end}
-                  className={joinClassNames(
-                    styles.mobileNavItem,
-                    item.tone === 'primary' && styles.mobileNavItemPrimary,
-                  )}
-                  isActive={activeNavKey === item.key}
-                  ariaLabel={item.label}
-                  onNavigate={mobileMenu.onClose}
-                >
-                  {item.icon ? <span className={styles.navIcon}>{item.icon}</span> : null}
-                  <span>{item.label}</span>
-                </HeaderTextNavLink>
-              ))}
+              {mobileNavItems.map((item) => {
+                const itemClassName = joinClassNames(
+                  styles.mobileNavItem,
+                  item.tone === 'primary' && styles.mobileNavItemPrimary,
+                );
+                const content = (
+                  <>
+                    {item.icon ? <span className={styles.navIcon}>{item.icon}</span> : null}
+                    <span>{item.label}</span>
+                  </>
+                );
+
+                return item.to ? (
+                  <HeaderTextNavLink
+                    key={item.key}
+                    to={item.to}
+                    end={item.end}
+                    className={itemClassName}
+                    isActive={activeNavKey === item.key}
+                    ariaLabel={item.label}
+                    onNavigate={mobileMenu.onClose}
+                  >
+                    {content}
+                  </HeaderTextNavLink>
+                ) : (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className={itemClassName}
+                    onClick={() => {
+                      mobileMenu.onClose?.();
+                      item.onClick?.();
+                    }}
+                  >
+                    {content}
+                  </button>
+                );
+              })}
             </nav>
             {mobileMenu.footerContent ? (
               <div className={styles.mobilePanelFooter}>{mobileMenu.footerContent}</div>

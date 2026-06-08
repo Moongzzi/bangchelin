@@ -147,10 +147,15 @@
   gap: 10px;
   width: 100%;
   padding: 14px 0;
+  border: 0;
+  background: transparent;
   color: var(--header-text);
+  font-family: var(--font-sans);
   font-size: 0.9375rem;
   line-height: 1.2;
   font-weight: 600;
+  text-align: left;
+  cursor: pointer;
 }
 
 .mobileNavItemPrimary {
@@ -516,6 +521,7 @@
 .iconButton:focus-visible,
 .profileBadge:focus-visible,
 .profileMenuItem:focus-visible,
+.mobileNavItem:focus-visible,
 .notificationItem:focus-visible,
 .notificationReadAll:focus-visible {
   outline: 2px solid var(--header-focus-ring);

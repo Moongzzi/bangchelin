@@ -51,12 +51,15 @@ function getNavigationItems(isLoggedIn: boolean, isAdmin: boolean): HeaderNavIte
     : [...publicNavigationItems, ...protectedNavigationItems];
 }
 
-function getMobileNavigationItems(isLoggedIn: boolean, isAdmin: boolean): HeaderNavItemData[] {
+function getMobileNavigationItems(isLoggedIn: boolean, isAdmin: boolean, onLogout: () => void): HeaderNavItemData[] {
   return [
     ...getNavigationItems(isLoggedIn, isAdmin),
-    isLoggedIn
-      ? { key: 'profile', label: '프로필', to: ROUTES.profile }
-      : { key: 'login', label: '로그인', to: ROUTES.login },
+    ...(isLoggedIn
+      ? [
+          { key: 'profile', label: '프로필', to: ROUTES.profile },
+          { key: 'logout', label: '로그아웃', onClick: onLogout },
+        ]
+      : [{ key: 'login', label: '로그인', to: ROUTES.login }]),
   ];
 }
 
@@ -303,7 +306,7 @@ export function Header() {
           onToggle: () => setIsMobileMenuOpen((open) => !open),
           onClose: () => setIsMobileMenuOpen(false),
           navAriaLabel: 'Mobile navigation',
-          items: getMobileNavigationItems(isLoggedIn, isAdmin),
+          items: getMobileNavigationItems(isLoggedIn, isAdmin, handleLogout),
         }}
         showBottomBorder
       />
