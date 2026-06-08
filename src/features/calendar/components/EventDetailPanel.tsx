@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type FormEvent } from 'react';
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 
 import {
   calendarCategoryLabels,
@@ -161,6 +161,24 @@ function getKakaoSdk() {
   });
 }
 
+function getKakaoKey() {
+  return import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY as string | undefined;
+}
+
+async function prepareKakaoShare(kakaoKey: string) {
+  const kakao = await getKakaoSdk();
+
+  if (!kakao.isInitialized()) {
+    kakao.init(kakaoKey);
+  }
+
+  if (!kakao.Share) {
+    throw new Error('카카오 공유 기능을 사용할 수 없습니다.');
+  }
+
+  return kakao.Share;
+}
+
 async function copyShareUrl(shareUrl: string) {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(shareUrl);
@@ -247,6 +265,21 @@ export function EventDetailPanel({
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [shareMessage, setShareMessage] = useState('');
 
+  useEffect(() => {
+    if (!selectedEvent) {
+      return;
+    }
+
+    const kakaoKey = getKakaoKey();
+    if (!kakaoKey) {
+      return;
+    }
+
+    void prepareKakaoShare(kakaoKey).catch(() => {
+      // The visible fallback is handled when the user taps the Kakao share action.
+    });
+  }, [selectedEvent]);
+
   async function handleSubmitComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -332,7 +365,7 @@ export function EventDetailPanel({
       return;
     }
 
-    const kakaoKey = import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY as string | undefined;
+    const kakaoKey = getKakaoKey();
     const shareUrl = getEventShareUrl(selectedEvent.id);
     const authorName = selectedEvent.author?.nickname ?? selectedEvent.organizer ?? '작성자 정보 없음';
     const dateTimeText = formatDateTimeRange(
@@ -352,17 +385,19 @@ export function EventDetailPanel({
     }
 
     try {
-      const kakao = await getKakaoSdk();
+      const kakaoShare = window.Kakao?.isInitialized() && window.Kakao.Share
+        ? window.Kakao.Share
+        : null;
 
-      if (!kakao.isInitialized()) {
-        kakao.init(kakaoKey);
+      if (!kakaoShare) {
+        setShareMessage('카카오 공유를 준비 중입니다. 잠시 후 다시 눌러주세요.');
+        void prepareKakaoShare(kakaoKey)
+          .then(() => setShareMessage('카카오 공유 준비가 완료되었습니다. 다시 눌러주세요.'))
+          .catch(() => setShareMessage('카카오 SDK를 불러오지 못했습니다. 링크 복사를 이용해주세요.'));
+        return;
       }
 
-      if (!kakao.Share) {
-        throw new Error('카카오 공유 기능을 사용할 수 없습니다.');
-      }
-
-      kakao.Share.sendDefault({
+      kakaoShare.sendDefault({
         objectType: 'feed',
         content: {
           title,
