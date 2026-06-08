@@ -55,6 +55,7 @@ type CalendarEventCommentRow = {
   event_id: string;
   parent_id: string | null;
   user_id: string;
+  author_nickname?: string | null;
   content: string;
   created_at: string;
   updated_at: string;
@@ -103,7 +104,7 @@ function toFlatComment(row: CalendarEventCommentRow): CalendarEventComment {
     eventId: row.event_id,
     parentId: row.parent_id,
     userId: row.user_id,
-    author: row.profiles?.nickname?.trim() || '탈퇴한 사용자',
+    author: row.author_nickname?.trim() || row.profiles?.nickname?.trim() || '알 수 없는 사용자',
     content: row.content,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -259,7 +260,7 @@ const eventSelect = [
   'comments',
   'profiles!calendar_events_created_by_profiles_fkey(id,nickname,avatar_url)',
   'calendar_event_participants(id,profile_id,display_name,status,sort_order,created_at,profiles(avatar_url))',
-  'calendar_event_comments(id,event_id,parent_id,user_id,content,created_at,updated_at,profiles(nickname))',
+  'calendar_event_comments(id,event_id,parent_id,user_id,author_nickname,content,created_at,updated_at)',
 ].join(',');
 
 const legacyEventSelect = [
@@ -305,6 +306,13 @@ function isMissingAuthorProfileRelationshipError(error: unknown) {
     );
 }
 
+function isMissingCommentAuthorSnapshotError(error: unknown) {
+  return error instanceof Error
+    && error.message.includes('calendar_event_comments')
+    && error.message.includes('author_nickname')
+    && error.message.includes('does not exist');
+}
+
 export async function getCalendarEventsByRange(startDate: string, endDate: string) {
   const session = getRequiredSession();
 
@@ -328,7 +336,7 @@ export async function getCalendarEventsByRange(startDate: string, endDate: strin
       return rows.map(toCalendarEvent);
     }
 
-    if (!isMissingParticipantStatusError(error)) {
+    if (!isMissingParticipantStatusError(error) && !isMissingCommentAuthorSnapshotError(error)) {
       throw error;
     }
 
@@ -366,7 +374,7 @@ export async function getCalendarEvent(eventId: string) {
       return row ? toCalendarEvent(row) : null;
     }
 
-    if (!isMissingParticipantStatusError(error)) {
+    if (!isMissingParticipantStatusError(error) && !isMissingCommentAuthorSnapshotError(error)) {
       throw error;
     }
 
