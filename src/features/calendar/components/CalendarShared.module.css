@@ -493,6 +493,50 @@
   flex-shrink: 0;
 }
 
+.detailShareWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.detailShareMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 8;
+  width: 168px;
+  padding: 8px;
+  border: 1px solid var(--calendar-border-subtle);
+  border-radius: 8px;
+  background: var(--calendar-surface-elevated);
+  box-shadow: 0 16px 36px rgba(32, 28, 25, 0.14);
+}
+
+.detailShareMenuButton {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--calendar-text-primary);
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+}
+
+.detailShareMenuButton:hover {
+  background: color-mix(in srgb, var(--calendar-brand-primary) 10%, transparent);
+}
+
+.detailShareMessage {
+  margin: 6px 2px 0;
+  color: var(--calendar-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
 .detailTitle {
   font-size: 1.1rem;
   line-height: 1.4;
@@ -1521,6 +1565,7 @@
 }
 
 .externalGuestButton:focus-visible,
+.detailShareMenuButton:focus-visible,
 .participantChipRemoveButton:focus-visible {
   outline: 2px solid var(--calendar-focus-ring);
   outline-offset: 2px;

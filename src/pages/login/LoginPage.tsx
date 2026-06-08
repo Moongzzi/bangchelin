@@ -1,6 +1,6 @@
 import type { ChangeEvent, CSSProperties, FormEvent } from 'react';
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { signInWithUsername } from '../../features/auth/auth.api';
 import { InputField } from '../../shared/components/input-field';
@@ -47,6 +47,8 @@ function hasValidationErrors(errors: LoginFormErrors) {
 export function LoginPage() {
   const assetBasePath = import.meta.env.BASE_URL;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirectTo');
   const [formValues, setFormValues] = useState<LoginFormValues>(initialFormValues);
   const [formErrors, setFormErrors] = useState<LoginFormErrors>({});
   const [keepSignedIn, setKeepSignedIn] = useState(false);
@@ -165,7 +167,7 @@ export function LoginPage() {
         kind: 'success',
         message: '로그인되었습니다.',
       });
-      navigate(ROUTES.home);
+      navigate(redirectTo && redirectTo.startsWith('/') ? redirectTo : ROUTES.home, { replace: true });
     } catch (error) {
       setSubmissionState({
         kind: 'error',

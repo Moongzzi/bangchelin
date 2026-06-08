@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { ConfirmDialog } from '../../features/calendar/components/ConfirmDialog';
 import { EventCreateModal } from '../../features/calendar/components/EventCreateModal';
@@ -266,8 +267,10 @@ function getValidationMessage(values: CalendarEventFormValues) {
 }
 
 export function CalendarPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
   const today = useMemo(() => parseDateKey(todayKey), [todayKey]);
+  const sharedEventId = searchParams.get('event');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [currentMonth, setCurrentMonth] = useState<Date>(() => startOfMonth(today));
   const [selectedDate, setSelectedDate] = useState<Date | null>(today);
@@ -281,6 +284,7 @@ export function CalendarPage() {
   const [commentError, setCommentError] = useState('');
   const [attendanceSubmitting, setAttendanceSubmitting] = useState(false);
   const [attendanceError, setAttendanceError] = useState('');
+  const [openedSharedEventId, setOpenedSharedEventId] = useState<string | null>(null);
   const [filters, setFilters] = useState<CalendarFilters>(defaultCalendarFilters);
   const [modalState, setModalState] = useState<ModalState>(() => {
     const defaultValues = createDefaultFormValues(todayKey);
@@ -369,6 +373,56 @@ export function CalendarPage() {
       isMounted = false;
     };
   }, [visibleRange.endDate, visibleRange.startDate]);
+
+  useEffect(() => {
+    if (!sharedEventId || openedSharedEventId === sharedEventId) {
+      return;
+    }
+
+    const eventId = sharedEventId;
+    let isMounted = true;
+
+    async function openSharedEvent() {
+      try {
+        const sharedEvent = await getCalendarEvent(eventId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (!sharedEvent) {
+          setOpenedSharedEventId(eventId);
+          openNotice('공유 일정 열기 실패', '공유된 일정을 찾을 수 없습니다.');
+          return;
+        }
+
+        setEvents((currentEvents) => [
+          ...currentEvents.filter((event) => event.id !== sharedEvent.id),
+          sharedEvent,
+        ]);
+        setSelectedDate(parseDateKey(sharedEvent.date));
+        setSelectedEventId(sharedEvent.id);
+        setShowDetail(true);
+        setCurrentMonth(startOfMonth(parseDateKey(sharedEvent.date)));
+        setAttendanceError('');
+        setCommentError('');
+        setOpenedSharedEventId(eventId);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setOpenedSharedEventId(eventId);
+        openNotice('공유 일정 열기 실패', error instanceof Error ? error.message : '공유된 일정을 불러오지 못했습니다.');
+      }
+    }
+
+    void openSharedEvent();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [openedSharedEventId, sharedEventId]);
 
   useEffect(() => {
     if (selectedEventId && !filteredEvents.some((event) => event.id === selectedEventId)) {
@@ -504,6 +558,12 @@ export function CalendarPage() {
   function closeDetailPanel() {
     // Only hide the detail panel and clear the selected event.
     // Do NOT clear `selectedDate` so the left panel and calendar remain focused on the selected date.
+    if (searchParams.has('event')) {
+      const nextSearchParams = new URLSearchParams(searchParams);
+      nextSearchParams.delete('event');
+      setSearchParams(nextSearchParams, { replace: true });
+    }
+
     setShowDetail(false);
     setSelectedEventId(null);
   }

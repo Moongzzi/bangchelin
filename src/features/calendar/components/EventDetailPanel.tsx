@@ -8,6 +8,7 @@ import {
 } from '../constants/calendar.constants';
 import type { CalendarEvent, CalendarEventComment, CalendarEventParticipant } from '../types/calendar.types';
 import { formatDateTimeRange, formatShortDateLabel } from '../utils/calendarDate.utils';
+import { ROUTES } from '../../../shared/constants/routes';
 import styles from './CalendarShared.module.css';
 
 type EventDetailPanelProps = {
@@ -26,6 +27,43 @@ type EventDetailPanelProps = {
   commentError?: string;
   onClose: () => void;
 };
+
+type KakaoShareApi = {
+  sendDefault: (options: {
+    objectType: 'feed';
+    content: {
+      title: string;
+      description: string;
+      imageUrl?: string;
+      link: {
+        mobileWebUrl: string;
+        webUrl: string;
+      };
+    };
+    buttons: Array<{
+      title: string;
+      link: {
+        mobileWebUrl: string;
+        webUrl: string;
+      };
+    }>;
+  }) => void;
+};
+
+type KakaoSdk = {
+  isInitialized: () => boolean;
+  init: (key: string) => void;
+  Share?: KakaoShareApi;
+};
+
+declare global {
+  interface Window {
+    Kakao?: KakaoSdk;
+  }
+}
+
+const kakaoSdkScriptId = 'kakao-javascript-sdk';
+const kakaoSdkUrl = 'https://t1.kakaocdn.net/kakao_js_sdk/2.8.1/kakao.min.js';
 
 function toneStyle(background: string, text: string, border: string) {
   return {
@@ -52,12 +90,92 @@ function TrashIcon() {
   );
 }
 
+function ShareIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true">
+      <path d="M8 12h8M16 12l-3-3m3 3-3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 6H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h4M14 6h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function CloseIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" width="18" height="18" aria-hidden="true">
       <path d="M6 6 18 18M18 6 6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
+}
+
+function getEventShareUrl(eventId: string) {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+  const sharePath = `${basePath}${ROUTES.calendar}` || ROUTES.calendar;
+  const shareUrl = new URL(sharePath, window.location.origin);
+  shareUrl.searchParams.set('event', eventId);
+  return shareUrl.toString();
+}
+
+function getKakaoSdk() {
+  return new Promise<KakaoSdk>((resolve, reject) => {
+    if (typeof window === 'undefined') {
+      reject(new Error('브라우저에서만 공유할 수 있습니다.'));
+      return;
+    }
+
+    if (window.Kakao) {
+      resolve(window.Kakao);
+      return;
+    }
+
+    const existingScript = document.getElementById(kakaoSdkScriptId) as HTMLScriptElement | null;
+    if (existingScript) {
+      existingScript.addEventListener('load', () => {
+        if (window.Kakao) {
+          resolve(window.Kakao);
+        } else {
+          reject(new Error('카카오 SDK를 불러오지 못했습니다.'));
+        }
+      }, { once: true });
+      existingScript.addEventListener('error', () => reject(new Error('카카오 SDK를 불러오지 못했습니다.')), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = kakaoSdkScriptId;
+    script.src = kakaoSdkUrl;
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    script.onload = () => {
+      if (window.Kakao) {
+        resolve(window.Kakao);
+      } else {
+        reject(new Error('카카오 SDK를 불러오지 못했습니다.'));
+      }
+    };
+    script.onerror = () => reject(new Error('카카오 SDK를 불러오지 못했습니다.'));
+    document.head.appendChild(script);
+  });
+}
+
+async function copyShareUrl(shareUrl: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(shareUrl);
+    return;
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = shareUrl;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
 }
 
 function getParticipantInitial(displayName: string) {
@@ -126,6 +244,8 @@ export function EventDetailPanel({
 }: EventDetailPanelProps) {
   const [commentContent, setCommentContent] = useState('');
   const [replyTarget, setReplyTarget] = useState<CalendarEventComment | null>(null);
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [shareMessage, setShareMessage] = useState('');
 
   async function handleSubmitComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -166,6 +286,108 @@ export function EventDetailPanel({
         </div>
       </div>
     );
+  }
+
+  async function handleCopyShareLink() {
+    if (!selectedEvent) {
+      return;
+    }
+
+    try {
+      await copyShareUrl(getEventShareUrl(selectedEvent.id));
+      setShareMessage('링크를 복사했습니다.');
+    } catch {
+      setShareMessage('링크 복사에 실패했습니다.');
+    }
+  }
+
+  async function handleNativeShare() {
+    if (!selectedEvent) {
+      return;
+    }
+
+    const shareUrl = getEventShareUrl(selectedEvent.id);
+    const shareText = `${formatDateTimeRange(selectedEvent.date, selectedEvent.endDate ?? selectedEvent.date, selectedEvent.startTime, selectedEvent.endTime)} · ${selectedEvent.location}`;
+
+    if (!navigator.share) {
+      await handleCopyShareLink();
+      return;
+    }
+
+    try {
+      await navigator.share({
+        title: selectedEvent.title,
+        text: shareText,
+        url: shareUrl,
+      });
+      setShareMenuOpen(false);
+      setShareMessage('');
+    } catch {
+      // Browser share sheets reject when the user cancels. Keep the menu open without surfacing an error.
+    }
+  }
+
+  async function handleKakaoShare() {
+    if (!selectedEvent) {
+      return;
+    }
+
+    const kakaoKey = import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY as string | undefined;
+    const shareUrl = getEventShareUrl(selectedEvent.id);
+    const authorName = selectedEvent.author?.nickname ?? selectedEvent.organizer ?? '작성자 정보 없음';
+    const dateTimeText = formatDateTimeRange(
+      selectedEvent.date,
+      selectedEvent.endDate ?? selectedEvent.date,
+      selectedEvent.startTime,
+      selectedEvent.endTime,
+    );
+    const participantSummary = `${selectedEvent.currentParticipants}/${selectedEvent.capacity}`;
+    const title = `[${calendarStatusLabels[selectedEvent.status]}] ${participantSummary} • ${selectedEvent.title}`;
+    const description = `작성자 : ${authorName} / ${dateTimeText} / ${selectedEvent.location}`;
+
+    if (!kakaoKey) {
+      await handleCopyShareLink();
+      setShareMessage('카카오 키가 없어 링크를 복사했습니다.');
+      return;
+    }
+
+    try {
+      const kakao = await getKakaoSdk();
+
+      if (!kakao.isInitialized()) {
+        kakao.init(kakaoKey);
+      }
+
+      if (!kakao.Share) {
+        throw new Error('카카오 공유 기능을 사용할 수 없습니다.');
+      }
+
+      kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title,
+          description,
+          link: {
+            mobileWebUrl: shareUrl,
+            webUrl: shareUrl,
+          },
+        },
+        buttons: [
+          {
+            title: '일정 보기',
+            link: {
+              mobileWebUrl: shareUrl,
+              webUrl: shareUrl,
+            },
+          },
+        ],
+      });
+      setShareMenuOpen(false);
+      setShareMessage('');
+    } catch {
+      await handleCopyShareLink();
+      setShareMessage('카카오 공유에 실패해 링크를 복사했습니다.');
+    }
   }
 
   if (!selectedDateKey) {
@@ -225,6 +447,34 @@ export function EventDetailPanel({
           <h2 className={styles.detailTitle}>{selectedEvent.title}</h2>
         </div>
         <div className={styles.detailActionRow}>
+          <div className={styles.detailShareWrap}>
+            <button
+              type="button"
+              className={styles.detailCloseButton}
+              onClick={() => {
+                setShareMenuOpen((isOpen) => !isOpen);
+                setShareMessage('');
+              }}
+              aria-label="일정 공유"
+              aria-expanded={shareMenuOpen}
+            >
+              <ShareIcon />
+            </button>
+            {shareMenuOpen ? (
+              <div className={styles.detailShareMenu} role="menu" aria-label="일정 공유 메뉴">
+                <button type="button" className={styles.detailShareMenuButton} onClick={handleKakaoShare} role="menuitem">
+                  카카오톡으로 공유
+                </button>
+                <button type="button" className={styles.detailShareMenuButton} onClick={handleCopyShareLink} role="menuitem">
+                  링크 복사
+                </button>
+                <button type="button" className={styles.detailShareMenuButton} onClick={handleNativeShare} role="menuitem">
+                  외부로 공유
+                </button>
+                {shareMessage ? <p className={styles.detailShareMessage}>{shareMessage}</p> : null}
+              </div>
+            ) : null}
+          </div>
           {canManageEvent ? (
             <>
               <button type="button" className={styles.detailCloseButton} onClick={() => onEditEvent(selectedEvent)} aria-label="일정 수정">

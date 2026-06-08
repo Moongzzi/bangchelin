@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 
 import { getMyProfile } from '../../features/auth/auth.api';
 import { HomePage } from '../../pages/home/HomePage';
@@ -32,9 +32,23 @@ function LazyRoute({ children }: { children: ReactNode }) {
   return <Suspense fallback={<div style={routeFallbackStyle}>페이지를 불러오는 중입니다.</div>}>{children}</Suspense>;
 }
 
+function HomeRoute() {
+  const [searchParams] = useSearchParams();
+  const sharedEventId = searchParams.get('event');
+
+  if (sharedEventId) {
+    return <Navigate replace to={`${ROUTES.calendar}?event=${encodeURIComponent(sharedEventId)}`} />;
+  }
+
+  return <HomePage />;
+}
+
 function ProtectedRoute({ children }: { children: ReactNode }) {
+  const location = useLocation();
+
   if (!getSession()) {
-    return <Navigate replace to={ROUTES.home} />;
+    const redirectTo = `${location.pathname}${location.search}`;
+    return <Navigate replace to={`${ROUTES.login}?redirectTo=${encodeURIComponent(redirectTo)}`} />;
   }
 
   return children;
@@ -86,7 +100,7 @@ function AdminRoute({ children }: { children: ReactNode }) {
 export function AppRouter() {
   return (
     <Routes>
-      <Route path={ROUTES.home} element={<HomePage />} />
+      <Route path={ROUTES.home} element={<HomeRoute />} />
       <Route path={ROUTES.login} element={<LazyRoute><LoginPage /></LazyRoute>} />
       <Route path={ROUTES.register} element={<LazyRoute><RegisterPage /></LazyRoute>} />
       <Route path={ROUTES.about} element={<LazyRoute><AboutPage /></LazyRoute>} />
