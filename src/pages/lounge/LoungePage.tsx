@@ -273,7 +273,7 @@ export function LoungePage() {
             <p className={styles.eyebrow}>BANGCHELIN LOUNGE</p>
             <h1 id="lounge-title" className={styles.title}>라운지</h1>
             <p className={styles.description}>
-              게임, 퀴즈, 이벤트를 지도와 목록에서 탐색하는 인터랙티브 콘텐츠 허브입니다.
+              여러 콘텐츠들을 제공할 방슐랭 라운지 입니다.
             </p>
           </div>
 
