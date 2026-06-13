@@ -37,6 +37,18 @@ export type MazeAttempt = {
   clearRank: number | null;
 };
 
+export type MazeRankingMetric = 'clear_order' | 'elapsed_time';
+
+export type MazeRankingEntry = {
+  userId: string;
+  nickname: string;
+  clearedAt: string;
+  totalElapsedSeconds: number;
+  clearRank: number;
+  elapsedRank: number;
+  isMe: boolean;
+};
+
 export type MazeAnswerResult = {
   isCorrect: boolean;
   currentQuestionNo: number;

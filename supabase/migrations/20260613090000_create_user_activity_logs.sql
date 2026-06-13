@@ -251,6 +251,7 @@ begin
     'calendar_event_comments',
     'lounge_contents',
     'lounge_content_nodes',
+    'lounge_event_configs',
     'lounge_activity_logs',
     'lounge_rankings',
     'lounge_settings',

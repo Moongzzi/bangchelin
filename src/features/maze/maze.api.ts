@@ -1,5 +1,13 @@
 import { getSession, restRequest } from '../../shared/api/supabaseRest';
-import type { MazeAnswerResult, MazeAttempt, MazeAttemptStatus, MazeQuestion, MazeQuizSet } from './types/maze.types';
+import type {
+  MazeAnswerResult,
+  MazeAttempt,
+  MazeAttemptStatus,
+  MazeQuestion,
+  MazeQuizSet,
+  MazeRankingEntry,
+  MazeRankingMetric,
+} from './types/maze.types';
 
 type MazeQuizSetRow = {
   id: string;
@@ -44,6 +52,16 @@ type MazeAnswerResultRow = {
   cleared_at: string | null;
   total_elapsed_seconds: number | null;
   clear_rank: number | null;
+};
+
+type MazeRankingEntryRow = {
+  user_id: string;
+  nickname: string | null;
+  cleared_at: string;
+  total_elapsed_seconds: number;
+  clear_rank: number;
+  elapsed_rank: number;
+  is_me: boolean;
 };
 
 function getRequiredSession() {
@@ -109,6 +127,18 @@ function toMazeAnswerResult(row: MazeAnswerResultRow): MazeAnswerResult {
   };
 }
 
+function toMazeRankingEntry(row: MazeRankingEntryRow): MazeRankingEntry {
+  return {
+    userId: row.user_id,
+    nickname: row.nickname?.trim() || '알 수 없음',
+    clearedAt: row.cleared_at,
+    totalElapsedSeconds: row.total_elapsed_seconds,
+    clearRank: row.clear_rank,
+    elapsedRank: row.elapsed_rank,
+    isMe: row.is_me,
+  };
+}
+
 export async function getMazeQuizSets() {
   const session = getRequiredSession();
   const rows = await restRequest<MazeQuizSetRow[]>(
@@ -155,6 +185,21 @@ export async function getMyMazeAttempt(setId: string) {
   );
 
   return row ? toMazeAttempt(row) : null;
+}
+
+export async function getMazeRanking(setId: string, metric: MazeRankingMetric, limit = 50) {
+  const session = getRequiredSession();
+  const rows = await restRequest<MazeRankingEntryRow[]>('/rpc/get_maze_ranking', {
+    method: 'POST',
+    token: session.access_token,
+    body: {
+      p_set_id: setId,
+      p_metric: metric,
+      p_limit: limit,
+    },
+  });
+
+  return rows.map(toMazeRankingEntry);
 }
 
 export async function startMazeAttempt(setId: string) {

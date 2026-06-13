@@ -407,6 +407,10 @@ button.manageLink:disabled {
   grid-column: span 2;
 }
 
+.fullWidthField {
+  grid-column: 1 / -1;
+}
+
 .positionField {
   grid-column: span 2;
 }
@@ -498,6 +502,34 @@ button.manageLink:disabled {
   color: var(--admin-lounge-muted);
   font-size: 0.78rem;
   white-space: nowrap;
+}
+
+.descriptionBlockEditor {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.descriptionBlock {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid var(--admin-lounge-border);
+  border-radius: 0.5rem;
+  background: #fffdf9;
+}
+
+.descriptionImageFields {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.descriptionImagePreview {
+  width: 100%;
+  max-height: 18rem;
+  object-fit: contain;
+  border: 1px solid var(--admin-lounge-border);
+  border-radius: 0.5rem;
+  background: #f9f5ee;
 }
 
 .actionRow {

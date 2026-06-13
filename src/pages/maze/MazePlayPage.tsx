@@ -216,6 +216,15 @@ export function MazePlayPage() {
                     <img src={set.endImageUrl} alt="미궁 종료 페이지" className={styles.questionImage} />
                   </div>
                 ) : null}
+                <div className={styles.actionRow}>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={() => navigate('/lounge/maze')}
+                  >
+                    목록으로
+                  </button>
+                </div>
               </div>
             </section>
           ) : null}

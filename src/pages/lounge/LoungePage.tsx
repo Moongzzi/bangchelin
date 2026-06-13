@@ -10,7 +10,7 @@ import { ROUTES } from '../../shared/constants/routes';
 import styles from './LoungePage.module.css';
 
 type PageStatus = 'loading' | 'ready' | 'error';
-type NoticeType = 'member' | 'comingSoon' | null;
+type NoticeType = 'member' | 'comingSoon' | 'eventLocked' | null;
 
 type NodeStyle = CSSProperties & {
   '--node-x': string;
@@ -55,6 +55,47 @@ function canDisplayInMode(node: LoungeNode, viewMode: LoungeViewMode) {
   return node.displayMode === 'both' || node.displayMode === viewMode;
 }
 
+function getEventOpenTime(node: LoungeNode) {
+  const opensAt = node.content.eventConfig?.opensAt ?? null;
+
+  return opensAt ? new Date(opensAt).getTime() : null;
+}
+
+function isEventLocked(node: LoungeNode, now: number) {
+  const openTime = getEventOpenTime(node);
+
+  return openTime !== null && openTime > now;
+}
+
+function formatCountdown(milliseconds: number) {
+  const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) {
+    return `${days}일 ${hours.toString().padStart(2, '0')}시간`;
+  }
+
+  return [hours, minutes, seconds]
+    .map((value) => value.toString().padStart(2, '0'))
+    .join(':');
+}
+
+function getNodeStatusLabel(node: LoungeNode, now: number) {
+  if (!node.isEnabled) {
+    return '준비 중';
+  }
+
+  if (isEventLocked(node, now)) {
+    const openTime = getEventOpenTime(node) ?? now;
+    return `오픈까지 ${formatCountdown(openTime - now)}`;
+  }
+
+  return typeLabelMap[node.content.contentType];
+}
+
 export function LoungePage() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<LoungeViewMode>('map');
@@ -63,7 +104,14 @@ export function LoungePage() {
   const [settings, setSettings] = useState<LoungeSettings | null>(null);
   const [noticeType, setNoticeType] = useState<NoticeType>(null);
   const [selectedNode, setSelectedNode] = useState<LoungeNode | null>(null);
+  const [now, setNow] = useState(Date.now());
   const anonymousId = useMemo(getAnonymousId, []);
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => setNow(Date.now()), 1000);
+
+    return () => window.clearInterval(timerId);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -153,6 +201,21 @@ export function LoungePage() {
       return;
     }
 
+    if (isEventLocked(node, now)) {
+      openNotice('eventLocked', node);
+      void recordLoungeActivity({
+        anonymousId,
+        contentId: node.content.id,
+        eventType: 'event_locked_click',
+        eventPayload: {
+          slug: node.content.slug,
+          opensAt: node.content.eventConfig?.opensAt,
+          viewMode,
+        },
+      });
+      return;
+    }
+
     void recordLoungeActivity({
       anonymousId,
       contentId: node.content.id,
@@ -162,7 +225,7 @@ export function LoungePage() {
         viewMode,
       },
     });
-    navigate(node.content.routePath);
+    navigate(node.content.eventConfig?.targetRoutePath ?? node.content.routePath);
   }
 
   const noticeActions: PopupAction[] = noticeType === 'member'
@@ -190,10 +253,17 @@ export function LoungePage() {
         },
       ];
 
-  const noticeTitle = noticeType === 'member' ? '로그인이 필요합니다' : '준비 중인 콘텐츠입니다';
+  const eventOpenTime = selectedNode ? getEventOpenTime(selectedNode) : null;
+  const noticeTitle = noticeType === 'member'
+    ? '로그인이 필요합니다'
+    : noticeType === 'eventLocked'
+      ? '아직 오픈 전 이벤트입니다'
+      : '준비 중인 콘텐츠입니다';
   const noticeDescription = noticeType === 'member'
     ? '이 콘텐츠는 로그인 후 이용할 수 있습니다.'
-    : `${selectedNode?.content.title ?? '선택한 콘텐츠'}는 아직 제작 중입니다. 라운지 메인에서 먼저 위치와 흐름을 확인해 주세요.`;
+    : noticeType === 'eventLocked' && eventOpenTime
+      ? `${selectedNode?.content.title ?? '선택한 이벤트'}는 ${new Date(eventOpenTime).toLocaleString('ko-KR')}에 오픈됩니다.`
+      : `${selectedNode?.content.title ?? '선택한 콘텐츠'}는 아직 시작 전입니다. 라운지 메인에서 위치와 이름을 확인해주세요.`;
 
   return (
     <PageShell>
@@ -201,11 +271,9 @@ export function LoungePage() {
         <section className={styles.hero} aria-labelledby="lounge-title">
           <div className={styles.heroCopy}>
             <p className={styles.eyebrow}>BANGCHELIN LOUNGE</p>
-            <h1 id="lounge-title" className={styles.title}>
-              라운지
-            </h1>
+            <h1 id="lounge-title" className={styles.title}>라운지</h1>
             <p className={styles.description}>
-              게임, 퀴즈, 랭킹, 시즌 이벤트가 차례대로 열리는 인터랙티브 콘텐츠 허브입니다.
+              게임, 퀴즈, 이벤트를 지도와 목록에서 탐색하는 인터랙티브 콘텐츠 허브입니다.
             </p>
           </div>
 
@@ -237,7 +305,7 @@ export function LoungePage() {
 
         {status === 'error' ? (
           <section className={styles.statePanel} role="alert">
-            라운지를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+            라운지를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
           </section>
         ) : null}
 
@@ -295,7 +363,7 @@ export function LoungePage() {
                       </span>
                       <span className={styles.nodeText}>
                         <strong>{node.nodeLabel ?? node.content.title}</strong>
-                        <span>{node.isEnabled ? typeLabelMap[node.content.contentType] : '준비 중'}</span>
+                        <span>{getNodeStatusLabel(node, now)}</span>
                       </span>
                     </button>
                   );
@@ -327,7 +395,7 @@ export function LoungePage() {
                       </span>
                       <span className={styles.cardBody}>
                         <span className={styles.cardMeta}>
-                          {typeLabelMap[node.content.contentType]} · {node.isEnabled ? '이용 가능' : '준비 중'}
+                          {typeLabelMap[node.content.contentType]} · {getNodeStatusLabel(node, now)}
                         </span>
                         <strong className={styles.cardTitle}>{node.content.title}</strong>
                         <span className={styles.cardSummary}>{node.content.summary}</span>

@@ -1,8 +1,13 @@
 import { getSession, restRequest, uploadStorageObject } from '../../shared/api/supabaseRest';
 import type {
   LoungeAccessLevel,
+  LoungeContentDescriptionBlock,
   LoungeContentType,
   LoungeDisplayMode,
+  LoungeEventConfig,
+  LoungeEventRankConditionType,
+  LoungeEventRankingMetric,
+  LoungeEventRankingSource,
   LoungeNode,
   LoungeSettings,
 } from './types/lounge.types';
@@ -20,6 +25,21 @@ type LoungeContentRow = {
   route_path: string;
   thumbnail_url: string | null;
   tags: string[] | null;
+  metadata: Record<string, unknown> | null;
+  lounge_event_configs?: LoungeEventConfigRow | LoungeEventConfigRow[] | null;
+};
+
+type LoungeEventConfigRow = {
+  id: string;
+  content_id: string;
+  opens_at: string | null;
+  closes_at: string | null;
+  target_route_path: string | null;
+  ranking_source: LoungeEventRankingSource;
+  ranking_metric: LoungeEventRankingMetric;
+  ranking_target_id: string | null;
+  reward_rank_limit: number;
+  rank_condition_type: LoungeEventRankConditionType;
 };
 
 type AdminLoungeNodeRow = {
@@ -59,7 +79,83 @@ export type AdminLoungeNodeUpdateInput = {
   sortOrder: number;
 };
 
+export type AdminLoungeEventConfigInput = {
+  contentId: string;
+  title: string;
+  subtitle: string;
+  summary: string;
+  opensAt: string;
+  closesAt: string;
+  targetRoutePath: string;
+  rankingSource: LoungeEventRankingSource;
+  rankingMetric: LoungeEventRankingMetric;
+  rankingTargetId: string;
+  rewardRankLimit: number;
+  rankConditionType: LoungeEventRankConditionType;
+  metadata: Record<string, unknown>;
+  descriptionBlocks: LoungeContentDescriptionBlock[];
+};
+
 export type LoungeAssetKind = 'pin' | 'card';
+
+function toDescriptionBlocks(metadata: Record<string, unknown> | null): LoungeContentDescriptionBlock[] {
+  const blocks = metadata?.descriptionBlocks;
+
+  if (!Array.isArray(blocks)) {
+    return [];
+  }
+
+  return blocks.reduce<LoungeContentDescriptionBlock[]>((items, block, index) => {
+    if (!block || typeof block !== 'object') {
+      return items;
+    }
+
+    const record = block as Record<string, unknown>;
+    const id = typeof record.id === 'string' && record.id.trim() ? record.id : `block-${index}`;
+
+    if (record.type === 'text' && typeof record.text === 'string' && record.text.trim()) {
+      items.push({
+        id,
+        type: 'text',
+        text: record.text,
+      });
+    }
+
+    if (record.type === 'image' && typeof record.imageUrl === 'string' && record.imageUrl.trim()) {
+      items.push({
+        id,
+        type: 'image',
+        imageUrl: record.imageUrl,
+        alt: typeof record.alt === 'string' ? record.alt : '',
+        caption: typeof record.caption === 'string' ? record.caption : undefined,
+      });
+    }
+
+    return items;
+  }, []);
+}
+
+function normalizeDescriptionBlocks(blocks: LoungeContentDescriptionBlock[]) {
+  return blocks
+    .map((block) => {
+      if (block.type === 'text') {
+        return {
+          id: block.id,
+          type: block.type,
+          text: block.text.trim(),
+        };
+      }
+
+      return {
+        id: block.id,
+        type: block.type,
+        imageUrl: block.imageUrl.trim(),
+        alt: block.alt.trim(),
+        caption: block.caption?.trim() || undefined,
+      };
+    })
+    .filter((block) => block.type === 'text' ? Boolean(block.text) : Boolean(block.imageUrl));
+}
 
 function getRequiredSession() {
   const session = getSession();
@@ -72,6 +168,10 @@ function getRequiredSession() {
 }
 
 function normalizeContent(row: LoungeContentRow) {
+  const eventConfigRow = Array.isArray(row.lounge_event_configs)
+    ? row.lounge_event_configs[0]
+    : row.lounge_event_configs;
+
   return {
     id: row.id,
     slug: row.slug,
@@ -83,6 +183,24 @@ function normalizeContent(row: LoungeContentRow) {
     routePath: row.route_path,
     thumbnailUrl: row.thumbnail_url,
     tags: row.tags ?? [],
+    metadata: row.metadata ?? {},
+    descriptionBlocks: toDescriptionBlocks(row.metadata),
+    eventConfig: eventConfigRow ? toLoungeEventConfig(eventConfigRow) : null,
+  };
+}
+
+function toLoungeEventConfig(row: LoungeEventConfigRow): LoungeEventConfig {
+  return {
+    id: row.id,
+    contentId: row.content_id,
+    opensAt: row.opens_at,
+    closesAt: row.closes_at,
+    targetRoutePath: row.target_route_path,
+    rankingSource: row.ranking_source,
+    rankingMetric: row.ranking_metric,
+    rankingTargetId: row.ranking_target_id,
+    rewardRankLimit: row.reward_rank_limit,
+    rankConditionType: row.rank_condition_type ?? 'top',
   };
 }
 
@@ -122,7 +240,7 @@ function toLoungeSettings(row: LoungeSettingsRow): LoungeSettings {
 export async function getAdminLoungeNodes() {
   const session = getRequiredSession();
   const rows = await restRequest<AdminLoungeNodeRow[]>(
-    '/lounge_content_nodes?select=id,content_id,is_enabled,display_mode,zone,map_x,map_y,node_label,node_icon_url,node_variant,node_theme_color,sort_order,lounge_contents(id,slug,title,subtitle,summary,content_type,access_level,route_path,thumbnail_url,tags)&order=sort_order.asc',
+    '/lounge_content_nodes?select=id,content_id,is_enabled,display_mode,zone,map_x,map_y,node_label,node_icon_url,node_variant,node_theme_color,sort_order,lounge_contents(id,slug,title,subtitle,summary,content_type,access_level,route_path,thumbnail_url,tags,metadata,lounge_event_configs(id,content_id,opens_at,closes_at,target_route_path,ranking_source,ranking_metric,ranking_target_id,reward_rank_limit,rank_condition_type))&order=sort_order.asc',
     {
       token: session.access_token,
     },
@@ -136,7 +254,7 @@ export async function getAdminLoungeNodes() {
 export async function getAdminLoungeNode(nodeId: string) {
   const session = getRequiredSession();
   const [row] = await restRequest<AdminLoungeNodeRow[]>(
-    `/lounge_content_nodes?id=eq.${nodeId}&select=id,content_id,is_enabled,display_mode,zone,map_x,map_y,node_label,node_icon_url,node_variant,node_theme_color,sort_order,lounge_contents(id,slug,title,subtitle,summary,content_type,access_level,route_path,thumbnail_url,tags)`,
+    `/lounge_content_nodes?id=eq.${nodeId}&select=id,content_id,is_enabled,display_mode,zone,map_x,map_y,node_label,node_icon_url,node_variant,node_theme_color,sort_order,lounge_contents(id,slug,title,subtitle,summary,content_type,access_level,route_path,thumbnail_url,tags,metadata,lounge_event_configs(id,content_id,opens_at,closes_at,target_route_path,ranking_source,ranking_metric,ranking_target_id,reward_rank_limit,rank_condition_type))`,
     {
       token: session.access_token,
     },
@@ -218,6 +336,59 @@ export async function updateAdminLoungeNode(input: AdminLoungeNodeUpdateInput) {
   return nodes.find((node) => node.id === input.id) ?? null;
 }
 
+export async function updateAdminLoungeEventConfig(input: AdminLoungeEventConfigInput) {
+  const session = getRequiredSession();
+  const title = input.title.trim();
+
+  if (!title) {
+    throw new Error('이벤트 제목을 입력해주세요.');
+  }
+
+  await restRequest<LoungeContentRow[]>(`/lounge_contents?id=eq.${input.contentId}`, {
+    method: 'PATCH',
+    token: session.access_token,
+    body: {
+      title,
+      subtitle: input.subtitle.trim() || null,
+      summary: input.summary.trim() || null,
+      metadata: {
+        ...input.metadata,
+        descriptionBlocks: normalizeDescriptionBlocks(input.descriptionBlocks),
+      },
+      updated_at: new Date().toISOString(),
+    },
+    headers: {
+      Prefer: 'return=minimal',
+    },
+  });
+
+  const [row] = await restRequest<LoungeEventConfigRow[]>('/lounge_event_configs?on_conflict=content_id', {
+    method: 'POST',
+    token: session.access_token,
+    body: {
+      content_id: input.contentId,
+      opens_at: input.opensAt.trim() ? new Date(input.opensAt).toISOString() : null,
+      closes_at: input.closesAt.trim() ? new Date(input.closesAt).toISOString() : null,
+      target_route_path: input.targetRoutePath.trim() || null,
+      ranking_source: input.rankingSource,
+      ranking_metric: input.rankingMetric,
+      ranking_target_id: input.rankingTargetId.trim() || null,
+      reward_rank_limit: input.rewardRankLimit,
+      rank_condition_type: input.rankConditionType,
+      updated_at: new Date().toISOString(),
+    },
+    headers: {
+      Prefer: 'resolution=merge-duplicates,return=representation',
+    },
+  });
+
+  if (!row) {
+    throw new Error('이벤트 설정 저장 결과를 확인할 수 없습니다.');
+  }
+
+  return toLoungeEventConfig(row);
+}
+
 export async function uploadLoungeNodeAsset(nodeId: string, kind: LoungeAssetKind, file: File) {
   const session = getRequiredSession();
   const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
@@ -230,6 +401,14 @@ export async function uploadLoungeMapBackground(file: File) {
   const session = getRequiredSession();
   const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
   const objectPath = `map/background-${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+  return uploadStorageObject(loungeAssetBucket, objectPath, file, session.access_token);
+}
+
+export async function uploadLoungeContentAsset(contentId: string, file: File) {
+  const session = getRequiredSession();
+  const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'png';
+  const objectPath = `contents/${contentId}/body-${Date.now()}-${crypto.randomUUID()}.${extension}`;
 
   return uploadStorageObject(loungeAssetBucket, objectPath, file, session.access_token);
 }
