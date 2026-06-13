@@ -489,9 +489,19 @@
     width: 100%;
   }
 
-  .mapCanvas {
-    min-height: 38rem;
+  .mapSection {
     overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.75rem;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mapCanvas {
+    width: 54rem;
+    min-width: 54rem;
+    min-height: 38rem;
+    overflow: hidden;
   }
 
   .mapNode {

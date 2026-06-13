@@ -219,6 +219,23 @@ export async function startMazeAttempt(setId: string) {
   return toMazeAttempt(row);
 }
 
+export async function restartMazeAttempt(setId: string) {
+  const session = getRequiredSession();
+  const [row] = await restRequest<MazeAttemptRow[]>('/rpc/restart_maze_attempt', {
+    method: 'POST',
+    token: session.access_token,
+    body: {
+      p_set_id: setId,
+    },
+  });
+
+  if (!row) {
+    throw new Error('誘멸턿 吏꾪뻾 ?뺣낫瑜?珥덇린?뷀븷 ???놁뒿?덈떎.');
+  }
+
+  return toMazeAttempt(row);
+}
+
 export async function submitMazeAnswer(questionId: string, answer: string) {
   const session = getRequiredSession();
   const [row] = await restRequest<MazeAnswerResultRow[]>('/rpc/submit_maze_answer', {

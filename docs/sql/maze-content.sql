@@ -212,6 +212,7 @@ to authenticated
 using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
 
 drop function if exists public.start_maze_attempt(uuid);
+drop function if exists public.restart_maze_attempt(uuid);
 drop function if exists public.submit_maze_start_answer(uuid, text);
 drop function if exists public.submit_maze_answer(uuid, text);
 
@@ -263,6 +264,72 @@ begin
   set updated_at = now()
   returning * into v_attempt;
  
+  return query
+  select
+    v_attempt.id,
+    v_attempt.set_id,
+    v_attempt.user_id,
+    v_attempt.status,
+    v_attempt.current_question_no,
+    v_attempt.started_at,
+    v_attempt.cleared_at,
+    v_attempt.total_elapsed_seconds,
+    v_attempt.clear_rank;
+end;
+$$;
+
+create or replace function public.restart_maze_attempt(p_set_id uuid)
+returns table (
+  id uuid,
+  set_id uuid,
+  user_id uuid,
+  status public.maze_attempt_status,
+  current_question_no integer,
+  started_at timestamptz,
+  cleared_at timestamptz,
+  total_elapsed_seconds integer,
+  clear_rank integer
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_attempt public.maze_attempts;
+  v_start_question_no integer;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication required';
+  end if;
+
+  select case when s.has_start_page then 0 else 1 end
+  into v_start_question_no
+  from public.maze_quiz_sets as s
+  where s.id = p_set_id
+    and s.status = 'published';
+
+  if v_start_question_no is null then
+    raise exception 'Maze set is not available';
+  end if;
+
+  if not exists (select 1 from public.profiles as p where p.id = auth.uid()) then
+    raise exception 'Profile not found for current user';
+  end if;
+
+  if not exists (select 1 from public.maze_questions as q where q.set_id = p_set_id) then
+    raise exception 'Maze questions are not configured';
+  end if;
+
+  insert into public.maze_attempts (set_id, user_id, status, current_question_no, started_at)
+  values (p_set_id, auth.uid(), 'in_progress', v_start_question_no, now())
+  on conflict on constraint maze_attempts_set_id_user_id_key do update
+  set
+    status = 'in_progress',
+    current_question_no = excluded.current_question_no,
+    started_at = now(),
+    updated_at = now()
+  returning * into v_attempt;
+
   return query
   select
     v_attempt.id,
@@ -407,13 +474,17 @@ begin
       into v_clear_rank
       from public.maze_attempts as a
       where a.set_id = v_question.set_id
-        and a.status = 'cleared';
+        and a.cleared_at is not null
+        and a.id <> v_attempt.id;
 
       update public.maze_attempts
       set
         status = 'cleared',
-        cleared_at = now(),
-        total_elapsed_seconds = greatest(0, floor(extract(epoch from (now() - maze_attempts.started_at)))::integer),
+        cleared_at = coalesce(maze_attempts.cleared_at, now()),
+        total_elapsed_seconds = coalesce(
+          maze_attempts.total_elapsed_seconds,
+          greatest(0, floor(extract(epoch from (now() - maze_attempts.started_at)))::integer)
+        ),
         clear_rank = coalesce(maze_attempts.clear_rank, v_clear_rank),
         updated_at = now()
       where maze_attempts.id = v_attempt.id
@@ -432,6 +503,7 @@ end;
 $$;
 
 grant execute on function public.start_maze_attempt(uuid) to authenticated;
+grant execute on function public.restart_maze_attempt(uuid) to authenticated;
 grant execute on function public.submit_maze_start_answer(uuid, text) to authenticated;
 grant execute on function public.submit_maze_answer(uuid, text) to authenticated;
 

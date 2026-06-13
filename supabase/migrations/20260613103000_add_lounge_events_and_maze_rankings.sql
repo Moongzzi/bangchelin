@@ -41,6 +41,8 @@ alter table public.lounge_event_configs
   check (rank_condition_type in ('top', 'exact'));
 
 drop index if exists public.lounge_event_configs_active_open_idx;
+drop index if exists public.maze_attempts_set_clear_order_idx;
+drop index if exists public.maze_attempts_set_elapsed_idx;
 
 create index if not exists lounge_event_configs_open_idx
   on public.lounge_event_configs (opens_at);
@@ -71,11 +73,175 @@ with check (public.is_admin());
 
 create index if not exists maze_attempts_set_clear_order_idx
   on public.maze_attempts (set_id, clear_rank asc, cleared_at asc)
-  where status = 'cleared';
+  where cleared_at is not null;
 
 create index if not exists maze_attempts_set_elapsed_idx
   on public.maze_attempts (set_id, total_elapsed_seconds asc, cleared_at asc)
-  where status = 'cleared';
+  where cleared_at is not null;
+
+drop function if exists public.restart_maze_attempt(uuid);
+create or replace function public.restart_maze_attempt(p_set_id uuid)
+returns table (
+  id uuid,
+  set_id uuid,
+  user_id uuid,
+  status public.maze_attempt_status,
+  current_question_no integer,
+  started_at timestamptz,
+  cleared_at timestamptz,
+  total_elapsed_seconds integer,
+  clear_rank integer
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_attempt public.maze_attempts;
+  v_start_question_no integer;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication required';
+  end if;
+
+  select case when s.has_start_page then 0 else 1 end
+  into v_start_question_no
+  from public.maze_quiz_sets as s
+  where s.id = p_set_id
+    and s.status = 'published';
+
+  if v_start_question_no is null then
+    raise exception 'Maze set is not available';
+  end if;
+
+  if not exists (select 1 from public.profiles as p where p.id = auth.uid()) then
+    raise exception 'Profile not found for current user';
+  end if;
+
+  if not exists (select 1 from public.maze_questions as q where q.set_id = p_set_id) then
+    raise exception 'Maze questions are not configured';
+  end if;
+
+  insert into public.maze_attempts (set_id, user_id, status, current_question_no, started_at)
+  values (p_set_id, auth.uid(), 'in_progress', v_start_question_no, now())
+  on conflict on constraint maze_attempts_set_id_user_id_key do update
+  set
+    status = 'in_progress',
+    current_question_no = excluded.current_question_no,
+    started_at = now(),
+    updated_at = now()
+  returning * into v_attempt;
+
+  return query
+  select
+    v_attempt.id,
+    v_attempt.set_id,
+    v_attempt.user_id,
+    v_attempt.status,
+    v_attempt.current_question_no,
+    v_attempt.started_at,
+    v_attempt.cleared_at,
+    v_attempt.total_elapsed_seconds,
+    v_attempt.clear_rank;
+end;
+$$;
+
+drop function if exists public.submit_maze_answer(uuid, text);
+create or replace function public.submit_maze_answer(p_question_id uuid, p_answer text)
+returns table (
+  is_correct boolean,
+  current_question_no integer,
+  status public.maze_attempt_status,
+  cleared_at timestamptz,
+  total_elapsed_seconds integer,
+  clear_rank integer
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_question public.maze_questions;
+  v_answer public.maze_question_answers;
+  v_attempt public.maze_attempts;
+  v_last_question_no integer;
+  v_is_correct boolean;
+  v_clear_rank integer;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication required';
+  end if;
+
+  select * into v_question from public.maze_questions as q where q.id = p_question_id;
+  if v_question.id is null then
+    raise exception 'Question not found';
+  end if;
+
+  select *
+  into v_attempt
+  from public.maze_attempts as a
+  where a.set_id = v_question.set_id
+    and a.user_id = auth.uid();
+
+  if v_attempt.id is null then
+    raise exception 'Maze attempt not found';
+  end if;
+
+  if v_attempt.status = 'cleared' then
+    return query
+    select true, v_attempt.current_question_no, v_attempt.status, v_attempt.cleared_at, v_attempt.total_elapsed_seconds, v_attempt.clear_rank;
+    return;
+  end if;
+
+  if v_question.question_no <> v_attempt.current_question_no then
+    raise exception 'This question is not currently open';
+  end if;
+
+  select * into v_answer from public.maze_question_answers as ans where ans.question_id = p_question_id;
+  if v_answer.question_id is null then
+    raise exception 'Answer is not configured';
+  end if;
+
+  v_is_correct := lower(rtrim(coalesce(p_answer, ''))) = lower(rtrim(v_answer.answer_text));
+
+  insert into public.maze_answer_logs (attempt_id, question_id, submitted_answer, is_correct)
+  values (v_attempt.id, p_question_id, coalesce(p_answer, ''), v_is_correct);
+
+  if v_is_correct then
+    select max(q.question_no) into v_last_question_no from public.maze_questions as q where q.set_id = v_question.set_id;
+
+    if v_question.question_no >= v_last_question_no then
+      select count(*) + 1
+      into v_clear_rank
+      from public.maze_attempts as a
+      where a.set_id = v_question.set_id
+        and a.cleared_at is not null
+        and a.id <> v_attempt.id;
+
+      update public.maze_attempts
+      set
+        status = 'cleared',
+        cleared_at = coalesce(maze_attempts.cleared_at, now()),
+        total_elapsed_seconds = coalesce(
+          maze_attempts.total_elapsed_seconds,
+          greatest(0, floor(extract(epoch from (now() - maze_attempts.started_at)))::integer)
+        ),
+        clear_rank = coalesce(maze_attempts.clear_rank, v_clear_rank),
+        updated_at = now()
+      where maze_attempts.id = v_attempt.id
+      returning * into v_attempt;
+    else
+      update public.maze_attempts
+      set current_question_no = v_question.question_no + 1, updated_at = now()
+      where maze_attempts.id = v_attempt.id
+      returning * into v_attempt;
+    end if;
+  end if;
+
+  return query
+  select v_is_correct, v_attempt.current_question_no, v_attempt.status, v_attempt.cleared_at, v_attempt.total_elapsed_seconds, v_attempt.clear_rank;
+end;
+$$;
 
 drop function if exists public.get_maze_ranking(uuid, text, integer);
 create or replace function public.get_maze_ranking(
@@ -113,7 +279,6 @@ as $$
     from public.maze_attempts a
     join public.profiles p on p.id = a.user_id
     where a.set_id = p_set_id
-      and a.status = 'cleared'
       and a.cleared_at is not null
   ),
   top_ranked as (
@@ -149,6 +314,8 @@ as $$
 $$;
 
 grant execute on function public.get_maze_ranking(uuid, text, integer) to authenticated;
+grant execute on function public.restart_maze_attempt(uuid) to authenticated;
+grant execute on function public.submit_maze_answer(uuid, text) to authenticated;
 
 insert into public.lounge_contents (
   slug,

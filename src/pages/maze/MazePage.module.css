@@ -93,10 +93,11 @@
 }
 
 .setCard {
-  display: grid;
-  grid-template-rows: 12rem minmax(0, 1fr);
+  position: relative;
+  display: block;
   overflow: hidden;
-  min-height: 25rem;
+  aspect-ratio: 1 / 1.1;
+  min-height: 20rem;
   border: 1px solid #cfd8d0;
   border-radius: 0.5rem;
   background: #fffdf9;
@@ -115,8 +116,16 @@
   box-shadow: 0 1.25rem 2.5rem rgba(32, 28, 25, 0.12);
 }
 
+.setCard:hover .cardBody,
+.setCard:focus-visible .cardBody {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .cardMedia {
   display: grid;
+  width: 100%;
+  height: 100%;
   place-items: center;
   overflow: hidden;
   background:
@@ -137,10 +146,22 @@
 }
 
 .cardBody {
+  position: absolute;
+  inset: auto 0 0;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   padding: 1.15rem;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 249, 0.9), rgba(255, 253, 249, 0.98)),
+    #fffdf9;
+  border-top: 1px solid rgba(207, 216, 208, 0.72);
+  box-shadow: 0 -1rem 2rem rgba(32, 28, 25, 0.1);
+  opacity: 0;
+  transform: translateY(1rem);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
 }
 
 .cardMeta,
@@ -368,6 +389,9 @@
 
 .primaryButton,
 .answerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0 1rem;
   background: #31493c;
   color: #fff8f2;
@@ -558,8 +582,7 @@
   }
 
   .setCard {
-    grid-template-rows: 9rem minmax(0, 1fr);
-    min-height: 21rem;
+    min-height: 19rem;
   }
 
   .coverMedia {

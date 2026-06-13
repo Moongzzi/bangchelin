@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { getMazeQuizSet, getMazeRanking, getMyMazeAttempt, startMazeAttempt } from '../../features/maze/maze.api';
+import { getMazeQuizSet, getMazeRanking, getMyMazeAttempt, restartMazeAttempt, startMazeAttempt } from '../../features/maze/maze.api';
 import { getMazeRankingDisplayEntries } from '../../features/maze/mazeRankingDisplay';
 import type { MazeAttempt, MazeQuizSet, MazeRankingEntry, MazeRankingMetric } from '../../features/maze/types/maze.types';
 import { PageShell } from '../../shared/components/layout/PageShell';
@@ -111,7 +111,7 @@ export function MazeSetCoverPage() {
     try {
       setIsStarting(true);
       setStartError('');
-      await startMazeAttempt(set.id);
+      await (attempt?.status === 'cleared' ? restartMazeAttempt(set.id) : startMazeAttempt(set.id));
       navigate(`/lounge/maze/${set.slug}/play`);
     } catch {
       setStartError('플레이를 시작하지 못했습니다. 잠시 후 다시 시도해주세요.');
@@ -167,7 +167,7 @@ export function MazeSetCoverPage() {
                       disabled={isStarting || set.questionCount === 0}
                       onClick={() => void handleStart()}
                     >
-                      {isStarting ? '시작 중' : attempt ? '이어 플레이' : '플레이 시작'}
+                      {isStarting ? '시작 중' : attempt?.status === 'cleared' ? '다시하기' : attempt ? '이어 플레이' : '플레이 시작'}
                     </button>
                     <Link to="/lounge/maze" className={styles.secondaryButton}>목록으로</Link>
                   </div>

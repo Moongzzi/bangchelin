@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   getMazeQuestions,
   getMazeQuizSet,
+  restartMazeAttempt,
   startMazeAttempt,
   submitMazeAnswer,
   submitMazeStartAnswer,
@@ -63,6 +64,7 @@ export function MazePlayPage() {
   const [answer, setAnswer] = useState('');
   const [status, setStatus] = useState<PageStatus>('loading');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
   const [feedback, setFeedback] = useState({ type: 'neutral' as FeedbackType, message: '' });
   const [now, setNow] = useState(Date.now());
 
@@ -137,6 +139,26 @@ export function MazePlayPage() {
     setSelectedQuestionNo(questionNo);
     setAnswer('');
     setFeedback({ type: 'neutral', message: '' });
+  }
+
+  async function handleRestart() {
+    if (!set) {
+      return;
+    }
+
+    try {
+      setIsRestarting(true);
+      const nextAttempt = await restartMazeAttempt(set.id);
+      setAttempt(nextAttempt);
+      setSelectedQuestionNo(getSelectedQuestionNo(set, questions, nextAttempt));
+      setAnswer('');
+      setFeedback({ type: 'neutral', message: '' });
+      setNow(Date.now());
+    } catch {
+      setFeedback({ type: 'error', message: '미궁을 다시 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.' });
+    } finally {
+      setIsRestarting(false);
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -219,12 +241,30 @@ export function MazePlayPage() {
                 <div className={styles.actionRow}>
                   <button
                     type="button"
+                    className={styles.primaryButton}
+                    disabled={isRestarting}
+                    onClick={() => void handleRestart()}
+                  >
+                    {isRestarting ? '시작 중' : '다시하기'}
+                  </button>
+                  <button
+                    type="button"
                     className={styles.secondaryButton}
                     onClick={() => navigate('/lounge/maze')}
                   >
                     목록으로
                   </button>
                 </div>
+                {feedback.message ? (
+                  <p
+                    className={`${styles.feedback} ${
+                      feedback.type === 'error' ? styles.feedbackError : ''
+                    } ${feedback.type === 'success' ? styles.feedbackSuccess : ''}`}
+                    role={feedback.type === 'error' ? 'alert' : 'status'}
+                  >
+                    {feedback.message}
+                  </p>
+                ) : null}
               </div>
             </section>
           ) : null}
