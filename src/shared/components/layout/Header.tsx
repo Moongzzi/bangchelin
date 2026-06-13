@@ -25,12 +25,12 @@ const logo = {
 } as const;
 
 const publicNavigationItems: HeaderNavItemData[] = [
-  { key: 'home', label: '홈', to: ROUTES.home, end: true },
   { key: 'guide', label: '가이드', to: ROUTES.about },
 ];
 
 const protectedNavigationItems: HeaderNavItemData[] = [
   { key: 'calendar', label: '캘린더', to: ROUTES.calendar },
+  { key: 'lounge', label: '라운지' },
   { key: 'report', label: '문의/제보', to: ROUTES.report },
 ];
 
@@ -64,10 +64,6 @@ function getMobileNavigationItems(isLoggedIn: boolean, isAdmin: boolean, onLogou
 }
 
 function getActiveNavKey(pathname: string) {
-  if (pathname === ROUTES.home) {
-    return 'home';
-  }
-
   if (pathname.startsWith(ROUTES.about)) {
     return 'guide';
   }

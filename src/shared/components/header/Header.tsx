@@ -287,7 +287,17 @@ export function HeaderLogo({ logo }: HeaderLogoProps) {
 
 export function NavItem({ item, isActive }: NavItemProps) {
   if (!item.to) {
-    return null;
+    return (
+      <button
+        type="button"
+        className={joinClassNames(styles.navItem, item.tone === 'primary' && styles.navItemPrimary)}
+        aria-label={item.label}
+        onClick={item.onClick}
+      >
+        {item.icon ? <span className={styles.navIcon}>{item.icon}</span> : null}
+        <span>{item.label}</span>
+      </button>
+    );
   }
 
   return (

@@ -120,6 +120,8 @@
   align-items: center;
   gap: 8px;
   padding: 6px 0;
+  border: 0;
+  background: transparent;
   color: var(--header-text);
   font-family: var(--font-sans);
   font-size: 0.875rem;
@@ -127,6 +129,7 @@
   letter-spacing: -0.2px;
   font-weight: 600;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .navItemActive {
