@@ -25,8 +25,8 @@ const logo = {
 } as const;
 
 const publicNavigationItems: HeaderNavItemData[] = [
-  { key: 'home', label: '홈', to: ROUTES.home, end: true },
   { key: 'guide', label: '가이드', to: ROUTES.about },
+  { key: 'lounge', label: '라운지', to: ROUTES.lounge },
 ];
 
 const protectedNavigationItems: HeaderNavItemData[] = [
@@ -64,16 +64,16 @@ function getMobileNavigationItems(isLoggedIn: boolean, isAdmin: boolean, onLogou
 }
 
 function getActiveNavKey(pathname: string) {
-  if (pathname === ROUTES.home) {
-    return 'home';
-  }
-
   if (pathname.startsWith(ROUTES.about)) {
     return 'guide';
   }
 
   if (pathname.startsWith(ROUTES.calendar)) {
     return 'calendar';
+  }
+
+  if (pathname.startsWith(ROUTES.lounge)) {
+    return 'lounge';
   }
 
   if (pathname.startsWith(ROUTES.report)) {

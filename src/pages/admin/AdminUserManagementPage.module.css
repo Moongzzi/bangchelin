@@ -1,0 +1,286 @@
+.page {
+  --admin-users-background: var(--color-bg);
+  --admin-users-text: var(--color-text);
+  --admin-users-muted: var(--color-text-muted);
+  --admin-users-header-background: var(--color-surface-strong);
+  --admin-users-border: var(--color-border);
+  --admin-users-brand: var(--color-brand);
+  --admin-users-danger: #9b3442;
+  min-height: 60vh;
+  background: var(--admin-users-background);
+  color: var(--admin-users-text);
+}
+
+.inner {
+  width: min(1180px, calc(100vw - 48px));
+  margin: 0 auto;
+  padding: 94px 0 108px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.title {
+  margin: 0;
+  color: var(--admin-users-text);
+  font-family: var(--font-sans);
+  font-size: 32px;
+  line-height: 1.25;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.subtitle {
+  margin: 10px 0 0;
+  color: var(--admin-users-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.summaryGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.countBadge,
+.roleBadge,
+.onlineBadge,
+.offlineBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--admin-users-border);
+  border-radius: 999px;
+  color: var(--admin-users-muted);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.tableWrap {
+  margin-top: 46px;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 1080px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  padding: 0 20px;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table th {
+  height: 40px;
+  background: var(--admin-users-header-background);
+  color: var(--admin-users-muted);
+  font-size: 14px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.table td {
+  height: 68px;
+  overflow: hidden;
+  color: var(--admin-users-text);
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+
+.userCell {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) max-content;
+  align-items: center;
+  justify-content: start;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.userLink {
+  overflow: hidden;
+  color: inherit;
+  text-overflow: ellipsis;
+}
+
+.userLink:hover,
+.userLink:focus-visible,
+.logLink:hover,
+.logLink:focus-visible {
+  color: var(--admin-users-brand);
+}
+
+.username,
+.mutedCell,
+.approvalText {
+  color: var(--admin-users-muted);
+  font-weight: 600;
+}
+
+.username {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+}
+
+.roleBadge {
+  min-height: 22px;
+  padding: 0 7px;
+  border-color: var(--admin-users-brand);
+  color: var(--admin-users-brand);
+  font-size: 11px;
+}
+
+.onlineBadge {
+  border-color: #2f8f5b;
+  color: #2f8f5b;
+}
+
+.offlineBadge {
+  color: var(--admin-users-muted);
+}
+
+.approvalText {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.logLink {
+  color: inherit;
+}
+
+.deleteButton {
+  min-width: 58px;
+  min-height: 34px;
+  border: 1px solid var(--admin-users-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--admin-users-danger);
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.deleteButton:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.userColumn {
+  width: 22%;
+}
+
+.emailColumn {
+  width: 22%;
+}
+
+.statusColumn {
+  width: 15%;
+}
+
+.seenColumn {
+  width: 18%;
+}
+
+.logColumn {
+  width: 13%;
+}
+
+.actionColumn {
+  width: 10%;
+}
+
+.message,
+.errorMessage {
+  margin: 50px 0 0;
+  color: var(--admin-users-muted);
+  font-size: 15px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.errorMessage {
+  color: var(--admin-users-danger);
+}
+
+.deleteConfirmBody {
+  display: grid;
+  gap: 18px;
+}
+
+.deleteTargetInfo {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.deleteTargetInfo div {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.deleteTargetInfo dt {
+  color: var(--admin-users-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.deleteTargetInfo dd {
+  margin: 0;
+  color: var(--admin-users-text);
+  font-size: 14px;
+  font-weight: 800;
+  word-break: break-all;
+}
+
+.confirmLabel {
+  display: grid;
+  gap: 8px;
+  color: var(--admin-users-text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.confirmLabel input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--admin-users-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  background: transparent;
+  color: var(--admin-users-text);
+  font: inherit;
+  font-weight: 700;
+}
+
+@media (max-width: 767px) {
+  .inner {
+    width: calc(100vw - 32px);
+    padding: 56px 0 72px;
+  }
+
+  .tableWrap {
+    margin-top: 36px;
+  }
+}
