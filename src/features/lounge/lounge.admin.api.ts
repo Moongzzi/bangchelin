@@ -48,6 +48,7 @@ export type AdminLoungeNodeUpdateInput = {
   id: string;
   contentId: string;
   isEnabled: boolean;
+  accessLevel: LoungeAccessLevel;
   nodeLabel: string;
   nodeIconUrl: string;
   nodeThemeColor: string;
@@ -132,6 +133,18 @@ export async function getAdminLoungeNodes() {
     .filter((node): node is LoungeNode => Boolean(node));
 }
 
+export async function getAdminLoungeNode(nodeId: string) {
+  const session = getRequiredSession();
+  const [row] = await restRequest<AdminLoungeNodeRow[]>(
+    `/lounge_content_nodes?id=eq.${nodeId}&select=id,content_id,is_enabled,display_mode,zone,map_x,map_y,node_label,node_icon_url,node_variant,node_theme_color,sort_order,lounge_contents(id,slug,title,subtitle,summary,content_type,access_level,route_path,thumbnail_url,tags)`,
+    {
+      token: session.access_token,
+    },
+  );
+
+  return row ? toAdminLoungeNode(row) : null;
+}
+
 export async function getAdminLoungeSettings() {
   const session = getRequiredSession();
   const [row] = await restRequest<LoungeSettingsRow[]>(
@@ -190,6 +203,7 @@ export async function updateAdminLoungeNode(input: AdminLoungeNodeUpdateInput) {
     token: session.access_token,
     body: {
       thumbnail_url: input.thumbnailUrl.trim() || null,
+      access_level: input.accessLevel,
     },
     headers: {
       Prefer: 'return=minimal',

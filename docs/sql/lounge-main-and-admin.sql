@@ -147,52 +147,6 @@ insert into public.lounge_settings (id, map_background_url, map_background_mode)
 values ('main', null, 'css')
 on conflict (id) do nothing;
 
-insert into public.lounge_contents
-  (slug, title, subtitle, summary, content_type, access_level, status, route_path, tags)
-values
-  ('daily-quiz', '데일리 퀴즈', '매일 열리는 짧은 문제', '가볍게 풀고 랭킹을 쌓는 첫 퀴즈 콘텐츠입니다.', 'quiz', 'public', 'published', '/lounge/daily-quiz', array['퀴즈', '랭킹', '준비 중']),
-  ('random-game', '랜덤 미니게임', '짧게 즐기는 실험실', '라운지에 어울리는 미니게임을 차례대로 추가할 예정입니다.', 'game', 'member', 'published', '/lounge/random-game', array['게임', '로그인 필요', '준비 중']),
-  ('ranking-hub', '랭킹 허브', '점수와 기록을 모으는 장소', '콘텐츠별 랭킹과 시즌 기록을 확인하는 영역입니다.', 'event', 'public', 'published', '/lounge/ranking', array['랭킹', '기록', '준비 중']),
-  ('event-dock', '시즌 이벤트', '기간 한정 콘텐츠 구역', '추후 시즌 이벤트와 특별 미션을 연결할 공간입니다.', 'event', 'public', 'published', '/lounge/event-dock', array['이벤트', '시즌', '준비 중'])
-on conflict (slug) do update set
-  title = excluded.title,
-  subtitle = excluded.subtitle,
-  summary = excluded.summary,
-  content_type = excluded.content_type,
-  access_level = excluded.access_level,
-  status = excluded.status,
-  route_path = excluded.route_path,
-  tags = excluded.tags,
-  updated_at = now();
-
-insert into public.lounge_content_nodes
-  (content_id, is_enabled, display_mode, zone, map_x, map_y, node_label, node_variant, node_theme_color, sort_order)
-select id, false, 'both', 'quiz-plaza', 27, 33, '퀴즈 광장', 'quiz', '#8B1E2D', 10
-from public.lounge_contents
-where slug = 'daily-quiz'
-on conflict (content_id) do nothing;
-
-insert into public.lounge_content_nodes
-  (content_id, is_enabled, display_mode, zone, map_x, map_y, node_label, node_variant, node_theme_color, sort_order)
-select id, false, 'both', 'arcade-hill', 66, 27, '아케이드 언덕', 'game', '#223041', 20
-from public.lounge_contents
-where slug = 'random-game'
-on conflict (content_id) do nothing;
-
-insert into public.lounge_content_nodes
-  (content_id, is_enabled, display_mode, zone, map_x, map_y, node_label, node_variant, node_theme_color, sort_order)
-select id, false, 'both', 'ranking-tower', 50, 62, '랭킹 타워', 'ranking', '#A78643', 30
-from public.lounge_contents
-where slug = 'ranking-hub'
-on conflict (content_id) do nothing;
-
-insert into public.lounge_content_nodes
-  (content_id, is_enabled, display_mode, zone, map_x, map_y, node_label, node_variant, node_theme_color, sort_order)
-select id, false, 'both', 'event-dock', 76, 70, '이벤트 선착장', 'event', '#31493C', 40
-from public.lounge_contents
-where slug = 'event-dock'
-on conflict (content_id) do nothing;
-
 insert into storage.buckets (id, name, public)
 values ('lounge-assets', 'lounge-assets', true)
 on conflict (id) do update set public = excluded.public;

@@ -1,5 +1,4 @@
 import { getSession, restRequest } from '../../shared/api/supabaseRest';
-import { loungePreviewNodes } from './mock/loungeNodes.mock';
 import type {
   LoungeAccessLevel,
   LoungeContentType,
@@ -104,9 +103,9 @@ export async function getLoungeNodes() {
       .map(toLoungeNode)
       .filter((node): node is LoungeNode => Boolean(node));
 
-    return nodes.length ? nodes : loungePreviewNodes;
+    return nodes;
   } catch {
-    return loungePreviewNodes;
+    return [];
   }
 }
 
