@@ -347,11 +347,13 @@ button.manageLink:disabled {
 .formGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
   gap: 0.9rem;
 }
 
 .field {
   display: grid;
+  align-content: start;
   gap: 0.45rem;
   min-width: 0;
 }
@@ -411,7 +413,8 @@ button.manageLink:disabled {
 
 .positionEditor {
   position: relative;
-  min-height: 10.5rem;
+  min-height: 16rem;
+  aspect-ratio: 16 / 10;
   overflow: hidden;
   border: 1px solid var(--admin-lounge-border);
   border-radius: 0.5rem;
@@ -426,7 +429,7 @@ button.manageLink:disabled {
 
 .positionEditorWithImage {
   background-image: var(--admin-position-map-image);
-  background-size: cover;
+  background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
 }
