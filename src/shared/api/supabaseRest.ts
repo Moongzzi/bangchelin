@@ -18,10 +18,22 @@ type RequestOptions = {
   token?: string | null;
   headers?: Record<string, string>;
   body?: unknown;
+  logActivity?: boolean;
 };
 
 const sessionStorageKey = 'bangchelin.supabase.session';
 const tokenExpiryLeewaySeconds = 30;
+const activityLogRpcPath = '/rpc/log_user_activity';
+const sensitiveActivityKeys = new Set([
+  'access_token',
+  'apikey',
+  'api_key',
+  'authorization',
+  'auth_email',
+  'password',
+  'refresh_token',
+  'token',
+]);
 
 type SessionPersistence = 'local' | 'session';
 
@@ -63,6 +75,129 @@ async function readResponse<T>(response: Response) {
   }
 
   return data as T;
+}
+
+function sanitizeActivityPayload(value: unknown): unknown {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(sanitizeActivityPayload);
+  }
+
+  if (typeof value === 'object') {
+    if (value instanceof File) {
+      return {
+        name: value.name,
+        size: value.size,
+        type: value.type,
+      };
+    }
+
+    return Object.entries(value as Record<string, unknown>).reduce<Record<string, unknown>>((payload, [key, entryValue]) => {
+      if (sensitiveActivityKeys.has(key.toLowerCase())) {
+        return payload;
+      }
+
+      payload[key] = sanitizeActivityPayload(entryValue);
+      return payload;
+    }, {});
+  }
+
+  return value;
+}
+
+function getEntityTypeFromPath(path: string) {
+  const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+  const [resource] = normalizedPath.split('?');
+
+  if (resource === 'rpc') {
+    const [, rpcName] = normalizedPath.split('/');
+    return rpcName ? `rpc:${rpcName.split('?')[0]}` : 'rpc';
+  }
+
+  return resource || 'unknown';
+}
+
+function getEntityIdFromPath(path: string) {
+  const idMatch = path.match(/[?&]id=eq\.([^&]+)/);
+  return idMatch?.[1] ? decodeURIComponent(idMatch[1]) : null;
+}
+
+function getActionType(method: string, path: string) {
+  const entityType = getEntityTypeFromPath(path);
+  const normalizedMethod = method.toUpperCase();
+
+  if (entityType.startsWith('rpc:')) {
+    return entityType.replace(':', '.');
+  }
+
+  if (normalizedMethod === 'GET') {
+    return `${entityType}.read`;
+  }
+
+  if (normalizedMethod === 'POST') {
+    return `${entityType}.create`;
+  }
+
+  if (normalizedMethod === 'PATCH') {
+    return `${entityType}.update`;
+  }
+
+  if (normalizedMethod === 'DELETE') {
+    return `${entityType}.delete`;
+  }
+
+  return `${entityType}.${normalizedMethod.toLowerCase()}`;
+}
+
+async function writeActivityLog(input: {
+  token?: string | null;
+  actionType: string;
+  method: string;
+  endpoint: string;
+  success: boolean;
+  httpStatus?: number | null;
+  entityType?: string | null;
+  entityId?: string | null;
+  requestPayload?: unknown;
+  responsePayload?: unknown;
+  errorMessage?: string | null;
+  metadata?: Record<string, unknown>;
+  source?: string;
+}) {
+  if (!input.token || !supabaseUrl) {
+    return;
+  }
+
+  try {
+    await fetch(`${supabaseUrl}/rest/v1${activityLogRpcPath}`, {
+      method: 'POST',
+      headers: buildHeaders(input.token, {
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      }),
+      body: JSON.stringify({
+        p_action_type: input.actionType,
+        p_method: input.method.toUpperCase(),
+        p_endpoint: input.endpoint,
+        p_success: input.success,
+        p_http_status: input.httpStatus ?? null,
+        p_entity_type: input.entityType ?? null,
+        p_entity_id: input.entityId ?? null,
+        p_request_payload: sanitizeActivityPayload(input.requestPayload) ?? null,
+        p_response_payload: sanitizeActivityPayload(input.responsePayload) ?? null,
+        p_error_message: input.errorMessage ?? null,
+        p_metadata: input.metadata ?? {},
+        p_user_agent: window.navigator.userAgent,
+        p_page_path: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+        p_source: input.source ?? 'client_rest',
+      }),
+    });
+  } catch {
+    // Activity logging should never block the user-facing request.
+  }
 }
 
 function normalizeSession(session: SupabaseSession) {
@@ -138,8 +273,10 @@ export async function restRequest<T>(path: string, options: RequestOptions = {})
   assertSupabaseConfig();
 
   const requestToken = await getRequestToken(options.token);
-  const response = await fetch(`${supabaseUrl}/rest/v1${path}`, {
-    method: options.method ?? 'GET',
+  const method = options.method ?? 'GET';
+  let activityToken = requestToken;
+  let response = await fetch(`${supabaseUrl}/rest/v1${path}`, {
+    method,
     headers: buildHeaders(requestToken, {
       'Content-Type': 'application/json',
       Prefer: 'return=representation',
@@ -152,8 +289,9 @@ export async function restRequest<T>(path: string, options: RequestOptions = {})
     const refreshedSession = await refreshStoredSession();
 
     if (refreshedSession?.access_token) {
-      const retryResponse = await fetch(`${supabaseUrl}/rest/v1${path}`, {
-        method: options.method ?? 'GET',
+      activityToken = refreshedSession.access_token;
+      response = await fetch(`${supabaseUrl}/rest/v1${path}`, {
+        method,
         headers: buildHeaders(refreshedSession.access_token, {
           'Content-Type': 'application/json',
           Prefer: 'return=representation',
@@ -161,19 +299,53 @@ export async function restRequest<T>(path: string, options: RequestOptions = {})
         }),
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
       });
-
-      return readResponse<T>(retryResponse);
     }
   }
 
-  return readResponse<T>(response);
+  try {
+    const data = await readResponse<T>(response);
+
+    if (options.logActivity !== false && path !== activityLogRpcPath) {
+      await writeActivityLog({
+        token: activityToken,
+        actionType: getActionType(method, path),
+        method,
+        endpoint: `/rest/v1${path}`,
+        success: true,
+        httpStatus: response.status,
+        entityType: getEntityTypeFromPath(path),
+        entityId: getEntityIdFromPath(path),
+        requestPayload: options.body,
+      });
+    }
+
+    return data;
+  } catch (error) {
+    if (options.logActivity !== false && path !== activityLogRpcPath) {
+      await writeActivityLog({
+        token: activityToken,
+        actionType: getActionType(method, path),
+        method,
+        endpoint: `/rest/v1${path}`,
+        success: false,
+        httpStatus: response.status,
+        entityType: getEntityTypeFromPath(path),
+        entityId: getEntityIdFromPath(path),
+        requestPayload: options.body,
+        errorMessage: error instanceof Error ? error.message : 'Unknown Supabase REST error',
+      });
+    }
+
+    throw error;
+  }
 }
 
 export async function uploadStorageObject(bucket: string, path: string, file: File, token: string) {
   assertSupabaseConfig();
 
   const requestToken = await getRequestToken(token);
-  const response = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${path}`, {
+  let activityToken = requestToken;
+  let response = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${path}`, {
     method: 'POST',
     headers: buildHeaders(requestToken, {
       'Content-Type': file.type || 'application/octet-stream',
@@ -186,7 +358,8 @@ export async function uploadStorageObject(bucket: string, path: string, file: Fi
     const refreshedSession = await refreshStoredSession();
 
     if (refreshedSession?.access_token) {
-      const retryResponse = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${path}`, {
+      activityToken = refreshedSession.access_token;
+      response = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${path}`, {
         method: 'POST',
         headers: buildHeaders(refreshedSession.access_token, {
           'Content-Type': file.type || 'application/octet-stream',
@@ -194,14 +367,42 @@ export async function uploadStorageObject(bucket: string, path: string, file: Fi
         }),
         body: file,
       });
-
-      await readResponse(retryResponse);
-      return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
     }
   }
 
-  await readResponse(response);
-  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
+  try {
+    await readResponse(response);
+    await writeActivityLog({
+      token: activityToken,
+      actionType: 'storage_objects.upload',
+      method: 'POST',
+      endpoint: `/storage/v1/object/${bucket}/${path}`,
+      success: true,
+      httpStatus: response.status,
+      entityType: 'storage_object',
+      entityId: `${bucket}/${path}`,
+      requestPayload: file,
+      source: 'client_storage',
+    });
+
+    return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
+  } catch (error) {
+    await writeActivityLog({
+      token: activityToken,
+      actionType: 'storage_objects.upload',
+      method: 'POST',
+      endpoint: `/storage/v1/object/${bucket}/${path}`,
+      success: false,
+      httpStatus: response.status,
+      entityType: 'storage_object',
+      entityId: `${bucket}/${path}`,
+      requestPayload: file,
+      errorMessage: error instanceof Error ? error.message : 'Unknown Supabase storage error',
+      source: 'client_storage',
+    });
+
+    throw error;
+  }
 }
 
 function getStoredSession(storage: Storage) {
