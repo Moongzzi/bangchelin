@@ -26,11 +26,11 @@ const logo = {
 
 const publicNavigationItems: HeaderNavItemData[] = [
   { key: 'guide', label: '가이드', to: ROUTES.about },
+  { key: 'lounge', label: '라운지', to: ROUTES.lounge },
 ];
 
 const protectedNavigationItems: HeaderNavItemData[] = [
   { key: 'calendar', label: '캘린더', to: ROUTES.calendar },
-  { key: 'lounge', label: '라운지' },
   { key: 'report', label: '문의/제보', to: ROUTES.report },
 ];
 
@@ -70,6 +70,10 @@ function getActiveNavKey(pathname: string) {
 
   if (pathname.startsWith(ROUTES.calendar)) {
     return 'calendar';
+  }
+
+  if (pathname.startsWith(ROUTES.lounge)) {
+    return 'lounge';
   }
 
   if (pathname.startsWith(ROUTES.report)) {

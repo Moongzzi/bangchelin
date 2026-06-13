@@ -7,6 +7,7 @@ import { getSession } from '../../shared/api/supabaseRest';
 import { ROUTES } from '../../shared/constants/routes';
 
 const AdminPage = lazy(() => import('../../pages/admin/AdminPage').then((module) => ({ default: module.AdminPage })));
+const AdminLoungePage = lazy(() => import('../../pages/admin/AdminLoungePage').then((module) => ({ default: module.AdminLoungePage })));
 const AdminInquiryPage = lazy(() => import('../../pages/admin/AdminInquiryPage').then((module) => ({ default: module.AdminInquiryPage })));
 const AdminInquiryDetailPage = lazy(() => import('../../pages/admin/AdminInquiryDetailPage').then((module) => ({ default: module.AdminInquiryDetailPage })));
 const AboutPage = lazy(() => import('../../pages/about/AboutPage').then((module) => ({ default: module.AboutPage })));
@@ -14,6 +15,7 @@ const CalendarPage = lazy(() => import('../../pages/calendar/CalendarPage').then
 const DropdownPreviewPage = lazy(() => import('../../pages/dropdown-preview/DropdownPreviewPage').then((module) => ({ default: module.DropdownPreviewPage })));
 const InputPreviewPage = lazy(() => import('../../pages/input-preview/InputPreviewPage').then((module) => ({ default: module.InputPreviewPage })));
 const LoginPage = lazy(() => import('../../pages/login/LoginPage').then((module) => ({ default: module.LoginPage })));
+const LoungePage = lazy(() => import('../../pages/lounge/LoungePage').then((module) => ({ default: module.LoungePage })));
 const PopupPreviewPage = lazy(() => import('../../pages/popup-preview/PopupPreviewPage').then((module) => ({ default: module.PopupPreviewPage })));
 const ProfilePage = lazy(() => import('../../pages/profile/ProfilePage').then((module) => ({ default: module.ProfilePage })));
 const RegisterPage = lazy(() => import('../../pages/register/RegisterPage').then((module) => ({ default: module.RegisterPage })));
@@ -104,8 +106,10 @@ export function AppRouter() {
       <Route path={ROUTES.login} element={<LazyRoute><LoginPage /></LazyRoute>} />
       <Route path={ROUTES.register} element={<LazyRoute><RegisterPage /></LazyRoute>} />
       <Route path={ROUTES.about} element={<LazyRoute><AboutPage /></LazyRoute>} />
+      <Route path={ROUTES.lounge} element={<LazyRoute><LoungePage /></LazyRoute>} />
       <Route path={ROUTES.calendar} element={<ProtectedRoute><LazyRoute><CalendarPage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.admin} element={<AdminRoute><LazyRoute><AdminPage /></LazyRoute></AdminRoute>} />
+      <Route path={ROUTES.adminLounge} element={<AdminRoute><LazyRoute><AdminLoungePage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.adminInquiries} element={<AdminRoute><LazyRoute><AdminInquiryPage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.adminInquiryDetail} element={<AdminRoute><LazyRoute><AdminInquiryDetailPage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.dropdownPreview} element={<LazyRoute><DropdownPreviewPage /></LazyRoute>} />
