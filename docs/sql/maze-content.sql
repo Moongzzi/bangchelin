@@ -262,7 +262,7 @@ begin
   on conflict on constraint maze_attempts_set_id_user_id_key do update
   set updated_at = now()
   returning * into v_attempt;
-
+ 
   return query
   select
     v_attempt.id,
