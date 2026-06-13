@@ -340,6 +340,39 @@ export async function restRequest<T>(path: string, options: RequestOptions = {})
   }
 }
 
+export async function functionRequest<T>(name: string, options: RequestOptions = {}) {
+  assertSupabaseConfig();
+
+  const requestToken = await getRequestToken(options.token);
+  const method = options.method ?? 'POST';
+  const normalizedName = name.replace(/^\/+/, '');
+  let response = await fetch(`${supabaseUrl}/functions/v1/${normalizedName}`, {
+    method,
+    headers: buildHeaders(requestToken, {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    }),
+    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+  });
+
+  if (response.status === 401 && options.token) {
+    const refreshedSession = await refreshStoredSession();
+
+    if (refreshedSession?.access_token) {
+      response = await fetch(`${supabaseUrl}/functions/v1/${normalizedName}`, {
+        method,
+        headers: buildHeaders(refreshedSession.access_token, {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        }),
+        body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      });
+    }
+  }
+
+  return readResponse<T>(response);
+}
+
 export async function uploadStorageObject(bucket: string, path: string, file: File, token: string) {
   assertSupabaseConfig();
 

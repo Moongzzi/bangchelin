@@ -17,11 +17,31 @@ const logo = {
 
 const adminNavigationItems: HeaderNavItemData[] = [
   { key: 'account-auth', label: '계정 인증', to: ROUTES.admin },
-  { key: 'user-management', label: '유저 관리', to: ROUTES.admin },
+  { key: 'user-management', label: '유저 관리', to: ROUTES.adminUsers },
   { key: 'lounge-management', label: '라운지 관리', to: ROUTES.adminLounge },
   { key: 'inquiry-management', label: '문의 관리', to: ROUTES.adminInquiries },
   { key: 'user-home', label: '사용자', to: ROUTES.home, tone: 'primary' },
 ];
+
+function getActiveNavKey(pathname: string) {
+  if (pathname.startsWith(ROUTES.adminLounge)) {
+    return 'lounge-management';
+  }
+
+  if (pathname.startsWith(ROUTES.adminInquiries)) {
+    return 'inquiry-management';
+  }
+
+  if (pathname.startsWith(ROUTES.adminUsers)) {
+    return 'user-management';
+  }
+
+  if (pathname === ROUTES.admin) {
+    return 'account-auth';
+  }
+
+  return undefined;
+}
 
 export function AdminHeader() {
   const { pathname } = useLocation();
@@ -46,13 +66,7 @@ export function AdminHeader() {
       navItems={adminNavigationItems}
       actionType="none"
       navAriaLabel="Admin navigation"
-      activeNavKey={
-        pathname.startsWith(ROUTES.adminLounge)
-          ? 'lounge-management'
-          : pathname.startsWith(ROUTES.adminInquiries)
-            ? 'inquiry-management'
-            : undefined
-      }
+      activeNavKey={getActiveNavKey(pathname)}
       mobileMenu={{
         isOpen: isMobileMenuOpen,
         onToggle: () => setIsMobileMenuOpen((open) => !open),

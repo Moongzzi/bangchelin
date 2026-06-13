@@ -7,6 +7,8 @@ import { getSession } from '../../shared/api/supabaseRest';
 import { ROUTES } from '../../shared/constants/routes';
 
 const AdminPage = lazy(() => import('../../pages/admin/AdminPage').then((module) => ({ default: module.AdminPage })));
+const AdminUserManagementPage = lazy(() => import('../../pages/admin/AdminUserManagementPage').then((module) => ({ default: module.AdminUserManagementPage })));
+const AdminUserActivityPage = lazy(() => import('../../pages/admin/AdminUserActivityPage').then((module) => ({ default: module.AdminUserActivityPage })));
 const AdminLoungePage = lazy(() => import('../../pages/admin/AdminLoungePage').then((module) => ({ default: module.AdminLoungePage })));
 const AdminLoungeContentPage = lazy(() => import('../../pages/admin/AdminLoungeContentPage').then((module) => ({ default: module.AdminLoungeContentPage })));
 const AdminInquiryPage = lazy(() => import('../../pages/admin/AdminInquiryPage').then((module) => ({ default: module.AdminInquiryPage })));
@@ -118,6 +120,8 @@ export function AppRouter() {
       <Route path={ROUTES.loungeMazePlay} element={<ProtectedRoute><LazyRoute><MazePlayPage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.calendar} element={<ProtectedRoute><LazyRoute><CalendarPage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.admin} element={<AdminRoute><LazyRoute><AdminPage /></LazyRoute></AdminRoute>} />
+      <Route path={ROUTES.adminUsers} element={<AdminRoute><LazyRoute><AdminUserManagementPage /></LazyRoute></AdminRoute>} />
+      <Route path={ROUTES.adminUserActivity} element={<AdminRoute><LazyRoute><AdminUserActivityPage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.adminLounge} element={<AdminRoute><LazyRoute><AdminLoungePage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.adminLoungeContent} element={<AdminRoute><LazyRoute><AdminLoungeContentPage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.adminInquiries} element={<AdminRoute><LazyRoute><AdminInquiryPage /></LazyRoute></AdminRoute>} />

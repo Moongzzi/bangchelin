@@ -11,6 +11,8 @@ export const ROUTES = {
   calendar: '/calendar',
   report: '/report',
   admin: '/admin',
+  adminUsers: '/admin/users',
+  adminUserActivity: '/admin/users/:userId/activity',
   adminLounge: '/admin/lounge',
   adminLoungeContent: '/admin/lounge/:nodeId',
   adminInquiries: '/admin/inquiries',
