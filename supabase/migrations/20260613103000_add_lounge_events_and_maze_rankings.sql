@@ -193,7 +193,7 @@ begin
     return;
   end if;
 
-  if v_question.question_no <> v_attempt.current_question_no then
+  if v_question.question_no <> v_attempt.current_question_no and v_attempt.cleared_at is null then
     raise exception 'This question is not currently open';
   end if;
 
@@ -232,7 +232,13 @@ begin
       returning * into v_attempt;
     else
       update public.maze_attempts
-      set current_question_no = v_question.question_no + 1, updated_at = now()
+      set
+        current_question_no = case
+          when maze_attempts.cleared_at is not null
+            then greatest(maze_attempts.current_question_no, v_question.question_no + 1)
+          else v_question.question_no + 1
+        end,
+        updated_at = now()
       where maze_attempts.id = v_attempt.id
       returning * into v_attempt;
     end if;
@@ -262,7 +268,15 @@ language sql
 security definer
 set search_path = public
 as $$
-  with ranked as (
+  with viewer_clear as (
+    select 1
+    from public.maze_attempts viewer_attempt
+    where viewer_attempt.set_id = p_set_id
+      and viewer_attempt.user_id = auth.uid()
+      and viewer_attempt.cleared_at is not null
+    limit 1
+  ),
+  ranked as (
     select
       a.user_id,
       coalesce(nullif(trim(p.nickname), ''), '알 수 없음') as nickname,
@@ -280,6 +294,7 @@ as $$
     join public.profiles p on p.id = a.user_id
     where a.set_id = p_set_id
       and a.cleared_at is not null
+      and exists (select 1 from viewer_clear)
   ),
   top_ranked as (
     select *

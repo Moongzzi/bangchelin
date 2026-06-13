@@ -582,7 +582,53 @@
   }
 
   .setCard {
-    min-height: 19rem;
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    min-height: 0;
+    aspect-ratio: auto;
+  }
+
+  .setCard:hover,
+  .setCard:focus-visible {
+    transform: translateY(-2px);
+  }
+
+  .cardMedia {
+    aspect-ratio: 1 / 1;
+    height: auto;
+    font-size: 2rem;
+  }
+
+  .cardBody {
+    position: static;
+    gap: 0.45rem;
+    justify-content: center;
+    min-width: 0;
+    padding: 0.8rem;
+    border-top: 0;
+    border-left: 1px solid rgba(207, 216, 208, 0.72);
+    box-shadow: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .cardTitle,
+  .cardSummary {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+  }
+
+  .cardTitle {
+    font-size: 1rem;
+    -webkit-line-clamp: 2;
+  }
+
+  .cardSummary {
+    min-height: 0;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    -webkit-line-clamp: 2;
   }
 
   .coverMedia {

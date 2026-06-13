@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 
 import { getLoungeEventContent } from '../../features/lounge/lounge.api';
 import type { LoungeContent } from '../../features/lounge/types/lounge.types';
-import { getMazeRanking } from '../../features/maze/maze.api';
+import { getMazeRanking, getMyMazeAttempt } from '../../features/maze/maze.api';
 import { getMazeRankingDisplayEntries } from '../../features/maze/mazeRankingDisplay';
 import type { MazeRankingEntry } from '../../features/maze/types/maze.types';
 import { PageShell } from '../../shared/components/layout/PageShell';
@@ -53,6 +53,7 @@ export function LoungeEventPage() {
   const { eventSlug = '' } = useParams();
   const [content, setContent] = useState<LoungeContent | null>(null);
   const [ranking, setRanking] = useState<MazeRankingEntry[]>([]);
+  const [isRankingLocked, setIsRankingLocked] = useState(false);
   const [status, setStatus] = useState<PageStatus>('loading');
 
   useEffect(() => {
@@ -61,6 +62,7 @@ export function LoungeEventPage() {
     async function loadEvent() {
       try {
         setStatus('loading');
+        setIsRankingLocked(false);
         const nextContent = await getLoungeEventContent(eventSlug);
 
         if (!nextContent?.eventConfig) {
@@ -79,17 +81,26 @@ export function LoungeEventPage() {
           return;
         }
 
-        const nextRanking = nextContent.eventConfig.rankingSource === 'maze' && nextContent.eventConfig.rankingTargetId
-          ? await getMazeRanking(
+        let nextRanking: MazeRankingEntry[] = [];
+        let nextIsRankingLocked = false;
+
+        if (nextContent.eventConfig.rankingSource === 'maze' && nextContent.eventConfig.rankingTargetId) {
+          const nextAttempt = await getMyMazeAttempt(nextContent.eventConfig.rankingTargetId);
+          nextIsRankingLocked = nextAttempt?.status !== 'cleared';
+
+          if (!nextIsRankingLocked) {
+            nextRanking = await getMazeRanking(
               nextContent.eventConfig.rankingTargetId,
               nextContent.eventConfig.rankingMetric,
               nextContent.eventConfig.rewardRankLimit,
-            )
-          : [];
+            );
+          }
+        }
 
         if (isMounted) {
           setContent(nextContent);
           setRanking(nextRanking);
+          setIsRankingLocked(nextIsRankingLocked);
           setStatus('ready');
         }
       } catch {
@@ -168,7 +179,9 @@ export function LoungeEventPage() {
                     <h2 id="event-ranking-title" className={styles.rankingTitle}>조건 대상 랭킹</h2>
                   </div>
                 </div>
-                {rankingDisplayEntries.length === 0 ? (
+                {isRankingLocked ? (
+                  <p className={styles.feedback}>해당 미궁을 클리어한 뒤 랭킹을 확인할 수 있습니다.</p>
+                ) : rankingDisplayEntries.length === 0 ? (
                   <p className={styles.feedback}>아직 조건에 해당하는 기록이 없습니다.</p>
                 ) : (
                   <ol className={styles.rankingList}>

@@ -121,18 +121,19 @@ export function MazePlayPage() {
   );
   const elapsedSeconds = getElapsedSeconds(attempt, now);
   const isCleared = attempt?.status === 'cleared';
+  const hasClearedRecord = Boolean(attempt?.clearedAt);
   const isStartPage = Boolean(set?.hasStartPage && attempt?.currentQuestionNo === 0 && selectedQuestionNo === 0);
   const currentImageUrl = isStartPage ? set?.startImageUrl : selectedQuestion?.imageUrl;
   const canSubmit = Boolean(
     (selectedQuestion || isStartPage)
     && attempt
     && !isCleared
-    && selectedQuestionNo === attempt.currentQuestionNo
+    && (hasClearedRecord || selectedQuestionNo === attempt.currentQuestionNo)
     && answer.length > 0,
   );
 
   function handleQuestionSelect(questionNo: number) {
-    if (!attempt || questionNo > attempt.currentQuestionNo) {
+    if (!attempt || (!hasClearedRecord && questionNo > attempt.currentQuestionNo)) {
       return;
     }
 
@@ -191,7 +192,7 @@ export function MazePlayPage() {
           type: 'success',
           message: result.status === 'cleared' ? '미궁을 클리어했습니다.' : '정답입니다. 다음 문제가 열렸습니다.',
         });
-        setSelectedQuestionNo(result.currentQuestionNo);
+        setSelectedQuestionNo(hasClearedRecord ? selectedQuestionNo : result.currentQuestionNo);
       } else {
         setFeedback({ type: 'error', message: '정답이 아닙니다.' });
       }
@@ -289,7 +290,7 @@ export function MazePlayPage() {
                   &lt;
                 </button>
                 {questions.map((question) => {
-                  const isLocked = !attempt || question.questionNo > attempt.currentQuestionNo;
+                  const isLocked = !attempt || (!hasClearedRecord && question.questionNo > attempt.currentQuestionNo);
 
                   return (
                     <button
@@ -326,7 +327,7 @@ export function MazePlayPage() {
                       variant="outlined"
                       value={answer}
                       onChange={(event) => setAnswer(event.target.value)}
-                      disabled={selectedQuestionNo !== attempt?.currentQuestionNo}
+                      disabled={!hasClearedRecord && selectedQuestionNo !== attempt?.currentQuestionNo}
                       autoComplete="off"
                       fullWidth
                     />

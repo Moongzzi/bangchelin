@@ -8,7 +8,7 @@ import { PageShell } from '../../shared/components/layout/PageShell';
 import styles from './MazePage.module.css';
 
 type PageStatus = 'loading' | 'ready' | 'error' | 'notFound';
-type RankingStatus = 'idle' | 'loading' | 'ready' | 'error';
+type RankingStatus = 'idle' | 'locked' | 'loading' | 'ready' | 'error';
 
 function formatElapsedSeconds(seconds: number) {
   const safeSeconds = Math.max(0, seconds);
@@ -81,6 +81,12 @@ export function MazeSetCoverPage() {
         return;
       }
 
+      if (attempt?.status !== 'cleared') {
+        setRanking([]);
+        setRankingStatus('locked');
+        return;
+      }
+
       try {
         setRankingStatus('loading');
         const nextRanking = await getMazeRanking(set.id, rankingMetric);
@@ -101,7 +107,7 @@ export function MazeSetCoverPage() {
     return () => {
       isMounted = false;
     };
-  }, [rankingMetric, set]);
+  }, [attempt?.status, rankingMetric, set]);
 
   async function handleStart() {
     if (!set) {
@@ -206,6 +212,9 @@ export function MazeSetCoverPage() {
                 </div>
 
                 {rankingStatus === 'loading' ? <p className={styles.feedback}>랭킹을 불러오는 중입니다.</p> : null}
+                {rankingStatus === 'locked' ? (
+                  <p className={styles.feedback}>해당 미궁을 클리어한 뒤 랭킹을 확인할 수 있습니다.</p>
+                ) : null}
                 {rankingStatus === 'error' ? (
                   <p className={`${styles.feedback} ${styles.feedbackError}`} role="alert">
                     랭킹을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
