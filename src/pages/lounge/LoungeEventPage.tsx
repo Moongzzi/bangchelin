@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
+import { getMyProfile } from '../../features/auth/auth.api';
 import { getLoungeEventContent } from '../../features/lounge/lounge.api';
 import type { LoungeContent } from '../../features/lounge/types/lounge.types';
 import { getMazeRanking, getMyMazeAttempt } from '../../features/maze/maze.api';
@@ -85,8 +86,11 @@ export function LoungeEventPage() {
         let nextIsRankingLocked = false;
 
         if (nextContent.eventConfig.rankingSource === 'maze' && nextContent.eventConfig.rankingTargetId) {
-          const nextAttempt = await getMyMazeAttempt(nextContent.eventConfig.rankingTargetId);
-          nextIsRankingLocked = nextAttempt?.status !== 'cleared';
+          const [nextAttempt, nextProfile] = await Promise.all([
+            getMyMazeAttempt(nextContent.eventConfig.rankingTargetId),
+            getMyProfile(),
+          ]);
+          nextIsRankingLocked = nextAttempt?.status !== 'cleared' && nextProfile?.role !== 'admin';
 
           if (!nextIsRankingLocked) {
             nextRanking = await getMazeRanking(

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+import { getMyProfile } from '../../features/auth/auth.api';
 import { getMazeQuizSet, getMazeRanking, getMyMazeAttempt, restartMazeAttempt, startMazeAttempt } from '../../features/maze/maze.api';
 import { getMazeRankingDisplayEntries } from '../../features/maze/mazeRankingDisplay';
 import type { MazeAttempt, MazeQuizSet, MazeRankingEntry, MazeRankingMetric } from '../../features/maze/types/maze.types';
@@ -30,6 +31,7 @@ export function MazeSetCoverPage() {
   const [rankingMetric, setRankingMetric] = useState<MazeRankingMetric>('clear_order');
   const [ranking, setRanking] = useState<MazeRankingEntry[]>([]);
   const [rankingStatus, setRankingStatus] = useState<RankingStatus>('idle');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [startError, setStartError] = useState('');
   const rankingDisplayEntries = getMazeRankingDisplayEntries(ranking, rankingMetric);
@@ -50,11 +52,15 @@ export function MazeSetCoverPage() {
           return;
         }
 
-        const nextAttempt = await getMyMazeAttempt(nextSet.id);
+        const [nextAttempt, nextProfile] = await Promise.all([
+          getMyMazeAttempt(nextSet.id),
+          getMyProfile(),
+        ]);
 
         if (isMounted) {
           setSet(nextSet);
           setAttempt(nextAttempt);
+          setIsAdmin(nextProfile?.role === 'admin');
           setStatus('ready');
         }
       } catch {
@@ -81,7 +87,7 @@ export function MazeSetCoverPage() {
         return;
       }
 
-      if (attempt?.status !== 'cleared') {
+      if (attempt?.status !== 'cleared' && !isAdmin) {
         setRanking([]);
         setRankingStatus('locked');
         return;
@@ -107,7 +113,7 @@ export function MazeSetCoverPage() {
     return () => {
       isMounted = false;
     };
-  }, [attempt?.status, rankingMetric, set]);
+  }, [attempt?.status, isAdmin, rankingMetric, set]);
 
   async function handleStart() {
     if (!set) {
