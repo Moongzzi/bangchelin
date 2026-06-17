@@ -15,6 +15,7 @@ export const ROUTES = {
   adminUserActivity: '/admin/users/:userId/activity',
   adminLounge: '/admin/lounge',
   adminLoungeContent: '/admin/lounge/:nodeId',
+  adminKakaoShare: '/admin/kakao-share',
   adminInquiries: '/admin/inquiries',
   adminInquiryDetail: '/admin/inquiries/:inquiryId',
   profile: '/profile',

@@ -11,6 +11,7 @@ const AdminUserManagementPage = lazy(() => import('../../pages/admin/AdminUserMa
 const AdminUserActivityPage = lazy(() => import('../../pages/admin/AdminUserActivityPage').then((module) => ({ default: module.AdminUserActivityPage })));
 const AdminLoungePage = lazy(() => import('../../pages/admin/AdminLoungePage').then((module) => ({ default: module.AdminLoungePage })));
 const AdminLoungeContentPage = lazy(() => import('../../pages/admin/AdminLoungeContentPage').then((module) => ({ default: module.AdminLoungeContentPage })));
+const AdminKakaoSharePage = lazy(() => import('../../pages/admin/AdminKakaoSharePage').then((module) => ({ default: module.AdminKakaoSharePage })));
 const AdminInquiryPage = lazy(() => import('../../pages/admin/AdminInquiryPage').then((module) => ({ default: module.AdminInquiryPage })));
 const AdminInquiryDetailPage = lazy(() => import('../../pages/admin/AdminInquiryDetailPage').then((module) => ({ default: module.AdminInquiryDetailPage })));
 const AboutPage = lazy(() => import('../../pages/about/AboutPage').then((module) => ({ default: module.AboutPage })));
@@ -124,6 +125,7 @@ export function AppRouter() {
       <Route path={ROUTES.adminUserActivity} element={<AdminRoute><LazyRoute><AdminUserActivityPage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.adminLounge} element={<AdminRoute><LazyRoute><AdminLoungePage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.adminLoungeContent} element={<AdminRoute><LazyRoute><AdminLoungeContentPage /></LazyRoute></AdminRoute>} />
+      <Route path={ROUTES.adminKakaoShare} element={<AdminRoute><LazyRoute><AdminKakaoSharePage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.adminInquiries} element={<AdminRoute><LazyRoute><AdminInquiryPage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.adminInquiryDetail} element={<AdminRoute><LazyRoute><AdminInquiryDetailPage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.dropdownPreview} element={<LazyRoute><DropdownPreviewPage /></LazyRoute>} />
