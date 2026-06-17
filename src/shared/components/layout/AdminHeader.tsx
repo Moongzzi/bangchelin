@@ -19,6 +19,7 @@ const adminNavigationItems: HeaderNavItemData[] = [
   { key: 'account-auth', label: '계정 인증', to: ROUTES.admin },
   { key: 'user-management', label: '유저 관리', to: ROUTES.adminUsers },
   { key: 'lounge-management', label: '라운지 관리', to: ROUTES.adminLounge },
+  { key: 'kakao-share', label: '카카오 공유', to: ROUTES.adminKakaoShare },
   { key: 'inquiry-management', label: '문의 관리', to: ROUTES.adminInquiries },
   { key: 'user-home', label: '사용자', to: ROUTES.home, tone: 'primary' },
 ];
@@ -26,6 +27,10 @@ const adminNavigationItems: HeaderNavItemData[] = [
 function getActiveNavKey(pathname: string) {
   if (pathname.startsWith(ROUTES.adminLounge)) {
     return 'lounge-management';
+  }
+
+  if (pathname.startsWith(ROUTES.adminKakaoShare)) {
+    return 'kakao-share';
   }
 
   if (pathname.startsWith(ROUTES.adminInquiries)) {
