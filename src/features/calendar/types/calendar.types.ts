@@ -50,6 +50,7 @@ export type CalendarEvent = {
   startTime: string;
   endTime: string;
   status: CalendarEventStatus;
+  closedByCapacity?: boolean;
   category: CalendarEventCategory;
   locationRegion?: CalendarLocationRegion | '';
   location: string;
