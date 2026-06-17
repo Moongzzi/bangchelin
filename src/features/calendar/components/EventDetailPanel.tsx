@@ -470,9 +470,11 @@ export function EventDetailPanel({
   const statusTone = calendarStatusTone[selectedEvent.status];
   const categoryTone = calendarCategoryTone[selectedEvent.category];
   const isRecruiting = selectedEvent.status === 'recruiting';
+  const isAutoClosedWithWaitlist = selectedEvent.status === 'closed' && Boolean(selectedEvent.closedByCapacity);
+  const canUseAttendance = isRecruiting || isAutoClosedWithWaitlist;
   const canManageEvent = Boolean(selectedEvent.isCurrentUserAuthor);
   const isAlreadyJoined = Boolean(selectedEvent.isCurrentUserParticipant || selectedEvent.isCurrentUserWaitlisted);
-  const attendanceLabel = selectedEvent.currentParticipants >= selectedEvent.capacity ? '대기 참석' : '참석';
+  const attendanceLabel = selectedEvent.currentParticipants >= selectedEvent.capacity || isAutoClosedWithWaitlist ? '대기 참석' : '참석';
   const participantDetails = selectedEvent.participantsDetail ?? [];
   const confirmedParticipants = participantDetails.length
     ? participantDetails.filter((participant) => participant.status === 'confirmed')
@@ -551,7 +553,7 @@ export function EventDetailPanel({
               <span className={styles.eventBadge} style={toneStyle(statusTone.background, statusTone.text, statusTone.border)}>
                 {calendarStatusLabels[selectedEvent.status]}
               </span>
-              {isRecruiting ? (
+              {canUseAttendance ? (
                 <div className={styles.attendanceActionGroup}>
                   <button
                     type="button"
@@ -598,7 +600,7 @@ export function EventDetailPanel({
           </div>
         </div>
 
-        {isRecruiting && selectedEvent.currentParticipants >= selectedEvent.capacity ? (
+        {canUseAttendance && (selectedEvent.currentParticipants >= selectedEvent.capacity || waitlistedParticipants.length > 0) ? (
           <div className={styles.detailSection}>
             <p className={styles.detailLabel}>대기 참석자</p>
             <div className={styles.participantList}>

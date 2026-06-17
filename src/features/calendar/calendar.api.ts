@@ -19,6 +19,7 @@ type CalendarEventRow = {
   start_time: string;
   end_time: string;
   status: CalendarEventStatus;
+  closed_by_capacity?: boolean;
   category: CalendarEventCategory;
   location_region: CalendarLocationRegion | null;
   location_detail: string;
@@ -157,6 +158,7 @@ function toCalendarEvent(row: CalendarEventRow): CalendarEvent {
     startTime: row.start_time.slice(0, 5),
     endTime: row.end_time.slice(0, 5),
     status: effectiveStatus,
+    closedByCapacity: effectiveStatus === 'closed' ? Boolean(row.closed_by_capacity) : false,
     category: row.category,
     locationRegion: row.location_region ?? '',
     location: row.location_detail,
@@ -252,6 +254,7 @@ const eventSelect = [
   'start_time',
   'end_time',
   'status',
+  'closed_by_capacity',
   'category',
   'location_region',
   'location_detail',
@@ -315,6 +318,13 @@ function isMissingCommentAuthorSnapshotError(error: unknown) {
     && error.message.includes('does not exist');
 }
 
+function isMissingClosedByCapacityError(error: unknown) {
+  return error instanceof Error
+    && error.message.includes('calendar_events')
+    && error.message.includes('closed_by_capacity')
+    && error.message.includes('does not exist');
+}
+
 export async function getCalendarEventsByRange(startDate: string, endDate: string) {
   const session = getRequiredSession();
 
@@ -338,7 +348,7 @@ export async function getCalendarEventsByRange(startDate: string, endDate: strin
       return rows.map(toCalendarEvent);
     }
 
-    if (!isMissingParticipantStatusError(error) && !isMissingCommentAuthorSnapshotError(error)) {
+    if (!isMissingParticipantStatusError(error) && !isMissingCommentAuthorSnapshotError(error) && !isMissingClosedByCapacityError(error)) {
       throw error;
     }
 
@@ -376,7 +386,7 @@ export async function getCalendarEvent(eventId: string) {
       return row ? toCalendarEvent(row) : null;
     }
 
-    if (!isMissingParticipantStatusError(error) && !isMissingCommentAuthorSnapshotError(error)) {
+    if (!isMissingParticipantStatusError(error) && !isMissingCommentAuthorSnapshotError(error) && !isMissingClosedByCapacityError(error)) {
       throw error;
     }
 
