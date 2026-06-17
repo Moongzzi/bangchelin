@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { calendarConfig } from '../constants/calendar.constants';
+import { calendarCategoryTone, calendarConfig } from '../constants/calendar.constants';
 import type { CalendarEvent, CalendarEventInCell, CalendarMonthCell } from '../types/calendar.types';
 import { formatEnglishMonthLabel, formatMonthLabel, formatYearLabel } from '../utils/calendarDate.utils';
 import { CalendarDayCell } from './CalendarDayCell';
@@ -192,25 +192,38 @@ export function MonthCalendar({
           return (
             <div key={weekCells[0]?.dateKey} className={styles.monthWeekRow}>
               <div className={styles.weekEventLayer} aria-hidden="true">
-                {weekSegments.map((segment) => (
-                  <button
-                    key={`${segment.event.id}-${weekCells[0]?.dateKey}`}
-                    type="button"
-                    className={[styles.weekEventBar, segment.spanClassName].join(' ')}
-                    style={{
-                      gridColumn: `${segment.startColumn + 1} / ${segment.endColumn + 2}`,
-                      gridRow: `${segment.lane + 1}`,
-                    }}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onSelectEvent(segment.event.id);
-                    }}
-                    aria-label={`${segment.event.title} 일정 보기`}
-                  >
-                    {segment.showDot ? <span className={styles.weekEventBarDot} aria-hidden="true" /> : null}
-                    <span className={styles.weekEventBarTitle}>{segment.event.title}</span>
-                  </button>
-                ))}
+                {weekSegments.map((segment) => {
+                  const categoryTone = calendarCategoryTone[segment.event.category];
+
+                  return (
+                    <button
+                      key={`${segment.event.id}-${weekCells[0]?.dateKey}`}
+                      type="button"
+                      className={[styles.weekEventBar, segment.spanClassName].join(' ')}
+                      style={{
+                        gridColumn: `${segment.startColumn + 1} / ${segment.endColumn + 2}`,
+                        gridRow: `${segment.lane + 1}`,
+                        background: categoryTone.background,
+                        color: categoryTone.text,
+                        boxShadow: `inset 0 0 0 1px ${categoryTone.border}`,
+                      }}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onSelectEvent(segment.event.id);
+                      }}
+                      aria-label={`${segment.event.title} 일정 보기`}
+                    >
+                      {segment.showDot ? (
+                        <span
+                          className={styles.weekEventBarDot}
+                          style={{ background: categoryTone.border }}
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      <span className={styles.weekEventBarTitle}>{segment.event.title}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               <div className={styles.monthGrid}>
