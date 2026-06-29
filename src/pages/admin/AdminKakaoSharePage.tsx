@@ -28,14 +28,9 @@ type ShareDraft = {
   buttonText2: string;
 };
 
-const categoryLabels: Record<AdminKakaoShareCategory, string> = {
-  notice: '怨듭?',
-  update: '?낅뜲?댄듃',
-};
-
 const displayCategoryLabels: Record<AdminKakaoShareCategory, string> = {
-  notice: '\uacf5\uc9c0',
-  update: '\uc5c5\ub370\uc774\ud2b8',
+  notice: '공지',
+  update: '업데이트',
 };
 
 const noticeTemplateIdsByImageCount: Record<number, number> = {
@@ -324,42 +319,42 @@ function buildTemplateArgs(draft: ShareDraft): Record<string, string> {
 
 function getDraftError(draft: ShareDraft, templateId: number | null) {
   if (!templateId) {
-    return `${displayCategoryLabels[draft.category]} \ud15c\ud50c\ub9bf ID\ub97c \ud655\uc778\ud574 \uc8fc\uc138\uc694.`;
+    return `${displayCategoryLabels[draft.category]} 템플릿 ID를 확인해 주세요.`;
   }
 
   if (draft.category === 'notice') {
     if (!draft.title.trim()) {
-      return '\uacf5\uc9c0 \uc81c\ubaa9\uc744 \uc785\ub825\ud574 \uc8fc\uc138\uc694.';
+      return '공지 제목을 입력해 주세요.';
     }
 
     if (!draft.content.trim()) {
-      return '\uacf5\uc9c0 \ub0b4\uc6a9\uc744 \uc785\ub825\ud574 \uc8fc\uc138\uc694.';
+      return '공지 내용을 입력해 주세요.';
     }
   }
 
   if (draft.category === 'update') {
     if (!draft.title.trim()) {
-      return '\uc5c5\ub370\uc774\ud2b8 \uc81c\ubaa9\uc744 \uc785\ub825\ud574 \uc8fc\uc138\uc694.';
+      return '업데이트 제목을 입력해 주세요.';
     }
 
     if (!draft.content.trim()) {
-      return '\uc5c5\ub370\uc774\ud2b8 \ub0b4\uc6a9\uc744 \uc785\ub825\ud574 \uc8fc\uc138\uc694.';
+      return '업데이트 내용을 입력해 주세요.';
     }
 
     if (draft.buttonUrl2.trim() && !draft.buttonUrl1.trim()) {
-      return '\ubc84\ud2bc URL 2\ub97c \uc0ac\uc6a9\ud558\ub824\uba74 \ubc84\ud2bc URL 1\uc744 \uba3c\uc800 \uc785\ub825\ud574 \uc8fc\uc138\uc694.';
+      return '버튼 URL 2를 사용하려면 버튼 URL 1을 먼저 입력해 주세요.';
     }
 
     if ((draft.buttonUrl1.trim() && !isValidUrl(draft.buttonUrl1)) || (draft.buttonUrl2.trim() && !isValidUrl(draft.buttonUrl2))) {
-      return '\uc5c5\ub370\uc774\ud2b8 \ubc84\ud2bc URL\uc740 http \ub610\ub294 https \uc8fc\uc18c\ub85c \uc785\ub825\ud574 \uc8fc\uc138\uc694.';
+      return '업데이트 버튼 URL은 http 또는 https 주소로 입력해 주세요.';
     }
 
     if (draft.buttonUrl1.trim() && !draft.buttonText1.trim()) {
-      return '\ubc84\ud2bc 1 \ud14d\uc2a4\ud2b8\ub97c \uc785\ub825\ud574 \uc8fc\uc138\uc694.';
+      return '버튼 1 텍스트를 입력해 주세요.';
     }
 
     if (draft.buttonUrl2.trim() && !draft.buttonText2.trim()) {
-      return '\ubc84\ud2bc 2 \ud14d\uc2a4\ud2b8\ub97c \uc785\ub825\ud574 \uc8fc\uc138\uc694.';
+      return '버튼 2 텍스트를 입력해 주세요.';
     }
   }
 
@@ -393,7 +388,7 @@ export function AdminKakaoSharePage() {
         }
       } catch (error) {
         if (isMounted) {
-          setErrorMessage(error instanceof Error ? error.message : '移댁뭅??怨듭쑀 硫붿떆吏 紐⑸줉??遺덈윭?ㅼ? 紐삵뻽?듬땲??');
+          setErrorMessage(error instanceof Error ? error.message : '카카오 공유 메시지 목록을 불러오지 못했습니다.');
           setStatus('error');
         }
       }
@@ -461,7 +456,7 @@ export function AdminKakaoSharePage() {
         };
       });
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '怨듭쑀 ?대?吏瑜??낅줈?쒗븯吏 紐삵뻽?듬땲??');
+      setErrorMessage(error instanceof Error ? error.message : '공유 이미지를 업로드하지 못했습니다.');
     } finally {
       setUploading(false);
     }
@@ -478,7 +473,7 @@ export function AdminKakaoSharePage() {
 
   async function saveDraft() {
     if (!templateId) {
-      throw new Error('\ud15c\ud50c\ub9bf ID\ub97c \ud655\uc778\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4.');
+      throw new Error('템플릿 ID를 확인하지 못했습니다.');
     }
 
     const savedMessage = await createAdminKakaoShareMessage({
@@ -511,9 +506,9 @@ export function AdminKakaoSharePage() {
       setErrorMessage('');
       setSuccessMessage('');
       await saveDraft();
-      setSuccessMessage('移댁뭅??怨듭쑀 硫붿떆吏瑜???ν뻽?듬땲??');
+      setSuccessMessage('카카오 공유 메시지를 저장했습니다.');
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '移댁뭅??怨듭쑀 硫붿떆吏瑜???ν븯吏 紐삵뻽?듬땲??');
+      setErrorMessage(error instanceof Error ? error.message : '카카오 공유 메시지를 저장하지 못했습니다.');
     } finally {
       setSubmitMode(null);
     }
@@ -527,7 +522,7 @@ export function AdminKakaoSharePage() {
 
     const kakaoKey = getKakaoJavaScriptKey();
     if (!kakaoKey) {
-      setErrorMessage('VITE_KAKAO_JAVASCRIPT_KEY ?섍꼍 蹂?섎? ?ㅼ젙?댁＜?몄슂.');
+      setErrorMessage('VITE_KAKAO_JAVASCRIPT_KEY 환경 변수를 설정해 주세요.');
       return;
     }
 
@@ -543,9 +538,9 @@ export function AdminKakaoSharePage() {
         templateId: templateId as number,
         templateArgs: latestTemplateArgs,
       });
-      setSuccessMessage('移댁뭅?ㅽ넚 怨듭쑀 李쎌쓣 ?댁뿀?듬땲??');
+      setSuccessMessage('카카오톡 공유 창을 열었습니다.');
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '移댁뭅?ㅽ넚 怨듭쑀???ㅽ뙣?덉뒿?덈떎.');
+      setErrorMessage(error instanceof Error ? error.message : '카카오톡 공유에 실패했습니다.');
     } finally {
       setSubmitMode(null);
     }
@@ -555,30 +550,30 @@ export function AdminKakaoSharePage() {
     <div className="min-h-screen bg-transparent text-[var(--color-text)]">
       <AdminHeader />
       <main>
-        <section className={styles.page} style={pageStyle} aria-label={'\uce74\uce74\uc624 \uacf5\uc720 \uad00\ub9ac'}>
+        <section className={styles.page} style={pageStyle} aria-label="카카오 공유 관리">
           <div className={styles.inner}>
             <div className={styles.titleRow}>
               <div>
-                <h1 className={styles.title}>{'\uce74\uce74\uc624 \uacf5\uc720'}</h1>
+                <h1 className={styles.title}>카카오 공유</h1>
                 <p className={styles.description}>
-                  {'\uacf5\uc9c0\uc640 \uc5c5\ub370\uc774\ud2b8 \uce74\ud14c\uace0\ub9ac\uc5d0 \ub9de\ub294 \uce74\uce74\uc624 \ucee4\uc2a4\ud140 \uba54\uc2dc\uc9c0 \ud15c\ud50c\ub9bf\uc744 \uc120\ud0dd\ud574 \uacf5\uc720\ud569\ub2c8\ub2e4.'}
+                  공지와 업데이트 카테고리에 맞는 카카오 커스텀 메시지 템플릿을 선택해 공유합니다.
                 </p>
               </div>
-              <span className={styles.countBadge}>{'\ucd5c\uadfc'} {messages.length}{'\uac74'}</span>
+              <span className={styles.countBadge}>최근 {messages.length}건</span>
             </div>
 
             <div className={styles.layout}>
               <section className={styles.panel} aria-labelledby="kakao-share-form-title">
                 <div className={styles.sectionHeader}>
                   <div>
-                    <h2 id="kakao-share-form-title" className={styles.sectionTitle}>{'\uba54\uc2dc\uc9c0 \uc791\uc131'}</h2>
+                    <h2 id="kakao-share-form-title" className={styles.sectionTitle}>메시지 작성</h2>
                   </div>
                   <span className={styles.countBadge}>
-                    {'\ud15c\ud50c\ub9bf'} {templateId ?? '\ubbf8\uc124\uc815'}
+                    템플릿 {templateId ?? '미설정'}
                   </span>
                 </div>
 
-                <div className={styles.categoryGroup} aria-label={'\uce74\uce74\uc624 \uacf5\uc720 \uce74\ud14c\uace0\ub9ac'}>
+                <div className={styles.categoryGroup} aria-label="카카오 공유 카테고리">
                   {(['notice', 'update'] as AdminKakaoShareCategory[]).map((category) => (
                     <button
                       key={category}
@@ -596,10 +591,10 @@ export function AdminKakaoSharePage() {
                   {draft.category === 'notice' ? (
                     <>
                       <label className={`${styles.field} ${styles.fullWidthField}`}>
-                        <span>{'\uc774\ubbf8\uc9c0 \uc5c5\ub85c\ub4dc'}</span>
+                        <span>이미지 업로드</span>
                         <span className={styles.uploadRow}>
                           <input type="file" accept="image/*" onChange={(event) => void handleImageUpload(0, event)} />
-                          <span className={styles.statusText}>{uploading ? '\uc5c5\ub85c\ub4dc \uc911' : '\uc120\ud0dd \uc0ac\ud56d'}</span>
+                          <span className={styles.statusText}>{uploading ? '업로드 중' : '선택 사항'}</span>
                         </span>
                       </label>
 
@@ -607,19 +602,19 @@ export function AdminKakaoSharePage() {
                         <div className={`${styles.imagePreviewBlock} ${styles.fullWidthField}`}>
                           <img src={draft.imageUrls[0]} alt="" className={styles.previewImage} />
                           <button type="button" className={styles.secondaryButton} onClick={() => removeImage(0)}>
-                            {'\uc774\ubbf8\uc9c0 \uc81c\uac70'}
+                            이미지 제거
                           </button>
                         </div>
                       ) : null}
 
                       {[1, 2].map((imageIndex) => (
                         <div key={`share-image-${imageIndex}`} className={`${styles.field} ${styles.fullWidthField}`}>
-                          <span>{`\uc774\ubbf8\uc9c0 ${imageIndex + 1}`}</span>
+                          <span>{`이미지 ${imageIndex + 1}`}</span>
                           {draft.imageUrls[imageIndex] ? (
                             <div className={styles.imagePreviewBlock}>
                               <img src={draft.imageUrls[imageIndex]} alt="" className={styles.previewImage} />
                               <button type="button" className={styles.secondaryButton} onClick={() => removeImage(imageIndex)}>
-                                {'\uc774\ubbf8\uc9c0 \uc81c\uac70'}
+                                이미지 제거
                               </button>
                             </div>
                           ) : (
@@ -630,51 +625,51 @@ export function AdminKakaoSharePage() {
                                 disabled={uploading}
                                 onChange={(event) => void handleImageUpload(imageIndex, event)}
                               />
-                              <span className={styles.statusText}>{uploading ? '\uc5c5\ub85c\ub4dc \uc911' : '\uc120\ud0dd \uc0ac\ud56d'}</span>
+                              <span className={styles.statusText}>{uploading ? '업로드 중' : '선택 사항'}</span>
                             </span>
                           )}
                         </div>
                       ))}
 
                       <label className={`${styles.field} ${styles.fullWidthField}`}>
-                        <span>{'\uba54\uc2dc\uc9c0 \uc81c\ubaa9'}</span>
+                        <span>메시지 제목</span>
                         <input
                           value={draft.title}
                           onChange={(event) => updateDraft({ title: event.target.value })}
-                          placeholder={'\uacf5\uc9c0 \uc81c\ubaa9'}
+                          placeholder="공지 제목"
                         />
                       </label>
                       <label className={`${styles.field} ${styles.fullWidthField}`}>
-                        <span>{'\uba54\uc2dc\uc9c0 \ub0b4\uc6a9'}</span>
+                        <span>메시지 내용</span>
                         <textarea
                           value={draft.content}
                           onChange={(event) => updateDraft({ content: event.target.value })}
-                          placeholder={'\uacf5\uc9c0 \ub0b4\uc6a9\uc744 \uc785\ub825\ud574 \uc8fc\uc138\uc694.'}
+                          placeholder="공지 내용을 입력해 주세요."
                         />
                       </label>
                     </>
                   ) : (
                     <>
                       <label className={`${styles.field} ${styles.fullWidthField}`}>
-                        <span>{'\uba54\uc2dc\uc9c0 \uc81c\ubaa9'}</span>
+                        <span>메시지 제목</span>
                         <input
                           value={draft.title}
                           onChange={(event) => updateDraft({ title: event.target.value })}
-                          placeholder={'\uc5c5\ub370\uc774\ud2b8 \uc81c\ubaa9'}
+                          placeholder="업데이트 제목"
                         />
                       </label>
 
                       <label className={`${styles.field} ${styles.fullWidthField}`}>
-                        <span>{'\uba54\uc2dc\uc9c0 \ub0b4\uc6a9'}</span>
+                        <span>메시지 내용</span>
                         <textarea
                           value={draft.content}
                           onChange={(event) => updateDraft({ content: event.target.value })}
-                          placeholder={'\uc5c5\ub370\uc774\ud2b8 \ub0b4\uc6a9\uc744 \uc785\ub825\ud574 \uc8fc\uc138\uc694.'}
+                          placeholder="업데이트 내용을 입력해 주세요."
                         />
                       </label>
 
                       <label className={styles.field}>
-                        <span>{'\ubc84\ud2bc URL 1'}</span>
+                        <span>버튼 URL 1</span>
                         <input
                           value={draft.buttonUrl1}
                           onChange={(event) => updateDraft({ buttonUrl1: event.target.value })}
@@ -683,16 +678,16 @@ export function AdminKakaoSharePage() {
                       </label>
 
                       <label className={styles.field}>
-                        <span>{'\ubc84\ud2bc \ud14d\uc2a4\ud2b8 1'}</span>
+                        <span>버튼 텍스트 1</span>
                         <input
                           value={draft.buttonText1}
                           onChange={(event) => updateDraft({ buttonText1: event.target.value })}
-                          placeholder={'\uc790\uc138\ud788 \ubcf4\uae30'}
+                          placeholder="자세히 보기"
                         />
                       </label>
 
                       <label className={styles.field}>
-                        <span>{'\ubc84\ud2bc URL 2'}</span>
+                        <span>버튼 URL 2</span>
                         <input
                           value={draft.buttonUrl2}
                           onChange={(event) => updateDraft({ buttonUrl2: event.target.value })}
@@ -701,11 +696,11 @@ export function AdminKakaoSharePage() {
                       </label>
 
                       <label className={styles.field}>
-                        <span>{'\ubc84\ud2bc \ud14d\uc2a4\ud2b8 2'}</span>
+                        <span>버튼 텍스트 2</span>
                         <input
                           value={draft.buttonText2}
                           onChange={(event) => updateDraft({ buttonText2: event.target.value })}
-                          placeholder={'\ud655\uc778\ud558\uae30'}
+                          placeholder="확인하기"
                         />
                       </label>
                     </>
@@ -713,13 +708,13 @@ export function AdminKakaoSharePage() {
                 </div>
 
                 <div className={styles.actionRow}>
-                  <span className={styles.statusText}>{draftError || '\uacf5\uc720 \uc804\uc5d0 \uba54\uc2dc\uc9c0 \uae30\ub85d\uc774 \uc790\ub3d9 \uc800\uc7a5\ub429\ub2c8\ub2e4.'}</span>
+                  <span className={styles.statusText}>{draftError || '공유 전에 메시지 기록이 자동 저장됩니다.'}</span>
                   <div className={styles.actionRow}>
                     <button type="button" className={styles.secondaryButton} disabled={!canSubmit} onClick={() => void handleSave()}>
-                      {submitMode === 'save' ? '\uc800\uc7a5 \uc911' : '\uc800\uc7a5'}
+                      {submitMode === 'save' ? '저장 중' : '저장'}
                     </button>
                     <button type="button" className={styles.saveButton} disabled={!canSubmit} onClick={() => void handleShare()}>
-                      {submitMode === 'share' ? '\uacf5\uc720 \uc900\ube44 \uc911' : '\uce74\uce74\uc624\ud1a1 \uacf5\uc720'}
+                      {submitMode === 'share' ? '공유 준비 중' : '카카오톡 공유'}
                     </button>
                   </div>
                 </div>
@@ -730,12 +725,12 @@ export function AdminKakaoSharePage() {
 
               <aside className={styles.panel} aria-labelledby="kakao-share-history-title">
                 <div>
-                  <h2 id="kakao-share-history-title" className={styles.sectionTitle}>理쒓렐 ?묒꽦</h2>
-                  <p className={styles.sectionDescription}>理쒓렐 ??ν븳 怨듭쑀 硫붿떆吏 20嫄댁엯?덈떎.</p>
+                  <h2 id="kakao-share-history-title" className={styles.sectionTitle}>최근 작성</h2>
+                  <p className={styles.sectionDescription}>최근 저장한 공유 메시지 20건입니다.</p>
                 </div>
 
                 {status === 'loading' ? (
-                  <p className={styles.message}>移댁뭅??怨듭쑀 硫붿떆吏瑜?遺덈윭?ㅻ뒗 以묒엯?덈떎.</p>
+                  <p className={styles.message}>카카오 공유 메시지를 불러오는 중입니다.</p>
                 ) : null}
 
                 {status === 'error' ? (
@@ -743,7 +738,7 @@ export function AdminKakaoSharePage() {
                 ) : null}
 
                 {status === 'ready' && messages.length === 0 ? (
-                  <p className={styles.message}>?꾩쭅 ??ν븳 怨듭쑀 硫붿떆吏媛 ?놁뒿?덈떎.</p>
+                  <p className={styles.message}>아직 저장한 공유 메시지가 없습니다.</p>
                 ) : null}
 
                 {messages.length > 0 ? (
@@ -752,7 +747,7 @@ export function AdminKakaoSharePage() {
                       <article key={message.id} className={styles.historyItem}>
                         <strong>{message.title || message.content}</strong>
                         <p className={styles.historyMeta}>
-                          {displayCategoryLabels[message.category]} 쨌 ?쒗뵆由?{message.templateId} 쨌 {formatDateTime(message.createdAt)}
+                          {displayCategoryLabels[message.category]} · 템플릿 {message.templateId} · {formatDateTime(message.createdAt)}
                         </p>
                       </article>
                     ))}
