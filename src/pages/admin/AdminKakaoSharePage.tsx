@@ -10,6 +10,7 @@ import {
 import { getKakaoJavaScriptKey, prepareKakaoShare } from '../../shared/lib/kakaoShare';
 import { AdminHeader } from '../../shared/components/layout/AdminHeader';
 import { Footer } from '../../shared/components/layout/Footer';
+import { ROUTES } from '../../shared/constants/routes';
 import { colors } from '../../shared/styles/tokens/colors';
 import styles from './AdminKakaoSharePage.module.css';
 
@@ -95,6 +96,32 @@ function getDefaultTargetUrl() {
   return new URL(basePath || '/', window.location.origin).toString();
 }
 
+function isBangchelinHost(hostname: string) {
+  return hostname === 'bangchelin.com' || hostname === 'www.bangchelin.com';
+}
+
+function getShareOrigin() {
+  if (typeof window === 'undefined') {
+    return 'https://bangchelin.com';
+  }
+
+  return window.location.origin;
+}
+
+function shouldUseExternalRedirect(url: URL) {
+  if (typeof window === 'undefined') {
+    return !isBangchelinHost(url.hostname);
+  }
+
+  return url.origin !== window.location.origin && !isBangchelinHost(url.hostname);
+}
+
+function getExternalRedirectUrl(url: URL) {
+  const redirectUrl = new URL(ROUTES.externalRedirect, getShareOrigin());
+  redirectUrl.searchParams.set('url', url.toString());
+  return redirectUrl;
+}
+
 function isValidUrl(value: string) {
   if (!value.trim()) {
     return false;
@@ -120,16 +147,19 @@ function getKakaoLinkParts(value: string) {
   }
 
   try {
-    const url = new URL(trimmedValue);
+    const parsedUrl = new URL(trimmedValue);
+    const url = shouldUseExternalRedirect(parsedUrl) ? getExternalRedirectUrl(parsedUrl) : parsedUrl;
+    const path = `${url.pathname}${url.search}${url.hash}`.replace(/^\/+/, '');
+
     return {
       domain: url.origin,
-      path: `${url.pathname}${url.search}${url.hash}`,
+      path,
       url: url.toString(),
     };
   } catch {
     return {
       domain: '',
-      path: trimmedValue,
+      path: trimmedValue.replace(/^\/+/, ''),
       url: trimmedValue,
     };
   }
@@ -184,12 +214,16 @@ function buildTemplateArgs(draft: ShareDraft): Record<string, string> {
       CONTENT: content,
       button1: buttonUrl1,
       button2: buttonUrl2,
+      buttonDomain: buttonLink1.domain,
       buttonDomain1: buttonLink1.domain,
       buttonDomain2: buttonLink2.domain,
+      buttonPath: buttonLink1.path,
       buttonPath1: buttonLink1.path,
       buttonPath2: buttonLink2.path,
+      buttonUrl: buttonUrl1,
       buttonUrl1,
       buttonUrl2,
+      buttonText: buttonText1,
       buttonText1,
       buttonText2,
     };
