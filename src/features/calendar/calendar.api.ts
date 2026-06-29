@@ -66,6 +66,10 @@ type CalendarEventCommentRow = {
   } | null;
 };
 
+type CurrentUserProfileRow = {
+  nickname: string | null;
+};
+
 export type CalendarParticipantSearchResult = {
   id: string;
   nickname: string;
@@ -206,7 +210,32 @@ function toEventPayload(values: CalendarEventFormValues) {
   };
 }
 
-async function replaceParticipants(eventId: string, participantNames: string[], token: string) {
+async function getCurrentUserParticipant(token: string, userId: string) {
+  const [profile] = await restRequest<CurrentUserProfileRow[]>(`/profiles?id=eq.${userId}&select=nickname`, {
+    token,
+  });
+  const nickname = profile?.nickname?.trim();
+
+  if (!nickname) {
+    throw new Error('Profile nickname is required.');
+  }
+
+  return {
+    profileId: userId,
+    displayName: nickname,
+  };
+}
+
+function normalizeParticipantName(name: string) {
+  return name.trim().toLowerCase();
+}
+
+async function replaceParticipants(
+  eventId: string,
+  participantNames: string[],
+  token: string,
+  ownerParticipant?: { profileId: string; displayName: string },
+) {
   await restRequest(`/calendar_event_participants?event_id=eq.${eventId}`, {
     method: 'DELETE',
     token,
@@ -215,12 +244,33 @@ async function replaceParticipants(eventId: string, participantNames: string[], 
     },
   });
 
-  const rows = participantNames.map((name, index) => ({
-    event_id: eventId,
-    display_name: name.trim(),
-    status: 'confirmed',
-    sort_order: index,
-  })).filter((row) => row.display_name);
+  const ownerNameKey = ownerParticipant ? normalizeParticipantName(ownerParticipant.displayName) : null;
+  const seenNames = new Set<string>(ownerNameKey ? [ownerNameKey] : []);
+  const rows = [
+    ...(ownerParticipant ? [{
+      event_id: eventId,
+      profile_id: ownerParticipant.profileId,
+      display_name: ownerParticipant.displayName,
+      status: 'confirmed',
+      sort_order: 0,
+    }] : []),
+    ...participantNames.map((name) => name.trim()).filter(Boolean).flatMap((name) => {
+      const nameKey = normalizeParticipantName(name);
+
+      if (seenNames.has(nameKey)) {
+        return [];
+      }
+
+      seenNames.add(nameKey);
+
+      return [{
+        event_id: eventId,
+        display_name: name,
+        status: 'confirmed',
+        sort_order: seenNames.size - 1,
+      }];
+    }),
+  ];
 
   if (!rows.length) {
     return;
@@ -405,6 +455,7 @@ export async function getCalendarEvent(eventId: string) {
 
 export async function createCalendarEvent(values: CalendarEventFormValues) {
   const session = getRequiredSession();
+  const ownerParticipant = await getCurrentUserParticipant(session.access_token, session.user.id);
   const [row] = await restRequest<CalendarEventRow[]>('/calendar_events', {
     method: 'POST',
     token: session.access_token,
@@ -415,7 +466,7 @@ export async function createCalendarEvent(values: CalendarEventFormValues) {
     throw new Error('일정 생성 결과를 확인할 수 없습니다.');
   }
 
-  await replaceParticipants(row.id, values.participantNames, session.access_token);
+  await replaceParticipants(row.id, values.participantNames, session.access_token, ownerParticipant);
   return getCalendarEvent(row.id);
 }
 
