@@ -9,6 +9,7 @@ export const ROUTES = {
   loungeMazeSet: '/lounge/maze/:setSlug',
   loungeMazePlay: '/lounge/maze/:setSlug/play',
   calendar: '/calendar',
+  externalRedirect: '/out',
   report: '/report',
   admin: '/admin',
   adminUsers: '/admin/users',

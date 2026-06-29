@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 
 import {
   calendarCategoryLabels,
@@ -22,8 +22,12 @@ type EventDetailPanelProps = {
   onLeaveEvent: (eventId: string) => Promise<void>;
   attendanceSubmitting?: boolean;
   attendanceError?: string;
+  currentUserId?: string | null;
   onSubmitComment: (content: string, parentId?: string | null) => Promise<void>;
+  onUpdateComment: (commentId: string, content: string) => Promise<void>;
+  onDeleteComment: (commentId: string) => void;
   commentSubmitting?: boolean;
+  commentActionSubmittingId?: string | null;
   commentError?: string;
   onClose: () => void;
 };
@@ -71,6 +75,54 @@ function toneStyle(background: string, text: string, border: string) {
     color: text,
     borderColor: border,
   } as CSSProperties;
+}
+
+const commentUrlPattern = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+const trailingUrlPunctuationPattern = /[.,!?;:)\]}]+$/;
+
+function renderCommentContent(content: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  let lastIndex = 0;
+
+  for (const match of content.matchAll(commentUrlPattern)) {
+    const rawUrl = match[0];
+    const matchIndex = match.index ?? 0;
+    const trailingPunctuation = rawUrl.match(trailingUrlPunctuationPattern)?.[0] ?? '';
+    const linkText = trailingPunctuation ? rawUrl.slice(0, -trailingPunctuation.length) : rawUrl;
+
+    if (!linkText) {
+      continue;
+    }
+
+    if (matchIndex > lastIndex) {
+      nodes.push(content.slice(lastIndex, matchIndex));
+    }
+
+    const href = /^https?:\/\//i.test(linkText) ? linkText : `https://${linkText}`;
+    nodes.push(
+      <a
+        key={`${matchIndex}-${linkText}`}
+        className={styles.commentLink}
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {linkText}
+      </a>,
+    );
+
+    if (trailingPunctuation) {
+      nodes.push(trailingPunctuation);
+    }
+
+    lastIndex = matchIndex + rawUrl.length;
+  }
+
+  if (lastIndex < content.length) {
+    nodes.push(content.slice(lastIndex));
+  }
+
+  return nodes.length ? nodes : [content];
 }
 
 function PencilIcon() {
@@ -255,15 +307,22 @@ export function EventDetailPanel({
   onLeaveEvent,
   attendanceSubmitting = false,
   attendanceError,
+  currentUserId,
   onSubmitComment,
+  onUpdateComment,
+  onDeleteComment,
   commentSubmitting = false,
+  commentActionSubmittingId,
   commentError,
   onClose,
 }: EventDetailPanelProps) {
   const [commentContent, setCommentContent] = useState('');
   const [replyTarget, setReplyTarget] = useState<CalendarEventComment | null>(null);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentContent, setEditingCommentContent] = useState('');
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [shareMessage, setShareMessage] = useState('');
+  const commentComposerRef = useRef<HTMLFormElement | null>(null);
 
   useEffect(() => {
     if (!selectedEvent) {
@@ -297,7 +356,43 @@ export function EventDetailPanel({
     }
   }
 
+  function revealCommentComposer() {
+    window.setTimeout(() => {
+      commentComposerRef.current?.scrollIntoView({ block: 'end', inline: 'nearest' });
+    }, 120);
+  }
+
+  function startEditComment(comment: CalendarEventComment) {
+    setReplyTarget(null);
+    setEditingCommentId(comment.id);
+    setEditingCommentContent(comment.content);
+  }
+
+  function cancelEditComment() {
+    setEditingCommentId(null);
+    setEditingCommentContent('');
+  }
+
+  async function submitEditComment(commentId: string) {
+    const trimmedContent = editingCommentContent.trim();
+    if (!trimmedContent || commentActionSubmittingId) {
+      return;
+    }
+
+    try {
+      await onUpdateComment(commentId, trimmedContent);
+      cancelEditComment();
+    } catch {
+      // The parent panel owns the visible error message.
+    }
+  }
+
   function renderComment(comment: CalendarEventComment, depth = 0) {
+    const isOwnComment = Boolean(currentUserId && comment.userId === currentUserId);
+    const isEditing = editingCommentId === comment.id;
+    const isActionSubmitting = commentActionSubmittingId === comment.id;
+    const canSaveEdit = Boolean(editingCommentContent.trim()) && editingCommentContent.trim() !== comment.content.trim();
+
     return (
       <div key={comment.id} className={`${styles.commentItem} ${depth > 0 ? styles.commentReplyItem : ''}`.trim()}>
         <span className={styles.commentAvatar} aria-hidden="true">
@@ -310,13 +405,59 @@ export function EventDetailPanel({
         <div className={styles.commentBody}>
           <div className={styles.commentHeader}>
             <p className={styles.detailMetaText}>{comment.author}</p>
-            {depth === 0 ? (
+            {depth === 0 && !isEditing ? (
               <button type="button" className={styles.commentReplyButton} onClick={() => setReplyTarget(comment)}>
                 답글
               </button>
             ) : null}
+            {isOwnComment && !isEditing ? (
+              <div className={styles.commentActionGroup}>
+                <button type="button" className={styles.commentReplyButton} onClick={() => startEditComment(comment)}>
+                  수정
+                </button>
+                <button
+                  type="button"
+                  className={styles.commentReplyButton}
+                  onClick={() => onDeleteComment(comment.id)}
+                  disabled={isActionSubmitting}
+                >
+                  {isActionSubmitting ? '삭제 중' : '삭제'}
+                </button>
+              </div>
+            ) : null}
           </div>
-          <p className={styles.commentText}>{comment.content}</p>
+          {isEditing ? (
+            <div className={styles.commentEditForm}>
+              <textarea
+                className={styles.commentInput}
+                value={editingCommentContent}
+                maxLength={500}
+                rows={3}
+                disabled={isActionSubmitting}
+                onChange={(event) => setEditingCommentContent(event.target.value)}
+              />
+              <div className={styles.commentEditActions}>
+                <button
+                  type="button"
+                  className={styles.commentEditCancelButton}
+                  onClick={cancelEditComment}
+                  disabled={isActionSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className={styles.commentSubmitButton}
+                  onClick={() => void submitEditComment(comment.id)}
+                  disabled={isActionSubmitting || !canSaveEdit}
+                >
+                  {isActionSubmitting ? '저장 중' : '저장'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className={styles.commentText}>{renderCommentContent(comment.content)}</p>
+          )}
           {depth === 0 && comment.replies?.length ? (
             <div className={styles.commentReplyList}>
               {comment.replies.map((reply) => renderComment(reply, 1))}
@@ -630,7 +771,7 @@ export function EventDetailPanel({
         </div>
       </div>
 
-      <form className={styles.commentComposer} onSubmit={handleSubmitComment}>
+      <form ref={commentComposerRef} className={styles.commentComposer} onSubmit={handleSubmitComment}>
         {replyTarget ? (
           <div className={styles.commentReplyTarget}>
             <span>{replyTarget.author}님에게 답글 작성 중</span>
@@ -647,6 +788,7 @@ export function EventDetailPanel({
             rows={2}
             placeholder={replyTarget ? '답글을 입력해주세요.' : '댓글을 입력해주세요.'}
             disabled={commentSubmitting}
+            onFocus={revealCommentComposer}
             onChange={(event) => setCommentContent(event.target.value)}
           />
           <button type="submit" className={styles.commentSubmitButton} disabled={commentSubmitting || !commentContent.trim()}>

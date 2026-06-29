@@ -17,6 +17,7 @@ const AdminInquiryDetailPage = lazy(() => import('../../pages/admin/AdminInquiry
 const AboutPage = lazy(() => import('../../pages/about/AboutPage').then((module) => ({ default: module.AboutPage })));
 const CalendarPage = lazy(() => import('../../pages/calendar/CalendarPage').then((module) => ({ default: module.CalendarPage })));
 const DropdownPreviewPage = lazy(() => import('../../pages/dropdown-preview/DropdownPreviewPage').then((module) => ({ default: module.DropdownPreviewPage })));
+const ExternalRedirectPage = lazy(() => import('../../pages/external-redirect/ExternalRedirectPage').then((module) => ({ default: module.ExternalRedirectPage })));
 const InputPreviewPage = lazy(() => import('../../pages/input-preview/InputPreviewPage').then((module) => ({ default: module.InputPreviewPage })));
 const LoginPage = lazy(() => import('../../pages/login/LoginPage').then((module) => ({ default: module.LoginPage })));
 const LoungePage = lazy(() => import('../../pages/lounge/LoungePage').then((module) => ({ default: module.LoungePage })));
@@ -120,6 +121,7 @@ export function AppRouter() {
       <Route path={ROUTES.loungeMazeSet} element={<ProtectedRoute><LazyRoute><MazeSetCoverPage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.loungeMazePlay} element={<ProtectedRoute><LazyRoute><MazePlayPage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.calendar} element={<ProtectedRoute><LazyRoute><CalendarPage /></LazyRoute></ProtectedRoute>} />
+      <Route path={ROUTES.externalRedirect} element={<LazyRoute><ExternalRedirectPage /></LazyRoute>} />
       <Route path={ROUTES.admin} element={<AdminRoute><LazyRoute><AdminPage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.adminUsers} element={<AdminRoute><LazyRoute><AdminUserManagementPage /></LazyRoute></AdminRoute>} />
       <Route path={ROUTES.adminUserActivity} element={<AdminRoute><LazyRoute><AdminUserActivityPage /></LazyRoute></AdminRoute>} />

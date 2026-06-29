@@ -472,6 +472,46 @@ export async function createCalendarEventComment(eventId: string, content: strin
   return getCalendarEvent(eventId);
 }
 
+export async function updateCalendarEventComment(eventId: string, commentId: string, content: string) {
+  const session = getRequiredSession();
+  const trimmedContent = content.trim();
+
+  if (!trimmedContent) {
+    throw new Error('?볤? ?댁슜???낅젰?댁＜?몄슂.');
+  }
+
+  if (trimmedContent.length > 500) {
+    throw new Error('?볤?? 500???대궡濡??낅젰?댁＜?몄슂.');
+  }
+
+  await restRequest(`/calendar_event_comments?id=eq.${encodeURIComponent(commentId)}`, {
+    method: 'PATCH',
+    token: session.access_token,
+    headers: {
+      Prefer: 'return=minimal',
+    },
+    body: {
+      content: trimmedContent,
+    },
+  });
+
+  return getCalendarEvent(eventId);
+}
+
+export async function deleteCalendarEventComment(eventId: string, commentId: string) {
+  const session = getRequiredSession();
+
+  await restRequest(`/calendar_event_comments?id=eq.${encodeURIComponent(commentId)}`, {
+    method: 'DELETE',
+    token: session.access_token,
+    headers: {
+      Prefer: 'return=minimal',
+    },
+  });
+
+  return getCalendarEvent(eventId);
+}
+
 export async function joinCalendarEvent(eventId: string) {
   const session = getRequiredSession();
 

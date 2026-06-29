@@ -245,6 +245,18 @@
   justify-content: space-between;
 }
 
+.commentText {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.commentLink {
+  color: var(--calendar-brand-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .calendarShell {
   --calendar-day-cell-height: 112px;
   display: flex;
@@ -700,12 +712,24 @@
 .commentHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+.commentHeader .detailMetaText {
+  margin-right: auto;
+}
+
+.commentActionGroup {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
 }
 
 .commentReplyButton,
-.commentReplyTarget button {
+.commentReplyTarget button,
+.commentEditCancelButton {
   border: 0;
   background: transparent;
   color: var(--calendar-brand-primary);
@@ -713,6 +737,12 @@
   font-size: 0.75rem;
   line-height: 1.2;
   cursor: pointer;
+}
+
+.commentReplyButton:disabled,
+.commentEditCancelButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .commentReplyList {
@@ -798,6 +828,24 @@
   line-height: 1.5;
   resize: vertical;
   box-sizing: border-box;
+}
+
+.commentEditForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.commentEditActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.commentEditActions .commentSubmitButton {
+  min-height: 34px;
+  padding: 0 14px;
 }
 
 .commentSubmitButton {
@@ -1574,7 +1622,8 @@
 .commentInput:focus-visible,
 .commentSubmitButton:focus-visible,
 .commentReplyButton:focus-visible,
-.commentReplyTarget button:focus-visible {
+.commentReplyTarget button:focus-visible,
+.commentEditCancelButton:focus-visible {
   outline: 2px solid var(--calendar-focus-ring);
   outline-offset: 2px;
 }
@@ -1626,7 +1675,29 @@
 
   .detailPanel {
     width: 100%;
+    height: 100%;
+    max-height: inherit;
+    gap: 14px;
+    padding-top: 20px;
+    padding-bottom: calc(18px + max(env(safe-area-inset-bottom), 16px));
     box-sizing: border-box;
+    overscroll-behavior: contain;
+  }
+
+  .detailPanelBody {
+    scroll-padding-bottom: calc(96px + max(env(safe-area-inset-bottom), 16px));
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .commentComposer {
+    position: relative;
+    z-index: 1;
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+  }
+
+  .commentInput {
+    resize: none;
   }
 
   .monthTitle {
