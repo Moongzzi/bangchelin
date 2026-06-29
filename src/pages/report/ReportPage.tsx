@@ -8,8 +8,12 @@ import { colors } from '../../shared/styles/tokens/colors';
 import {
   clearInquiryDraft,
   getInquiryDraft,
+  getMyInquiries,
+  getMyInquiry,
   saveInquiryDraft,
   submitInquiry,
+  type MyInquiryDetail,
+  type MyInquiryListItem,
 } from '../../features/report/report.api';
 import {
   inquiryFormConfig,
@@ -28,6 +32,19 @@ const initialFormData: InquiryFormData = {
   category: '',
   subject: '',
   message: '',
+};
+
+type InquiryViewMode = 'write' | 'history';
+type InquiryListStatus = 'loading' | 'ready' | 'error';
+type InquiryDetailStatus = 'idle' | 'loading' | 'ready' | 'error';
+
+const categoryLabelMap = new Map(inquiryTypeOptions.map((option) => [option.value, option.label]));
+
+const statusLabelMap: Record<MyInquiryListItem['status'], string> = {
+  submitted: '접수 완료',
+  reviewing: '처리 중',
+  resolved: '처리 완료',
+  rejected: '반려',
 };
 
 function validateInquiryForm(formData: InquiryFormData): InquiryFieldErrors {
@@ -60,6 +77,22 @@ function getInputVariant(error?: string) {
   return error ? 'error' : 'default';
 }
 
+function formatInquiryDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${year}.${month}.${day} ${hours}:${minutes}`;
+}
+
 export function ReportPage() {
   const [formData, setFormData] = useState<InquiryFormData>(initialFormData);
   const [fieldErrors, setFieldErrors] = useState<InquiryFieldErrors>({});
@@ -67,6 +100,14 @@ export function ReportPage() {
   const [modalState, setModalState] = useState<InquiryModalState>(null);
   const [pendingDraft, setPendingDraft] = useState<InquiryDraftData | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [viewMode, setViewMode] = useState<InquiryViewMode>('write');
+  const [myInquiries, setMyInquiries] = useState<MyInquiryListItem[]>([]);
+  const [selectedInquiryId, setSelectedInquiryId] = useState('');
+  const [selectedInquiry, setSelectedInquiry] = useState<MyInquiryDetail | null>(null);
+  const [listStatus, setListStatus] = useState<InquiryListStatus>('loading');
+  const [detailStatus, setDetailStatus] = useState<InquiryDetailStatus>('idle');
+  const [listErrorMessage, setListErrorMessage] = useState('');
+  const [detailErrorMessage, setDetailErrorMessage] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -104,6 +145,80 @@ export function ReportPage() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadMyInquiries() {
+      try {
+        setListStatus('loading');
+        const nextInquiries = await getMyInquiries();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setMyInquiries(nextInquiries);
+        setListStatus('ready');
+
+        if (nextInquiries[0]) {
+          setSelectedInquiryId(nextInquiries[0].id);
+        }
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setListErrorMessage(error instanceof Error ? error.message : '내 문의 목록을 불러오지 못했습니다.');
+        setListStatus('error');
+      }
+    }
+
+    void loadMyInquiries();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSelectedInquiry() {
+      if (!selectedInquiryId) {
+        setSelectedInquiry(null);
+        setDetailStatus('idle');
+        return;
+      }
+
+      try {
+        setDetailStatus('loading');
+        setDetailErrorMessage('');
+        const nextInquiry = await getMyInquiry(selectedInquiryId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setSelectedInquiry(nextInquiry);
+        setDetailStatus('ready');
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setSelectedInquiry(null);
+        setDetailErrorMessage(error instanceof Error ? error.message : '문의 상세 내용을 불러오지 못했습니다.');
+        setDetailStatus('error');
+      }
+    }
+
+    void loadSelectedInquiry();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedInquiryId]);
 
   const pageStyle = {
     '--inquiry-page-background': colors.background.default,
@@ -281,8 +396,13 @@ export function ReportPage() {
 
     setPageStatus('submitting');
     try {
-      await submitInquiry(formData);
+      const submittedInquiry = await submitInquiry(formData);
       await handleClearDraftBeforeSubmit();
+      const nextInquiries = await getMyInquiries();
+      setMyInquiries(nextInquiries);
+      setSelectedInquiryId(submittedInquiry.id);
+      setListStatus('ready');
+      setViewMode('history');
       setFeedbackMessage('작성하신 문의를 전송하였습니다. 문의가 처리되기까지는 시간이 소요될 수 있습니다.');
       setFormData(initialFormData);
       setModalState('submit-complete');
@@ -331,76 +451,191 @@ export function ReportPage() {
             <h1 className={styles.title}>문의하기</h1>
           </header>
 
-          <form className={styles.form} onSubmit={handleSubmit}>
-            <div className={styles.card}>
-              <div className={styles.cardFields}>
-                <Dropdown
-                  label="문의 종류"
-                  options={inquiryTypeOptions}
-                  value={formData.category}
-                  onChange={(value) => updateField('category', value)}
-                  placeholder="문의 종류를 선택해주세요."
-                  invalid={Boolean(fieldErrors.category)}
-                  helperText={fieldErrors.category}
-                  required
-                  disabled={isFormLocked}
-                  className={styles.cardDropdown}
-                />
+          <div className={styles.viewTabs} role="tablist" aria-label="문의 화면 선택">
+            <button
+              type="button"
+              className={viewMode === 'write' ? styles.activeTab : styles.tab}
+              onClick={() => setViewMode('write')}
+              aria-selected={viewMode === 'write'}
+              role="tab"
+            >
+              문의 작성
+            </button>
+            <button
+              type="button"
+              className={viewMode === 'history' ? styles.activeTab : styles.tab}
+              onClick={() => setViewMode('history')}
+              aria-selected={viewMode === 'history'}
+              role="tab"
+            >
+              내 문의
+            </button>
+          </div>
 
-                <InputField
-                  label="문의 제목"
-                  value={formData.subject}
-                  onChange={handleInputChange('subject')}
-                  placeholder="제목을 입력해주세요."
-                  variant={getInputVariant(fieldErrors.subject)}
-                  message={fieldErrors.subject ?? helperText.subject}
-                  messageType={fieldErrors.subject ? 'error' : 'helper'}
-                  maxLength={inquiryFormConfig.subjectMaxLength}
-                  required
-                  disabled={isFormLocked}
-                  rootStyle={cardInputRootStyle}
-                  className={styles.subjectField}
-                />
+          {viewMode === 'write' ? (
+            <form className={styles.form} onSubmit={handleSubmit}>
+              <div className={styles.card}>
+                <div className={styles.cardFields}>
+                  <Dropdown
+                    label="문의 종류"
+                    options={inquiryTypeOptions}
+                    value={formData.category}
+                    onChange={(value) => updateField('category', value)}
+                    placeholder="문의 종류를 선택해주세요."
+                    invalid={Boolean(fieldErrors.category)}
+                    helperText={fieldErrors.category}
+                    required
+                    disabled={isFormLocked}
+                    className={styles.cardDropdown}
+                  />
 
-                <InputField
-                  label="문의 내용"
-                  value={formData.message}
-                  onChange={handleMessageChange}
-                  placeholder="문의 내용을 입력해주세요."
-                  variant={fieldErrors.message ? 'error' : 'outlined'}
-                  message={fieldErrors.message ?? helperText.message}
-                  messageType={fieldErrors.message ? 'error' : 'helper'}
-                  maxLength={inquiryFormConfig.messageMaxLength}
-                  required
-                  disabled={isFormLocked}
-                  rootStyle={textAreaRootStyle}
-                  className={styles.messageField}
-                  multiline
-                  rows={12}
-                />
+                  <InputField
+                    label="문의 제목"
+                    value={formData.subject}
+                    onChange={handleInputChange('subject')}
+                    placeholder="제목을 입력해주세요."
+                    variant={getInputVariant(fieldErrors.subject)}
+                    message={fieldErrors.subject ?? helperText.subject}
+                    messageType={fieldErrors.subject ? 'error' : 'helper'}
+                    maxLength={inquiryFormConfig.subjectMaxLength}
+                    required
+                    disabled={isFormLocked}
+                    rootStyle={cardInputRootStyle}
+                    className={styles.subjectField}
+                  />
+
+                  <InputField
+                    label="문의 내용"
+                    value={formData.message}
+                    onChange={handleMessageChange}
+                    placeholder="문의 내용을 입력해주세요."
+                    variant={fieldErrors.message ? 'error' : 'outlined'}
+                    message={fieldErrors.message ?? helperText.message}
+                    messageType={fieldErrors.message ? 'error' : 'helper'}
+                    maxLength={inquiryFormConfig.messageMaxLength}
+                    required
+                    disabled={isFormLocked}
+                    rootStyle={textAreaRootStyle}
+                    className={styles.messageField}
+                    multiline
+                    rows={12}
+                  />
+                </div>
+
+                <div className={styles.actions}>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={() => void handleSaveDraft()}
+                    disabled={isBusy || isFormLocked}
+                  >
+                    임시 저장
+                  </button>
+                  <button
+                    type="submit"
+                    className={styles.primaryButton}
+                    disabled={isBusy || isFormLocked}
+                  >
+                    보내기
+                  </button>
+                </div>
               </div>
 
-              <div className={styles.actions}>
-                <button
-                  type="button"
-                  className={styles.secondaryButton}
-                  onClick={() => void handleSaveDraft()}
-                  disabled={isBusy || isFormLocked}
-                >
-                  임시 저장
-                </button>
-                <button
-                  type="submit"
-                  className={styles.primaryButton}
-                  disabled={isBusy || isFormLocked}
-                >
-                  보내기
-                </button>
-              </div>
-            </div>
+              {feedbackMessage ? <p className={styles.feedback}>{feedbackMessage}</p> : null}
+            </form>
+          ) : (
+            <section className={styles.historyPanel} aria-label="내 문의 목록">
+              <div className={styles.historyList}>
+                {listStatus === 'loading' ? (
+                  <p className={styles.historyMessage}>내 문의 목록을 불러오는 중입니다.</p>
+                ) : null}
 
-            {feedbackMessage ? <p className={styles.feedback}>{feedbackMessage}</p> : null}
-          </form>
+                {listStatus === 'error' ? (
+                  <p className={styles.historyMessage} role="alert">{listErrorMessage}</p>
+                ) : null}
+
+                {listStatus === 'ready' && myInquiries.length === 0 ? (
+                  <p className={styles.historyMessage}>아직 작성한 문의가 없습니다.</p>
+                ) : null}
+
+                {myInquiries.map((inquiry) => (
+                  <button
+                    key={inquiry.id}
+                    type="button"
+                    className={selectedInquiryId === inquiry.id ? styles.activeInquiryItem : styles.inquiryItem}
+                    onClick={() => setSelectedInquiryId(inquiry.id)}
+                  >
+                    <span className={styles.inquiryItemTop}>
+                      <span>{categoryLabelMap.get(inquiry.category) ?? inquiry.category}</span>
+                      <span className={styles.statusBadge}>{statusLabelMap[inquiry.status]}</span>
+                    </span>
+                    <strong>{inquiry.subject}</strong>
+                    <span className={styles.inquiryDate}>{formatInquiryDate(inquiry.createdAt)}</span>
+                  </button>
+                ))}
+              </div>
+
+              <article className={styles.historyDetail} aria-live="polite">
+                {detailStatus === 'idle' && listStatus === 'ready' && myInquiries.length === 0 ? (
+                  <p className={styles.historyMessage}>문의가 접수되면 이곳에서 상태를 확인할 수 있습니다.</p>
+                ) : null}
+
+                {detailStatus === 'loading' ? (
+                  <p className={styles.historyMessage}>문의 상세 내용을 불러오는 중입니다.</p>
+                ) : null}
+
+                {detailStatus === 'error' ? (
+                  <p className={styles.historyMessage} role="alert">{detailErrorMessage}</p>
+                ) : null}
+
+                {detailStatus === 'ready' && selectedInquiry ? (
+                  <>
+                    <div className={styles.detailHeader}>
+                      <p className={styles.detailMeta}>
+                        {categoryLabelMap.get(selectedInquiry.category) ?? selectedInquiry.category}
+                      </p>
+                      <h2 className={styles.detailTitle}>{selectedInquiry.subject}</h2>
+                      <p className={styles.detailMeta}>
+                        접수일 {formatInquiryDate(selectedInquiry.createdAt)}
+                      </p>
+                    </div>
+
+                    <dl className={styles.detailInfo}>
+                      <div>
+                        <dt>처리 상태</dt>
+                        <dd>{statusLabelMap[selectedInquiry.status]}</dd>
+                      </div>
+                      <div>
+                        <dt>최근 변경</dt>
+                        <dd>{formatInquiryDate(selectedInquiry.updatedAt)}</dd>
+                      </div>
+                    </dl>
+
+                    <section className={styles.detailSection}>
+                      <h3>문의 내용</h3>
+                      <p>{selectedInquiry.message}</p>
+                    </section>
+
+                    <section className={styles.detailSection}>
+                      <h3>처리 내용</h3>
+                      {selectedInquiry.adminNote ? (
+                        <>
+                          <p>{selectedInquiry.adminNote}</p>
+                          {selectedInquiry.handledAt ? (
+                            <span className={styles.inquiryDate}>
+                              처리일 {formatInquiryDate(selectedInquiry.handledAt)}
+                            </span>
+                          ) : null}
+                        </>
+                      ) : (
+                        <p className={styles.historyMessage}>아직 등록된 처리 내용이 없습니다.</p>
+                      )}
+                    </section>
+                  </>
+                ) : null}
+              </article>
+            </section>
+          )}
         </div>
 
         <Popup

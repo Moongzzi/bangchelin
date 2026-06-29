@@ -11,11 +11,13 @@ import {
   createCalendarEvent,
   createCalendarEventComment,
   deleteCalendarEvent,
+  deleteCalendarEventComment,
   getCalendarEvent,
   getCalendarEventsByRange,
   joinCalendarEvent,
   leaveCalendarEvent,
   updateCalendarEvent,
+  updateCalendarEventComment,
 } from '../../features/calendar/calendar.api';
 import {
   calendarCategoryOptions,
@@ -45,6 +47,7 @@ import {
   startOfMonth,
 } from '../../features/calendar/utils/calendarDate.utils';
 import { PageShell } from '../../shared/components/layout/PageShell';
+import { getSession } from '../../shared/api/supabaseRest';
 import { Dropdown } from '../../shared/components/dropdown/Dropdown';
 import styles from './CalendarPage.module.css';
 
@@ -101,6 +104,7 @@ type ConfirmAction =
   | { type: 'save-edit'; eventId: string; values: CalendarEventFormValues }
   | { type: 'cancel-modal' }
   | { type: 'delete-event'; eventId: string }
+  | { type: 'delete-comment'; eventId: string; commentId: string }
   | { type: 'notice' }
   | null;
 
@@ -281,7 +285,9 @@ export function CalendarPage() {
   const [pageStatus, setPageStatus] = useState<CalendarPageStatus>('loading');
   const [statusMessage, setStatusMessage] = useState('');
   const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [commentActionSubmittingId, setCommentActionSubmittingId] = useState<string | null>(null);
   const [commentError, setCommentError] = useState('');
+  const [mobileKeyboardInset, setMobileKeyboardInset] = useState(0);
   const [attendanceSubmitting, setAttendanceSubmitting] = useState(false);
   const [attendanceError, setAttendanceError] = useState('');
   const [openedSharedEventId, setOpenedSharedEventId] = useState<string | null>(null);
@@ -306,6 +312,7 @@ export function CalendarPage() {
     action: null,
   });
 
+  const currentUserId = getSession()?.user.id ?? null;
   const selectedDateKey = selectedDate ? formatDateKey(selectedDate) : null;
   const filteredEvents = useMemo(() => filterCalendarEvents(events, filters), [events, filters]);
   const eventsByDate = useMemo(() => groupEventsByDate(filteredEvents), [filteredEvents]);
@@ -431,6 +438,73 @@ export function CalendarPage() {
     }
   }, [filteredEvents, selectedEventId]);
 
+  useEffect(() => {
+    if (!selectedDate || !showDetail || !window.matchMedia('(max-width: 767px)').matches) {
+      setMobileKeyboardInset(0);
+      return undefined;
+    }
+
+    const prevCount = Number(document.body.dataset.modalCount ?? '0');
+    const count = prevCount + 1;
+    document.body.dataset.modalCount = String(count);
+
+    if (prevCount === 0) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.dataset.prevPaddingRight = document.body.style.paddingRight || '';
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      const next = Number(document.body.dataset.modalCount ?? '1') - 1;
+      if (next <= 0) {
+        delete document.body.dataset.modalCount;
+        const prev = document.body.dataset.prevPaddingRight ?? '';
+        document.body.style.paddingRight = prev;
+        delete document.body.dataset.prevPaddingRight;
+        document.body.style.overflow = '';
+      } else {
+        document.body.dataset.modalCount = String(next);
+      }
+    };
+  }, [selectedDate, showDetail]);
+
+  useEffect(() => {
+    if (!selectedDate || !showDetail || !window.matchMedia('(max-width: 767px)').matches) {
+      setMobileKeyboardInset(0);
+      return undefined;
+    }
+
+    const visualViewport = window.visualViewport;
+
+    function updateMobileKeyboardInset() {
+      if (!visualViewport) {
+        setMobileKeyboardInset(0);
+        return;
+      }
+
+      const nextInset = Math.max(0, window.innerHeight - visualViewport.height - visualViewport.offsetTop);
+      setMobileKeyboardInset(Math.round(nextInset));
+    }
+
+    updateMobileKeyboardInset();
+
+    if (!visualViewport) {
+      return undefined;
+    }
+
+    visualViewport.addEventListener('resize', updateMobileKeyboardInset);
+    visualViewport.addEventListener('scroll', updateMobileKeyboardInset);
+
+    return () => {
+      visualViewport.removeEventListener('resize', updateMobileKeyboardInset);
+      visualViewport.removeEventListener('scroll', updateMobileKeyboardInset);
+      setMobileKeyboardInset(0);
+    };
+  }, [selectedDate, showDetail]);
+
   const pageStyle = {
     '--calendar-page-background': calendarStyleTokens.pageBackground,
     '--calendar-panel-background': calendarStyleTokens.panelBackground,
@@ -454,6 +528,7 @@ export function CalendarPage() {
     '--calendar-accent-navy': calendarStyleTokens.accentNavy,
     '--calendar-focus-ring': calendarStyleTokens.focusRing,
     '--calendar-dim-background': calendarStyleTokens.dimBackground,
+    '--calendar-mobile-keyboard-inset': `${mobileKeyboardInset}px`,
   } as CSSProperties;
 
   function closeConfirmDialog() {
@@ -592,6 +667,48 @@ export function CalendarPage() {
     } finally {
       setCommentSubmitting(false);
     }
+  }
+
+  async function handleUpdateComment(commentId: string, content: string) {
+    if (!selectedEventId) {
+      return;
+    }
+
+    setCommentActionSubmittingId(commentId);
+    setCommentError('');
+
+    try {
+      const updatedEvent = await updateCalendarEventComment(selectedEventId, commentId, content);
+
+      if (!updatedEvent) {
+        throw new Error('댓글 수정 결과를 확인할 수 없습니다.');
+      }
+
+      setEvents((currentEvents) => currentEvents.map((event) => (
+        event.id === updatedEvent.id ? updatedEvent : event
+      )));
+    } catch (error) {
+      setCommentError(error instanceof Error ? error.message : '댓글 수정에 실패했습니다.');
+      throw error;
+    } finally {
+      setCommentActionSubmittingId(null);
+    }
+  }
+
+  function handleRequestDeleteComment(commentId: string) {
+    if (!selectedEventId) {
+      return;
+    }
+
+    setConfirmDialogState({
+      open: true,
+      title: '댓글 삭제',
+      message: '댓글을 삭제하시겠습니까?\n삭제된 댓글 또는 답글은 되돌릴 수 없습니다.',
+      confirmLabel: '삭제',
+      cancelLabel: '취소',
+      tone: 'danger',
+      action: { type: 'delete-comment', eventId: selectedEventId, commentId },
+    });
   }
 
   async function handleJoinEvent(eventId: string) {
@@ -778,6 +895,29 @@ export function CalendarPage() {
       return;
     }
 
+    if (pendingAction.type === 'delete-comment') {
+      setCommentActionSubmittingId(pendingAction.commentId);
+      setCommentError('');
+      closeConfirmDialog();
+
+      try {
+        const updatedEvent = await deleteCalendarEventComment(pendingAction.eventId, pendingAction.commentId);
+
+        if (!updatedEvent) {
+          throw new Error('댓글 삭제 결과를 확인할 수 없습니다.');
+        }
+
+        setEvents((currentEvents) => currentEvents.map((event) => (
+          event.id === updatedEvent.id ? updatedEvent : event
+        )));
+      } catch (error) {
+        setCommentError(error instanceof Error ? error.message : '댓글 삭제에 실패했습니다.');
+      } finally {
+        setCommentActionSubmittingId(null);
+      }
+      return;
+    }
+
     if (pendingAction.type === 'save-create') {
       setPageStatus('saving');
 
@@ -947,8 +1087,12 @@ export function CalendarPage() {
                 onLeaveEvent={handleLeaveEvent}
                 attendanceSubmitting={attendanceSubmitting}
                 attendanceError={attendanceError}
+                currentUserId={currentUserId}
                 onSubmitComment={handleSubmitComment}
+                onUpdateComment={handleUpdateComment}
+                onDeleteComment={handleRequestDeleteComment}
                 commentSubmitting={commentSubmitting}
+                commentActionSubmittingId={commentActionSubmittingId}
                 commentError={commentError}
                 onClose={closeDetailPanel}
               />

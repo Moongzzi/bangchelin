@@ -33,6 +33,21 @@ export type AdminInquiryListItem = {
   createdAt: string;
 };
 
+export type MyInquiryListItem = {
+  id: string;
+  category: string;
+  subject: string;
+  status: InquiryRow['status'];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MyInquiryDetail = MyInquiryListItem & {
+  message: string;
+  adminNote: string;
+  handledAt: string;
+};
+
 export type AdminInquiryDetail = AdminInquiryListItem & {
   message: string;
   adminNote: string;
@@ -166,6 +181,54 @@ export async function submitInquiry(formData: InquiryFormData) {
   }
 
   return row;
+}
+
+export async function getMyInquiries() {
+  const session = getRequiredSession();
+  const userId = encodeURIComponent(session.user.id);
+  const rows = await restRequest<InquiryRow[]>(
+    `/inquiries?user_id=eq.${userId}&select=id,category,subject,status,created_at,updated_at&order=created_at.desc`,
+    {
+      token: session.access_token,
+    },
+  );
+
+  return rows.map<MyInquiryListItem>((row) => ({
+    id: row.id,
+    category: row.category,
+    subject: row.subject,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
+
+export async function getMyInquiry(inquiryId: string) {
+  const session = getRequiredSession();
+  const userId = encodeURIComponent(session.user.id);
+  const encodedInquiryId = encodeURIComponent(inquiryId);
+  const [row] = await restRequest<InquiryRow[]>(
+    `/inquiries?id=eq.${encodedInquiryId}&user_id=eq.${userId}&select=id,category,subject,message,status,admin_note,handled_at,created_at,updated_at`,
+    {
+      token: session.access_token,
+    },
+  );
+
+  if (!row) {
+    throw new Error('문의 상세 정보를 찾을 수 없습니다.');
+  }
+
+  return {
+    id: row.id,
+    category: row.category,
+    subject: row.subject,
+    message: row.message,
+    status: row.status,
+    adminNote: row.admin_note ?? '',
+    handledAt: row.handled_at ?? '',
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  } satisfies MyInquiryDetail;
 }
 
 export async function getAdminInquiries() {
