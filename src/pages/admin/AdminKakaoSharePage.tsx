@@ -88,12 +88,8 @@ function getTemplateId(draft: ShareDraft) {
 }
 
 function getDefaultTargetUrl() {
-  if (typeof window === 'undefined') {
-    return '';
-  }
-
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-  return new URL(basePath || '/', window.location.origin).toString();
+  return new URL(basePath || '/', getShareOrigin()).toString();
 }
 
 function isBangchelinHost(hostname: string) {
@@ -105,7 +101,11 @@ function getShareOrigin() {
     return 'https://bangchelin.com';
   }
 
-  return window.location.origin;
+  if (isBangchelinHost(window.location.hostname)) {
+    return window.location.origin;
+  }
+
+  return 'https://bangchelin.com';
 }
 
 function shouldUseExternalRedirect(url: URL) {
@@ -195,6 +195,7 @@ function buildTemplateArgs(draft: ShareDraft): Record<string, string> {
   const buttonLink1 = getKakaoLinkParts(buttonUrl1);
   const buttonLink2 = getKakaoLinkParts(buttonUrl2);
   const targetUrl = draft.targetUrl.trim() || getDefaultTargetUrl();
+  const targetLink = getKakaoLinkParts(targetUrl);
   const title = getShareTitle(draft);
   const content = draft.content.trim();
   const image1 = imageUrls[0] ?? '';
@@ -226,6 +227,21 @@ function buildTemplateArgs(draft: ShareDraft): Record<string, string> {
       buttonText: buttonText1,
       buttonText1,
       buttonText2,
+      targetDomain: targetLink.domain,
+      targetPath: targetLink.path,
+      targetUrl: targetLink.url,
+      target_url: targetLink.url,
+      TARGET_URL: targetLink.url,
+      url: targetLink.url,
+      URL: targetLink.url,
+      link: targetLink.url,
+      LINK: targetLink.url,
+      webUrl: targetLink.url,
+      web_url: targetLink.url,
+      WEB_URL: targetLink.url,
+      mobileWebUrl: targetLink.url,
+      mobile_web_url: targetLink.url,
+      MOBILE_WEB_URL: targetLink.url,
     };
   }
 
@@ -518,7 +534,7 @@ export function AdminKakaoSharePage() {
       content: draft.content,
       items: [],
       imageUrls: draft.category === 'notice' ? normalizeImageUrls(draft.imageUrls) : [],
-      targetUrl: draft.category === 'notice' ? getDefaultTargetUrl() : undefined,
+      targetUrl: getDefaultTargetUrl(),
       buttonUrl1: draft.category === 'update' ? draft.buttonUrl1 : undefined,
       buttonUrl2: draft.category === 'update' ? draft.buttonUrl2 : undefined,
       buttonText1: draft.category === 'update' ? draft.buttonText1 : undefined,
