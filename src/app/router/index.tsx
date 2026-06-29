@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom';
 
-import { getMyProfile } from '../../features/auth/auth.api';
+import { getMyProfile, signOut } from '../../features/auth/auth.api';
 import { HomePage } from '../../pages/home/HomePage';
 import { getSession } from '../../shared/api/supabaseRest';
 import { ROUTES } from '../../shared/constants/routes';
@@ -54,12 +54,81 @@ function HomeRoute() {
   return <HomePage />;
 }
 
+function DormantAccountBlock() {
+  return (
+    <div style={routeFallbackStyle} role="alert">
+      <div style={{ display: 'grid', gap: 12, justifyItems: 'center', padding: 24, textAlign: 'center' }}>
+        <strong>휴면 계정은 서비스 이용이 제한됩니다.</strong>
+        <span>다시 이용하려면 관리자에게 휴면 해제를 요청해 주세요.</span>
+        <button
+          type="button"
+          onClick={() => {
+            signOut();
+            window.location.assign(ROUTES.home);
+          }}
+          style={{
+            minHeight: 40,
+            border: '1px solid #d8d0ca',
+            borderRadius: 999,
+            padding: '0 18px',
+            background: '#fff',
+            color: '#3f352f',
+            fontWeight: 800,
+            cursor: 'pointer',
+          }}
+        >
+          홈으로 이동
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const location = useLocation();
+  const session = getSession();
+  const [status, setStatus] = useState<'loading' | 'allowed' | 'dormant'>('loading');
 
-  if (!getSession()) {
+  useEffect(() => {
+    let isMounted = true;
+
+    async function verifyAccountStatus() {
+      if (!session) {
+        setStatus('loading');
+        return;
+      }
+
+      try {
+        const profile = await getMyProfile();
+
+        if (isMounted) {
+          setStatus(profile?.account_status === 'dormant' ? 'dormant' : 'allowed');
+        }
+      } catch {
+        if (isMounted) {
+          setStatus('allowed');
+        }
+      }
+    }
+
+    void verifyAccountStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [location.pathname, location.search, session?.access_token]);
+
+  if (!session) {
     const redirectTo = `${location.pathname}${location.search}`;
     return <Navigate replace to={`${ROUTES.login}?redirectTo=${encodeURIComponent(redirectTo)}`} />;
+  }
+
+  if (status === 'loading') {
+    return <div style={routeFallbackStyle}>페이지를 불러오는 중입니다.</div>;
+  }
+
+  if (status === 'dormant') {
+    return <DormantAccountBlock />;
   }
 
   return children;
@@ -81,7 +150,7 @@ function AdminRoute({ children }: { children: ReactNode }) {
         const profile = await getMyProfile();
 
         if (isMounted) {
-          setStatus(profile?.role === 'admin' ? 'allowed' : 'denied');
+          setStatus(profile?.role === 'admin' && profile.account_status !== 'dormant' ? 'allowed' : 'denied');
         }
       } catch {
         if (isMounted) {

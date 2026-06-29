@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   deleteAdminUser,
   getAdminUsers,
+  updateAdminUserAccountStatus,
   type AdminUserSummary,
 } from '../../features/admin/adminUsers.api';
 import { getSession } from '../../shared/api/supabaseRest';
@@ -20,6 +21,11 @@ const approvalStatusLabels: Record<AdminUserSummary['approvalStatus'], string> =
   pending: '승인 대기',
   approved: '승인 완료',
   rejected: '반려',
+};
+
+const accountStatusLabels: Record<AdminUserSummary['accountStatus'], string> = {
+  active: '활성',
+  dormant: '휴면',
 };
 
 function formatDateTime(value: string) {
@@ -53,6 +59,7 @@ export function AdminUserManagementPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdminUserSummary | null>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deletingUserId, setDeletingUserId] = useState('');
+  const [updatingAccountUserId, setUpdatingAccountUserId] = useState('');
 
   const currentUserId = getSession()?.user.id ?? '';
 
@@ -85,6 +92,7 @@ export function AdminUserManagementPage() {
   }, []);
 
   const onlineCount = useMemo(() => users.filter((user) => user.isOnline).length, [users]);
+  const dormantCount = useMemo(() => users.filter((user) => user.accountStatus === 'dormant').length, [users]);
 
   const pageStyle = {
     '--admin-users-background': colors.background.default,
@@ -112,6 +120,21 @@ export function AdminUserManagementPage() {
       setErrorMessage(error instanceof Error ? error.message : '유저 계정을 삭제하지 못했습니다.');
     } finally {
       setDeletingUserId('');
+    }
+  }
+
+  async function handleUpdateAccountStatus(user: AdminUserSummary, accountStatus: AdminUserSummary['accountStatus']) {
+    try {
+      setUpdatingAccountUserId(user.id);
+      setErrorMessage('');
+      const updatedUser = await updateAdminUserAccountStatus(user.id, accountStatus);
+      setUsers((currentUsers) =>
+        currentUsers.map((currentUser) => (currentUser.id === updatedUser.id ? updatedUser : currentUser)),
+      );
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '계정 상태를 변경하지 못했습니다.');
+    } finally {
+      setUpdatingAccountUserId('');
     }
   }
 
@@ -154,6 +177,7 @@ export function AdminUserManagementPage() {
               <div className={styles.summaryGroup} aria-label="유저 요약">
                 <span className={styles.countBadge}>전체 {users.length}명</span>
                 <span className={styles.countBadge}>접속 추정 {onlineCount}명</span>
+                <span className={styles.countBadge}>휴면 {dormantCount}명</span>
               </div>
             </div>
 
@@ -198,19 +222,36 @@ export function AdminUserManagementPage() {
                           <span className={user.isOnline ? styles.onlineBadge : styles.offlineBadge}>
                             {user.isOnline ? '접속 중' : '오프라인'}
                           </span>
+                          <span className={user.accountStatus === 'dormant' ? styles.dormantBadge : styles.activeBadge}>
+                            {accountStatusLabels[user.accountStatus]}
+                          </span>
                           <span className={styles.approvalText}>{approvalStatusLabels[user.approvalStatus]}</span>
                         </td>
                         <td className={styles.mutedCell}>{formatDateTime(latestSeenAt)}</td>
                         <td>
                           <Link to={getActivityPath(user.id)} className={styles.logLink}>
-                            {user.activityCount.toLocaleString()}건 보기
+                            보기
                           </Link>
                         </td>
                         <td>
                           <button
                             type="button"
+                            className={user.accountStatus === 'dormant' ? styles.activateButton : styles.dormantButton}
+                            disabled={isCurrentUser || updatingAccountUserId === user.id}
+                            onClick={() =>
+                              void handleUpdateAccountStatus(user, user.accountStatus === 'dormant' ? 'active' : 'dormant')
+                            }
+                          >
+                            {updatingAccountUserId === user.id
+                              ? '변경 중'
+                              : user.accountStatus === 'dormant'
+                                ? '활성화'
+                                : '휴면'}
+                          </button>
+                          <button
+                            type="button"
                             className={styles.deleteButton}
-                            disabled={isCurrentUser || deletingUserId === user.id}
+                            disabled={isCurrentUser || deletingUserId === user.id || updatingAccountUserId === user.id}
                             onClick={() => {
                               setDeleteTarget(user);
                               setDeleteConfirmText('');
