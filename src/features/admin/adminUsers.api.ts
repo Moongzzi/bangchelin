@@ -7,6 +7,9 @@ export type AdminUserSummary = {
   email: string;
   role: 'user' | 'admin';
   approvalStatus: 'pending' | 'approved' | 'rejected';
+  accountStatus: 'active' | 'dormant';
+  dormantAt: string;
+  reactivatedAt: string;
   createdAt: string;
   updatedAt: string;
   lastSeenAt: string;
@@ -40,6 +43,9 @@ type AdminUserSummaryRow = {
   email: string | null;
   role: 'user' | 'admin' | string | null;
   approval_status: 'pending' | 'approved' | 'rejected' | null;
+  account_status: 'active' | 'dormant' | null;
+  dormant_at: string | null;
+  reactivated_at: string | null;
   created_at: string;
   updated_at: string;
   last_seen_at: string | null;
@@ -88,6 +94,9 @@ function toAdminUserSummary(row: AdminUserSummaryRow): AdminUserSummary {
     email: row.email?.trim() || '',
     role: row.role === 'admin' ? 'admin' : 'user',
     approvalStatus: row.approval_status ?? 'pending',
+    accountStatus: row.account_status === 'dormant' ? 'dormant' : 'active',
+    dormantAt: row.dormant_at ?? '',
+    reactivatedAt: row.reactivated_at ?? '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     lastSeenAt: row.last_seen_at ?? '',
@@ -130,6 +139,20 @@ export async function getAdminUsers() {
   return rows.map(toAdminUserSummary);
 }
 
+export async function getAdminUser(userId: string) {
+  const session = getRequiredSession();
+  const [row] = await restRequest<AdminUserSummaryRow[]>('/rpc/get_admin_user_summary', {
+    method: 'POST',
+    token: session.access_token,
+    body: {
+      p_user_id: userId,
+      p_online_window_minutes: 5,
+    },
+  });
+
+  return row ? toAdminUserSummary(row) : null;
+}
+
 export async function getAdminUserActivityLogs(userId: string, page = 0, pageSize = 50) {
   const session = getRequiredSession();
   const limit = Math.max(1, Math.min(pageSize, 100));
@@ -160,4 +183,22 @@ export async function deleteAdminUser(userId: string) {
   }
 
   return response;
+}
+
+export async function updateAdminUserAccountStatus(userId: string, accountStatus: AdminUserSummary['accountStatus']) {
+  const session = getRequiredSession();
+  const [row] = await restRequest<AdminUserSummaryRow[]>('/rpc/admin_set_user_account_status', {
+    method: 'POST',
+    token: session.access_token,
+    body: {
+      p_user_id: userId,
+      p_account_status: accountStatus,
+    },
+  });
+
+  if (!row) {
+    throw new Error('계정 상태 변경 결과를 확인하지 못했습니다.');
+  }
+
+  return toAdminUserSummary(row);
 }

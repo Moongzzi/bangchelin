@@ -4,12 +4,14 @@ import { Link } from 'react-router-dom';
 
 import {
   getMyProfile,
+  requestMyAccountDormancy,
   updateMyProfile,
   type ActivityRegion,
   type Profile,
 } from '../../features/auth/auth.api';
 import { InputField } from '../../shared/components/input-field';
 import { PageShell } from '../../shared/components/layout/PageShell';
+import { Popup, type PopupAction } from '../../shared/components/popup';
 import { ROUTES } from '../../shared/constants/routes';
 import { colors } from '../../shared/styles/tokens/colors';
 import { emailPattern, signupFormConfig } from '../register/registerConfig';
@@ -92,6 +94,8 @@ export function ProfilePage() {
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<PageStatus>('loading');
   const [message, setMessage] = useState('');
+  const [dormantPopupOpen, setDormantPopupOpen] = useState(false);
+  const [isRequestingDormancy, setIsRequestingDormancy] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -147,6 +151,7 @@ export function ProfilePage() {
   const hasUnsavedChanges = hasAvatarChange || hasProfileFieldChanges;
   const isSaving = status === 'saving';
   const canSave = hasUnsavedChanges && !isSaving;
+  const isDormant = profile?.account_status === 'dormant';
 
   const inputRootStyle = {
     '--input-border': colors.border.default,
@@ -267,6 +272,38 @@ export function ProfilePage() {
       setMessage(error instanceof Error ? error.message : '프로필 저장에 실패했습니다.');
     }
   }
+
+  async function handleRequestDormancy() {
+    try {
+      setIsRequestingDormancy(true);
+      setMessage('');
+      await requestMyAccountDormancy();
+      window.dispatchEvent(new Event('bangchelin:profile-updated'));
+      window.location.assign(ROUTES.home);
+    } catch (error) {
+      setStatus('error');
+      setMessage(error instanceof Error ? error.message : '휴면 계정 전환에 실패했습니다.');
+      setDormantPopupOpen(false);
+    } finally {
+      setIsRequestingDormancy(false);
+    }
+  }
+
+  const dormancyActions: PopupAction[] = [
+    {
+      label: '취소',
+      variant: 'outline',
+      tone: 'neutral',
+      onClick: () => setDormantPopupOpen(false),
+      closeOnClick: true,
+    },
+    {
+      label: isRequestingDormancy ? '전환 중' : '휴면 전환',
+      tone: 'neutral',
+      disabled: isRequestingDormancy,
+      onClick: () => void handleRequestDormancy(),
+    },
+  ];
 
   return (
     <PageShell>
@@ -422,10 +459,42 @@ export function ProfilePage() {
                   {isSaving ? '저장 중...' : '저장'}
                 </button>
               </div>
+
+              <section className="mt-6 grid gap-3 border-t border-[var(--color-border)] pt-6">
+                <div>
+                  <h2 className="text-base font-extrabold">계정 상태</h2>
+                  <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
+                    현재 상태: {isDormant ? '휴면' : '활성'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="h-11 w-full min-w-0 rounded-full border border-[var(--color-border)] bg-white text-sm font-extrabold text-red-700 transition-colors hover:border-red-300 disabled:cursor-not-allowed disabled:opacity-60 sm:w-48"
+                  disabled={isSaving || isRequestingDormancy || isDormant}
+                  onClick={() => setDormantPopupOpen(true)}
+                >
+                  휴면 계정 전환
+                </button>
+              </section>
             </form>
           ) : null}
         </div>
       </section>
+
+      <Popup
+        open={dormantPopupOpen}
+        onClose={() => {
+          if (!isRequestingDormancy) {
+            setDormantPopupOpen(false);
+          }
+        }}
+        title="휴면 계정으로 전환"
+        description="휴면 전환 후에는 서비스 이용이 제한되며, 다시 이용하려면 관리자가 계정을 활성 상태로 변경해야 합니다."
+        role="alertdialog"
+        actions={dormancyActions}
+        closeOnOverlayClick={!isRequestingDormancy}
+        closeOnEscape={!isRequestingDormancy}
+      />
     </PageShell>
   );
 }

@@ -30,6 +30,11 @@ export type Profile = {
   email: string | null;
   role: 'user' | 'admin';
   approval_status?: 'pending' | 'approved' | 'rejected';
+  account_status?: 'active' | 'dormant';
+  dormant_at?: string | null;
+  dormant_by?: string | null;
+  reactivated_at?: string | null;
+  reactivated_by?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -68,6 +73,7 @@ type AuthResponse = {
 type LoginAuthStatus = {
   auth_email: string | null;
   approval_status: 'pending' | 'approved' | 'rejected' | null;
+  account_status?: 'active' | 'dormant' | null;
 };
 
 type SignUpRequestRow = {
@@ -274,6 +280,10 @@ export async function signInWithUsername(username: string, password: string, kee
     throw new Error('계정 승인 상태를 확인할 수 없습니다.');
   }
 
+  if (loginInfo.account_status === 'dormant') {
+    throw new Error('휴면 계정입니다. 관리자에게 휴면 해제를 요청해 주세요.');
+  }
+
   let session: SupabaseSession;
 
   try {
@@ -374,5 +384,25 @@ export async function updateMyProfile(input: UpdateProfileInput) {
     throw new Error('프로필 저장 결과를 확인하지 못했습니다.');
   }
 
+  return profile;
+}
+
+export async function requestMyAccountDormancy() {
+  const session = getSession();
+
+  if (!session) {
+    throw new Error('로그인이 필요한 기능입니다.');
+  }
+
+  const [profile] = await restRequest<Profile[]>('/rpc/set_my_account_dormant', {
+    method: 'POST',
+    token: session.access_token,
+  });
+
+  if (!profile) {
+    throw new Error('휴면 계정 전환 결과를 확인하지 못했습니다.');
+  }
+
+  clearSession();
   return profile;
 }

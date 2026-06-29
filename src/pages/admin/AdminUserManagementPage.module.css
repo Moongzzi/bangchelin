@@ -53,7 +53,9 @@
 .countBadge,
 .roleBadge,
 .onlineBadge,
-.offlineBadge {
+.offlineBadge,
+.activeBadge,
+.dormantBadge {
   display: inline-flex;
   align-items: center;
   min-height: 28px;
@@ -154,6 +156,18 @@
   color: #2f8f5b;
 }
 
+.activeBadge {
+  margin-left: 6px;
+  border-color: #2f8f5b;
+  color: #2f8f5b;
+}
+
+.dormantBadge {
+  margin-left: 6px;
+  border-color: #a86b2c;
+  color: #a86b2c;
+}
+
 .offlineBadge {
   color: var(--admin-users-muted);
 }
@@ -168,30 +182,47 @@
   color: inherit;
 }
 
-.deleteButton {
+.deleteButton,
+.dormantButton,
+.activateButton {
   min-width: 58px;
   min-height: 34px;
   border: 1px solid var(--admin-users-border);
   border-radius: 6px;
   background: transparent;
-  color: var(--admin-users-danger);
   font-size: 13px;
   line-height: 1;
   font-weight: 800;
   cursor: pointer;
 }
 
-.deleteButton:disabled {
+.deleteButton {
+  color: var(--admin-users-danger);
+}
+
+.dormantButton {
+  margin-right: 6px;
+  color: #a86b2c;
+}
+
+.activateButton {
+  margin-right: 6px;
+  color: #2f8f5b;
+}
+
+.deleteButton:disabled,
+.dormantButton:disabled,
+.activateButton:disabled {
   opacity: 0.42;
   cursor: not-allowed;
 }
 
 .userColumn {
-  width: 22%;
+  width: 20%;
 }
 
 .emailColumn {
-  width: 22%;
+  width: 21%;
 }
 
 .statusColumn {
@@ -207,7 +238,7 @@
 }
 
 .actionColumn {
-  width: 10%;
+  width: 13%;
 }
 
 .message,

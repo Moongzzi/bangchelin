@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import {
+  getAdminUser,
   getAdminUserActivityLogs,
-  getAdminUsers,
   type AdminUserActivityLog,
   type AdminUserSummary,
 } from '../../features/admin/adminUsers.api';
@@ -89,13 +89,13 @@ export function AdminUserActivityPage() {
       try {
         setStatus('loading');
         setErrorMessage('');
-        const [users, nextLogs] = await Promise.all([
-          getAdminUsers(),
+        const [nextUser, nextLogs] = await Promise.all([
+          getAdminUser(userId),
           getAdminUserActivityLogs(userId, 0, pageSize),
         ]);
 
         if (isMounted) {
-          setUser(users.find((item) => item.id === userId) ?? null);
+          setUser(nextUser);
           setLogs(nextLogs);
           setPage(0);
           setHasMore(nextLogs.length === pageSize);
@@ -167,7 +167,7 @@ export function AdminUserActivityPage() {
                 <h1 className={styles.title}>{pageTitle}</h1>
                 {user ? (
                   <p className={styles.subtitle}>
-                    @{user.username || 'unknown'} · {user.email || '이메일 없음'} · 로그 {user.activityCount.toLocaleString()}건
+                    @{user.username || 'unknown'} · {user.email || '이메일 없음'}
                   </p>
                 ) : (
                   <p className={styles.subtitle}>유저 정보가 삭제되었거나 조회 권한이 없습니다.</p>
