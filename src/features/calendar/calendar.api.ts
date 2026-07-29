@@ -265,6 +265,7 @@ async function replaceParticipants(
 
       return [{
         event_id: eventId,
+        profile_id: null,
         display_name: name,
         status: 'confirmed',
         sort_order: seenNames.size - 1,
