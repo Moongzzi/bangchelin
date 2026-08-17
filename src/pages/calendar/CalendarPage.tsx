@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { ConfirmDialog } from '../../features/calendar/components/ConfirmDialog';
@@ -100,7 +100,7 @@ type CalendarFilters = {
 };
 
 type ConfirmAction =
-  | { type: 'save-create'; values: CalendarEventFormValues }
+  | { type: 'save-create'; values: CalendarEventFormValues; requestId: string }
   | { type: 'save-edit'; eventId: string; values: CalendarEventFormValues }
   | { type: 'cancel-modal' }
   | { type: 'delete-event'; eventId: string }
@@ -125,6 +125,12 @@ const defaultCalendarFilters: CalendarFilters = {
 };
 
 const allFilterOption = { value: 'all', label: '전체' };
+
+function createRequestId() {
+  return typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 const calendarFilterDropdownStyle = {
   '--dropdown-trigger-min-height': '32px',
@@ -292,6 +298,8 @@ export function CalendarPage() {
   const [attendanceError, setAttendanceError] = useState('');
   const [openedSharedEventId, setOpenedSharedEventId] = useState<string | null>(null);
   const [filters, setFilters] = useState<CalendarFilters>(defaultCalendarFilters);
+  const [confirmSubmitting, setConfirmSubmitting] = useState(false);
+  const confirmSubmittingRef = useRef(false);
   const [modalState, setModalState] = useState<ModalState>(() => {
     const defaultValues = createDefaultFormValues(todayKey);
     return {
@@ -532,6 +540,10 @@ export function CalendarPage() {
   } as CSSProperties;
 
   function closeConfirmDialog() {
+    if (confirmSubmittingRef.current) {
+      return;
+    }
+
     setConfirmDialogState((currentState) => ({
       ...currentState,
       open: false,
@@ -820,6 +832,10 @@ export function CalendarPage() {
   }
 
   function handleSubmitModal() {
+    if (confirmSubmittingRef.current) {
+      return;
+    }
+
     const validationMessage = getValidationMessage(modalState.values);
 
     if (validationMessage) {
@@ -835,7 +851,7 @@ export function CalendarPage() {
       cancelLabel: '취소',
       tone: 'brand',
       action: modalState.mode === 'create'
-        ? { type: 'save-create', values: modalState.values }
+        ? { type: 'save-create', values: modalState.values, requestId: createRequestId() }
         : { type: 'save-edit', eventId: modalState.editingEventId ?? '', values: modalState.values },
     });
   }
@@ -860,6 +876,10 @@ export function CalendarPage() {
   }
 
   async function handleConfirmDialogConfirm() {
+    if (confirmSubmittingRef.current) {
+      return;
+    }
+
     const pendingAction = confirmDialogState.action;
 
     if (!pendingAction) {
@@ -879,6 +899,8 @@ export function CalendarPage() {
     }
 
     if (pendingAction.type === 'delete-event') {
+      confirmSubmittingRef.current = true;
+      setConfirmSubmitting(true);
       setPageStatus('saving');
 
       try {
@@ -891,6 +913,9 @@ export function CalendarPage() {
       } catch (error) {
         setPageStatus('error');
         openNotice('일정 삭제 실패', error instanceof Error ? error.message : '일정 삭제에 실패했습니다.');
+      } finally {
+        confirmSubmittingRef.current = false;
+        setConfirmSubmitting(false);
       }
       return;
     }
@@ -919,10 +944,12 @@ export function CalendarPage() {
     }
 
     if (pendingAction.type === 'save-create') {
+      confirmSubmittingRef.current = true;
+      setConfirmSubmitting(true);
       setPageStatus('saving');
 
       try {
-        const nextEvent = await createCalendarEvent(pendingAction.values);
+        const nextEvent = await createCalendarEvent(pendingAction.values, pendingAction.requestId);
 
         if (!nextEvent) {
           throw new Error('일정 생성 결과를 확인할 수 없습니다.');
@@ -939,11 +966,16 @@ export function CalendarPage() {
       } catch (error) {
         setPageStatus('error');
         openNotice('일정 생성 실패', error instanceof Error ? error.message : '일정 생성에 실패했습니다.');
+      } finally {
+        confirmSubmittingRef.current = false;
+        setConfirmSubmitting(false);
       }
       return;
     }
 
     if (pendingAction.type === 'save-edit') {
+      confirmSubmittingRef.current = true;
+      setConfirmSubmitting(true);
       setPageStatus('saving');
 
       try {
@@ -966,6 +998,9 @@ export function CalendarPage() {
       } catch (error) {
         setPageStatus('error');
         openNotice('일정 수정 실패', error instanceof Error ? error.message : '일정 수정에 실패했습니다.');
+      } finally {
+        confirmSubmittingRef.current = false;
+        setConfirmSubmitting(false);
       }
     }
   }
@@ -1120,6 +1155,7 @@ export function CalendarPage() {
           confirmLabel={confirmDialogState.confirmLabel}
           cancelLabel={confirmDialogState.cancelLabel}
           tone={confirmDialogState.tone}
+          isSubmitting={confirmSubmitting}
           onConfirm={handleConfirmDialogConfirm}
           onCancel={closeConfirmDialog}
         />

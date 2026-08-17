@@ -42,7 +42,7 @@ const socialLinks: FooterSocialLink[] = [
   {
     key: 'discord',
     label: '디스코드',
-    href: '#',
+    href: 'https://discord.com/invite/HM4Q9mWwtZ',
     ariaLabel: '디스코드 바로가기',
     imageSrc: `${assetBasePath}assets/icons/social/discord.png`,
     imageAlt: '디스코드 아이콘',

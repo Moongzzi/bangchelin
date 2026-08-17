@@ -9,6 +9,7 @@ type ConfirmDialogProps = {
   confirmLabel: string;
   cancelLabel?: string;
   tone?: ConfirmDialogTone;
+  isSubmitting?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -20,14 +21,15 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel,
   tone = 'brand',
+  isSubmitting = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  if (!open) {
-    return null;
-  }
-
   useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
     // increment modal counter and lock body scroll
     const prevCount = Number(document.body.dataset.modalCount ?? '0');
     const count = prevCount + 1;
@@ -54,7 +56,11 @@ export function ConfirmDialog({
         document.body.dataset.modalCount = String(next);
       }
     };
-  }, []);
+  }, [open]);
+
+  if (!open) {
+    return null;
+  }
 
   return (
     <div className={styles.confirmBackdrop}>
@@ -64,12 +70,13 @@ export function ConfirmDialog({
 
         <div className={styles.confirmFooter}>
           {cancelLabel ? (
-            <button type="button" className={styles.confirmSecondaryButton} onClick={onCancel}>{cancelLabel}</button>
+            <button type="button" className={styles.confirmSecondaryButton} onClick={onCancel} disabled={isSubmitting}>{cancelLabel}</button>
           ) : null}
           <button
             type="button"
             className={tone === 'danger' ? styles.confirmPrimaryButton : styles.confirmPrimaryButton}
             onClick={onConfirm}
+            disabled={isSubmitting}
           >
             {confirmLabel}
           </button>

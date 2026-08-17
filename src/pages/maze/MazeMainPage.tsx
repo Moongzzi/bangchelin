@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { getMazeQuizSets } from '../../features/maze/maze.api';
+import { getMazeCustomUploadEnabled, getMazeQuizSets } from '../../features/maze/maze.api';
 import type { MazeQuizSet } from '../../features/maze/types/maze.types';
 import { PageShell } from '../../shared/components/layout/PageShell';
+import { ROUTES } from '../../shared/constants/routes';
 import styles from './MazePage.module.css';
 
 type PageStatus = 'loading' | 'ready' | 'error';
 
 export function MazeMainPage() {
   const [sets, setSets] = useState<MazeQuizSet[]>([]);
+  const [isCustomUploadEnabled, setIsCustomUploadEnabled] = useState(false);
   const [status, setStatus] = useState<PageStatus>('loading');
 
   useEffect(() => {
@@ -18,10 +20,14 @@ export function MazeMainPage() {
     async function loadSets() {
       try {
         setStatus('loading');
-        const nextSets = await getMazeQuizSets();
+        const [nextSets, nextIsCustomUploadEnabled] = await Promise.all([
+          getMazeQuizSets(),
+          getMazeCustomUploadEnabled(),
+        ]);
 
         if (isMounted) {
           setSets(nextSets);
+          setIsCustomUploadEnabled(nextIsCustomUploadEnabled);
           setStatus('ready');
         }
       } catch {
@@ -44,7 +50,14 @@ export function MazeMainPage() {
         <div className={styles.container}>
           <section className={styles.hero} aria-labelledby="maze-title">
             <p className={styles.eyebrow}>BANGCHELIN LOUNGE</p>
-            <h1 id="maze-title" className={styles.title}>미궁</h1>
+            <div className={styles.titleRow}>
+              <h1 id="maze-title" className={styles.title}>미궁</h1>
+              {isCustomUploadEnabled ? (
+                <Link to={ROUTES.loungeMazeMy} className={styles.myMazeButton}>
+                  내 미궁
+                </Link>
+              ) : null}
+            </div>
             <p className={styles.description}>
               순서대로 잠긴 문제를 풀어 마지막 문까지 도달하는 라운지 퀴즈 콘텐츠입니다.
             </p>

@@ -7,7 +7,7 @@
   min-height: 0;
   padding: 28px 30px 30px;
   background: var(--calendar-panel-background);
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .todaySummary {
@@ -88,6 +88,15 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.todayCardList {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .eventCardButton {

@@ -42,9 +42,14 @@ export type LoungeContent = {
   routePath: string;
   thumbnailUrl: string | null;
   tags: string[];
-  metadata: Record<string, unknown>;
+  metadata: LoungeContentMetadata;
   descriptionBlocks: LoungeContentDescriptionBlock[];
   eventConfig: LoungeEventConfig | null;
+};
+
+export type LoungeContentMetadata = {
+  mazeCustomUploadEnabled?: boolean;
+  [key: string]: unknown;
 };
 
 export type LoungeNode = {

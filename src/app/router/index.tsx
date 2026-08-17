@@ -23,6 +23,9 @@ const LoginPage = lazy(() => import('../../pages/login/LoginPage').then((module)
 const LoungePage = lazy(() => import('../../pages/lounge/LoungePage').then((module) => ({ default: module.LoungePage })));
 const LoungeEventPage = lazy(() => import('../../pages/lounge/LoungeEventPage').then((module) => ({ default: module.LoungeEventPage })));
 const MazeMainPage = lazy(() => import('../../pages/maze/MazeMainPage').then((module) => ({ default: module.MazeMainPage })));
+const MyMazeCreatePage = lazy(() => import('../../pages/maze/MyMazeCreatePage').then((module) => ({ default: module.MyMazeCreatePage })));
+const MyMazeManagePage = lazy(() => import('../../pages/maze/MyMazeManagePage').then((module) => ({ default: module.MyMazeManagePage })));
+const MyMazePage = lazy(() => import('../../pages/maze/MyMazePage').then((module) => ({ default: module.MyMazePage })));
 const MazePlayPage = lazy(() => import('../../pages/maze/MazePlayPage').then((module) => ({ default: module.MazePlayPage })));
 const MazeSetCoverPage = lazy(() => import('../../pages/maze/MazeSetCoverPage').then((module) => ({ default: module.MazeSetCoverPage })));
 const PopupPreviewPage = lazy(() => import('../../pages/popup-preview/PopupPreviewPage').then((module) => ({ default: module.PopupPreviewPage })));
@@ -187,6 +190,9 @@ export function AppRouter() {
       <Route path={ROUTES.lounge} element={<LazyRoute><LoungePage /></LazyRoute>} />
       <Route path={ROUTES.loungeEvent} element={<ProtectedRoute><LazyRoute><LoungeEventPage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.loungeMaze} element={<ProtectedRoute><LazyRoute><MazeMainPage /></LazyRoute></ProtectedRoute>} />
+      <Route path={ROUTES.loungeMazeMyNew} element={<ProtectedRoute><LazyRoute><MyMazeCreatePage /></LazyRoute></ProtectedRoute>} />
+      <Route path={ROUTES.loungeMazeMyManage} element={<ProtectedRoute><LazyRoute><MyMazeManagePage /></LazyRoute></ProtectedRoute>} />
+      <Route path={ROUTES.loungeMazeMy} element={<ProtectedRoute><LazyRoute><MyMazePage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.loungeMazeSet} element={<ProtectedRoute><LazyRoute><MazeSetCoverPage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.loungeMazePlay} element={<ProtectedRoute><LazyRoute><MazePlayPage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.calendar} element={<ProtectedRoute><LazyRoute><CalendarPage /></LazyRoute></ProtectedRoute>} />

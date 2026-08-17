@@ -2,6 +2,7 @@ import { getSession, restRequest, uploadStorageObject } from '../../shared/api/s
 import type {
   LoungeAccessLevel,
   LoungeContentDescriptionBlock,
+  LoungeContentMetadata,
   LoungeContentType,
   LoungeDisplayMode,
   LoungeEventConfig,
@@ -69,6 +70,8 @@ export type AdminLoungeNodeUpdateInput = {
   contentId: string;
   isEnabled: boolean;
   accessLevel: LoungeAccessLevel;
+  metadata: LoungeContentMetadata;
+  mazeCustomUploadEnabled: boolean;
   nodeLabel: string;
   nodeIconUrl: string;
   nodeThemeColor: string;
@@ -322,6 +325,11 @@ export async function updateAdminLoungeNode(input: AdminLoungeNodeUpdateInput) {
     body: {
       thumbnail_url: input.thumbnailUrl.trim() || null,
       access_level: input.accessLevel,
+      metadata: {
+        ...input.metadata,
+        mazeCustomUploadEnabled: input.mazeCustomUploadEnabled,
+      },
+      updated_at: new Date().toISOString(),
     },
     headers: {
       Prefer: 'return=minimal',
