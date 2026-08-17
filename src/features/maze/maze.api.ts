@@ -26,6 +26,10 @@ type MazeQuizSetRow = {
   maze_questions?: Array<{ id: string }> | null;
 };
 
+type MazeLoungeContentRow = {
+  metadata: Record<string, unknown> | null;
+};
+
 type MazeQuestionRow = {
   id: string;
   set_id: string;
@@ -149,6 +153,23 @@ export async function getMazeQuizSets() {
   );
 
   return rows.map(toMazeQuizSet);
+}
+
+export async function getMazeCustomUploadEnabled() {
+  const session = getSession();
+
+  try {
+    const [row] = await restRequest<MazeLoungeContentRow[]>(
+      '/lounge_contents?slug=eq.maze&select=metadata',
+      {
+        token: session?.access_token,
+      },
+    );
+
+    return row?.metadata?.mazeCustomUploadEnabled === true;
+  } catch {
+    return false;
+  }
 }
 
 export async function getMazeQuizSet(slug: string) {

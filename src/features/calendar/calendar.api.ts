@@ -70,6 +70,10 @@ type CurrentUserProfileRow = {
   nickname: string | null;
 };
 
+type CalendarEventCreateResultRow = {
+  event_id: string;
+};
+
 export type CalendarParticipantSearchResult = {
   id: string;
   nickname: string;
@@ -376,6 +380,21 @@ function isMissingClosedByCapacityError(error: unknown) {
     && error.message.includes('does not exist');
 }
 
+function isMissingCreateCalendarEventRpcError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return message.includes('create_calendar_event')
+    && (
+      message.includes('could not find')
+      || message.includes('schema cache')
+      || message.includes('does not exist')
+      || message.includes('not found')
+    );
+}
+
 export async function getCalendarEventsByRange(startDate: string, endDate: string) {
   const session = getRequiredSession();
 
@@ -454,7 +473,7 @@ export async function getCalendarEvent(eventId: string) {
   return row ? toCalendarEvent(row) : null;
 }
 
-export async function createCalendarEvent(values: CalendarEventFormValues) {
+async function createCalendarEventWithRest(values: CalendarEventFormValues) {
   const session = getRequiredSession();
   const ownerParticipant = await getCurrentUserParticipant(session.access_token, session.user.id);
   const [row] = await restRequest<CalendarEventRow[]>('/calendar_events', {
@@ -469,6 +488,47 @@ export async function createCalendarEvent(values: CalendarEventFormValues) {
 
   await replaceParticipants(row.id, values.participantNames, session.access_token, ownerParticipant);
   return getCalendarEvent(row.id);
+}
+
+export async function createCalendarEvent(values: CalendarEventFormValues, requestId: string) {
+  const session = getRequiredSession();
+  const payload = toEventPayload(values);
+
+  try {
+    const [result] = await restRequest<CalendarEventCreateResultRow[]>('/rpc/create_calendar_event', {
+      method: 'POST',
+      token: session.access_token,
+      body: {
+        p_client_request_id: requestId,
+        p_title: payload.title,
+        p_start_date: payload.start_date,
+        p_end_date: payload.end_date,
+        p_start_time: payload.start_time,
+        p_end_time: payload.end_time,
+        p_status: payload.status,
+        p_category: payload.category,
+        p_location_region: payload.location_region,
+        p_location_detail: payload.location_detail,
+        p_capacity: payload.capacity,
+        p_external_guest_count: payload.external_guest_count,
+        p_description: payload.description,
+        p_is_all_day: payload.is_all_day,
+        p_participant_names: values.participantNames,
+      },
+    });
+
+    if (!result?.event_id) {
+      throw new Error('일정 생성 결과를 확인할 수 없습니다.');
+    }
+
+    return getCalendarEvent(result.event_id);
+  } catch (error) {
+    if (isMissingCreateCalendarEventRpcError(error)) {
+      return createCalendarEventWithRest(values);
+    }
+
+    throw error;
+  }
 }
 
 export async function updateCalendarEvent(eventId: string, values: CalendarEventFormValues) {

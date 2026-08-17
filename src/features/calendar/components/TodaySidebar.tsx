@@ -1,4 +1,3 @@
-import { calendarConfig } from '../constants/calendar.constants';
 import type { CalendarEvent } from '../types/calendar.types';
 import { formatWeekdayLabel } from '../utils/calendarDate.utils';
 import { EventCard } from './EventCard';
@@ -46,7 +45,7 @@ export function TodaySidebar({
       </button>
 
       <div className={styles.todayCardList}>
-        {selectedDateEvents.slice(0, calendarConfig.maxTodayEvents).map((event) => (
+        {selectedDateEvents.map((event) => (
           <EventCard
             key={event.id}
             event={event}

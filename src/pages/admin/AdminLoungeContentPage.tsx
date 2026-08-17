@@ -42,6 +42,8 @@ function toDraft(node: LoungeNode): NodeDraft {
     contentId: node.content.id,
     isEnabled: node.isEnabled,
     accessLevel: node.content.accessLevel,
+    metadata: node.content.metadata,
+    mazeCustomUploadEnabled: node.content.metadata.mazeCustomUploadEnabled === true,
     nodeLabel: node.nodeLabel ?? '',
     nodeIconUrl: node.nodeIconUrl ?? '',
     nodeThemeColor: node.nodeThemeColor || '#8B1E2D',
@@ -508,6 +510,16 @@ export function AdminLoungeContentPage() {
                           />
                           <span>비로그인 사용자에게 제공</span>
                         </label>
+                        {isMazeContent ? (
+                          <label className={styles.toggleLabel}>
+                            <input
+                              type="checkbox"
+                              checked={draft.mazeCustomUploadEnabled}
+                              onChange={(event) => updateDraft({ mazeCustomUploadEnabled: event.target.checked })}
+                            />
+                            <span>커스텀 업로드</span>
+                          </label>
+                        ) : null}
                       </div>
                     </div>
 

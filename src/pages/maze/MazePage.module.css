@@ -35,6 +35,41 @@
   letter-spacing: 0;
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.myMazeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.4rem;
+  padding: 0 1rem;
+  border: 1px solid #cfd8d0;
+  border-radius: 0.5rem;
+  background: #fffdf9;
+  color: #31493c;
+  font-size: 0.9rem;
+  line-height: 1;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.myMazeButton:hover {
+  border-color: rgba(49, 73, 60, 0.42);
+  background: #f5f8f3;
+}
+
+.myMazeButton:focus-visible {
+  outline: 2px solid rgba(49, 73, 60, 0.42);
+  outline-offset: 3px;
+}
+
 .description {
   max-width: 44rem;
   margin: 0;
@@ -538,6 +573,396 @@
   color: #4d6a57;
 }
 
+.managementTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 0 1.5rem;
+}
+
+.myMazeList {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.myMazeItem {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  overflow: hidden;
+  min-height: 8rem;
+  border: 1px solid #cfd8d0;
+  border-radius: 0.5rem;
+  background: #fffdf9;
+  color: #201c19;
+  text-decoration: none;
+  box-shadow: 0 0.8rem 1.8rem rgba(32, 28, 25, 0.07);
+}
+
+.myMazeItem:hover {
+  border-color: rgba(49, 73, 60, 0.42);
+  transform: translateY(-2px);
+  box-shadow: 0 1rem 2.2rem rgba(32, 28, 25, 0.11);
+}
+
+.myMazeThumb {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 253, 249, 0.28), transparent),
+    #31493c;
+  color: #fff8f2;
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.myMazeThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.myMazeBody {
+  display: grid;
+  align-content: center;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.formPanel {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid #d8ded6;
+  border-radius: 0.5rem;
+  background: #fffdf9;
+}
+
+.formTitle {
+  margin: 0.35rem 0 0;
+  color: #201c19;
+  font-size: clamp(1.7rem, 1.25rem + 1vw, 2.45rem);
+  line-height: 1.15;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.mazeInfoForm {
+  display: grid;
+  gap: 1rem;
+}
+
+.mazeFormGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.mazeField {
+  display: grid;
+  gap: 0.45rem;
+  color: #201c19;
+  font-size: 0.86rem;
+  line-height: 1.3;
+  font-weight: 900;
+}
+
+.mazeField input,
+.mazeField select,
+.mazeField textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cfd8d0;
+  border-radius: 0.5rem;
+  background: #fffdf9;
+  color: #201c19;
+  font: inherit;
+  font-weight: 700;
+}
+
+.mazeField input {
+  min-height: 2.65rem;
+  padding: 0 0.8rem;
+}
+
+.mazeField select {
+  min-height: 2.65rem;
+  padding: 0 0.8rem;
+}
+
+.mazeField textarea {
+  resize: vertical;
+  padding: 0.75rem 0.8rem;
+  line-height: 1.55;
+}
+
+.mazeWideField {
+  grid-column: 1 / -1;
+}
+
+.thumbnailPreview {
+  display: grid;
+  width: min(16rem, 100%);
+  aspect-ratio: 16 / 9;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #cfd8d0;
+  border-radius: 0.5rem;
+  background: #31493c;
+}
+
+.thumbnailPreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.uploadControl {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  color: #6c645c;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.uploadControl input {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.formActionRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.manageShell {
+  display: grid;
+  gap: 1rem;
+}
+
+.manageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.manageTabs {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(7rem, 1fr));
+  width: fit-content;
+  padding: 0.25rem;
+  border: 1px solid #cfd8d0;
+  border-radius: 0.5rem;
+  background: #fffdf9;
+}
+
+.manageTab {
+  min-height: 2.35rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: #4a433b;
+  font-size: 0.88rem;
+  line-height: 1;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.manageTabActive {
+  background: #31493c;
+  color: #fff8f2;
+}
+
+.questionManagePanel {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #303030;
+  border-radius: 0.5rem;
+  background: #191919;
+  color: #f2f2f2;
+}
+
+.darkStatePanel {
+  display: grid;
+  min-height: 8rem;
+  place-items: center;
+  border: 1px solid #3a3a3a;
+  border-radius: 0.5rem;
+  background: #232323;
+  color: #9b9b9b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-weight: 800;
+}
+
+.selectAllRow {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  gap: 0.45rem;
+  color: #c9c9c9;
+  font-size: 0.86rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.selectAllRow input,
+.problemIdentity input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #0f8fe8;
+}
+
+.problemCard {
+  overflow: hidden;
+  border: 1px solid #3a3a3a;
+  border-radius: 0.5rem;
+  background: #232323;
+}
+
+.problemCardDropTarget {
+  border-color: #0f8fe8;
+}
+
+.problemCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.4rem;
+  padding: 0.7rem 0.9rem;
+}
+
+.problemIdentity {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.75rem;
+}
+
+.problemIdentity strong {
+  overflow: hidden;
+  color: #ffffff;
+  font-size: 0.92rem;
+  line-height: 1.3;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.problemDragHandle {
+  color: #888888;
+  font-size: 1rem;
+  line-height: 1;
+  font-weight: 900;
+  cursor: grab;
+}
+
+.problemDragHandle:active {
+  cursor: grabbing;
+}
+
+.problemActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.outlineActionButton,
+.iconTextButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border: 1px solid #3b3b3b;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: #cfcfcf;
+  font-size: 0.8rem;
+  line-height: 1;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.outlineActionButton:hover,
+.iconTextButton:hover {
+  border-color: #0f8fe8;
+  color: #ffffff;
+}
+
+.outlineActionButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.outlineActionButtonActive {
+  border-color: #0f8fe8;
+  color: #19a0ff;
+}
+
+.routeEditor {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.9rem;
+  border-top: 1px solid #3a3a3a;
+  background: #2c2c2c;
+}
+
+.routeHint {
+  margin: 0;
+  color: #9b9b9b;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.routeRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(10rem, 12rem) auto;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.routeRow input,
+.routeRow select {
+  min-width: 0;
+  min-height: 2.25rem;
+  border: 1px solid #3f3f3f;
+  border-radius: 0.375rem;
+  background: #3a3a3a;
+  color: #ffffff;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.routeRow input {
+  padding: 0 0.75rem;
+}
+
+.routeRow select {
+  padding: 0 0.65rem;
+}
+
+.routeEditorActions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 @media (max-width: 900px) {
   .setGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -554,6 +979,27 @@
 
   .rankingTabs {
     width: 100%;
+  }
+
+  .mazeFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .problemCardHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .problemActions {
+    justify-content: flex-start;
+  }
+
+  .routeRow {
+    grid-template-columns: 1fr;
+  }
+
+  .routeEditorActions {
+    grid-template-columns: 1fr;
   }
 
   .rankingItem,
@@ -575,6 +1021,11 @@
 
   .container {
     width: min(100vw - 1rem, 1120px);
+  }
+
+  .titleRow {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .setGrid {
@@ -638,5 +1089,15 @@
   .playTop {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .managementTopBar,
+  .formActionRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .myMazeItem {
+    grid-template-columns: 5.5rem minmax(0, 1fr);
   }
 }
