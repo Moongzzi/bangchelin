@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { getMinigameRanking } from '../../features/minigame/minigame.api';
 import type { MinigameRankingEntry } from '../../features/minigame/minigame.types';
 import { installUnityWebGLBridge } from '../../features/minigame/unityWebGLBridge';
 import { PageShell } from '../../shared/components/layout/PageShell';
-import { Popup, type PopupAction } from '../../shared/components/popup';
-import { ROUTES } from '../../shared/constants/routes';
-import { isMobileDevice } from '../../shared/lib/device';
+import { Popup } from '../../shared/components/popup';
 import styles from './DdeokGamePage.module.css';
 
 type UnityInstance = {
@@ -87,10 +84,8 @@ function loadUnityLoader() {
 }
 
 export function DdeokGamePage() {
-  const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const instanceRef = useRef<UnityInstance | null>(null);
-  const [isMobileRestricted] = useState(isMobileDevice);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [progress, setProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
@@ -101,10 +96,6 @@ export function DdeokGamePage() {
   const [rankingError, setRankingError] = useState('');
 
   useEffect(() => {
-    if (isMobileRestricted) {
-      return;
-    }
-
     const canvasElement = canvasRef.current;
 
     if (!canvasElement) {
@@ -208,7 +199,7 @@ export function DdeokGamePage() {
         void instance.Quit().catch(() => undefined);
       }
     };
-  }, [isMobileRestricted]);
+  }, []);
 
   async function loadRanking() {
     setRankingStatus('loading');
@@ -228,14 +219,6 @@ export function DdeokGamePage() {
     setRankingOpen(true);
     void loadRanking();
   }
-
-  const mobileNoticeActions: PopupAction[] = [
-    {
-      label: '라운지로 이동',
-      variant: 'filled',
-      onClick: () => navigate(ROUTES.lounge, { replace: true }),
-    },
-  ];
 
   return (
     <PageShell>
@@ -342,16 +325,6 @@ export function DdeokGamePage() {
         ) : null}
       </Popup>
 
-      <Popup
-        open={isMobileRestricted}
-        onClose={() => navigate(ROUTES.lounge, { replace: true })}
-        title="모바일에서는 이용할 수 없습니다"
-        description="보름달 합치기는 PC 환경에서만 실행할 수 있습니다. 라운지로 이동합니다."
-        actions={mobileNoticeActions}
-        role="alertdialog"
-        closeOnOverlayClick={false}
-        closeOnEscape={false}
-      />
     </PageShell>
   );
 }

@@ -63,8 +63,7 @@ type LoungeActivityInput = {
     | 'node_click'
     | 'locked_node_click'
     | 'coming_soon_click'
-    | 'event_locked_click'
-    | 'unsupported_device_click';
+    | 'event_locked_click';
   eventPayload?: Record<string, unknown>;
 };
 
