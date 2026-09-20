@@ -4,6 +4,7 @@ export const ROUTES = {
   register: '/register',
   about: '/about',
   lounge: '/lounge',
+  loungeDdeok: '/lounge/ddeok',
   loungeEvent: '/lounge/events/:eventSlug',
   loungeMaze: '/lounge/maze',
   loungeMazeMy: '/lounge/maze/my',

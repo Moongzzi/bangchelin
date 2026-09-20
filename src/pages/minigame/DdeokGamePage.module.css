@@ -1,0 +1,250 @@
+.page {
+  min-height: 72vh;
+  padding: 2rem 0 4.5rem;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 249, 0.9), rgba(245, 240, 230, 0.98)),
+    var(--color-bg);
+}
+
+.header,
+.gameFrame,
+.guide {
+  width: min(960px, calc(100vw - 2rem));
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 0 1.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  color: #8b1e2d;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.title {
+  margin: 0;
+  color: #201c19;
+  font-size: clamp(2rem, 1.55rem + 1.2vw, 3rem);
+  line-height: 1.1;
+  font-weight: 900;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.fullscreenButton,
+.rankingButton,
+.retryButton,
+.errorPanel button {
+  min-height: 2.65rem;
+  border: 1px solid #8b1e2d;
+  border-radius: 0.45rem;
+  padding: 0 1.1rem;
+  background: #8b1e2d;
+  color: #fff8f2;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.rankingButton,
+.retryButton {
+  background: #fffdf9;
+  color: #8b1e2d;
+}
+
+.fullscreenButton:disabled {
+  border-color: #cfc2af;
+  background: #d8d0c5;
+  cursor: wait;
+}
+
+.gameFrame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 8 / 5;
+  border: 0.5rem solid #7f5f34;
+  border-radius: 0.5rem;
+  background: #17130f;
+  box-shadow: 0 1.5rem 3rem rgba(32, 28, 25, 0.16);
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #17130f;
+}
+
+.loadingPanel,
+.errorPanel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: rgba(23, 19, 15, 0.96);
+  color: #fff8f2;
+  text-align: center;
+}
+
+.progressTrack {
+  width: min(24rem, 70%);
+  height: 0.7rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.progressBar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #d7c074;
+  transition: width 120ms ease;
+}
+
+.errorPanel span {
+  color: #eadfd5;
+  font-size: 0.9rem;
+}
+
+.warning {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  left: 0.75rem;
+  z-index: 3;
+  padding: 0.75rem 1rem;
+  border-radius: 0.4rem;
+  background: #fff0bd;
+  color: #4a3510;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.guide {
+  margin-top: 1rem;
+  color: #6c645c;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.rankingState {
+  display: grid;
+  min-height: 10rem;
+  place-items: center;
+  gap: 1rem;
+  color: #6c645c;
+  font-weight: 700;
+  text-align: center;
+}
+
+.rankingTableWrap {
+  max-height: min(26rem, 52vh);
+  overflow: auto;
+  border: 1px solid #e5dacb;
+  border-radius: 0.5rem;
+}
+
+.rankingTable {
+  width: 100%;
+  border-collapse: collapse;
+  color: #201c19;
+  font-size: 0.92rem;
+}
+
+.rankingTable th,
+.rankingTable td {
+  padding: 0.8rem 0.9rem;
+  border-bottom: 1px solid #eee4d8;
+  text-align: left;
+}
+
+.rankingTable th:first-child,
+.rankingTable td:first-child {
+  width: 5rem;
+  text-align: center;
+}
+
+.rankingTable th:last-child,
+.rankingTable td:last-child {
+  text-align: right;
+}
+
+.rankingTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f9f5ee;
+  color: #6c645c;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.rankingTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.myRanking td {
+  background: #fff4d4;
+  font-weight: 900;
+}
+
+.meBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.35rem;
+  margin-left: 0.45rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: #8b1e2d;
+  color: #fff8f2;
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding: 1rem 0 3rem;
+  }
+
+  .header,
+  .gameFrame,
+  .guide {
+    width: min(100vw - 1rem, 960px);
+  }
+
+  .header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+
+  .fullscreenButton,
+  .rankingButton {
+    flex: 1;
+  }
+
+  .gameFrame {
+    border-width: 0.3rem;
+  }
+}

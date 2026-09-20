@@ -21,6 +21,7 @@ const ExternalRedirectPage = lazy(() => import('../../pages/external-redirect/Ex
 const InputPreviewPage = lazy(() => import('../../pages/input-preview/InputPreviewPage').then((module) => ({ default: module.InputPreviewPage })));
 const LoginPage = lazy(() => import('../../pages/login/LoginPage').then((module) => ({ default: module.LoginPage })));
 const LoungePage = lazy(() => import('../../pages/lounge/LoungePage').then((module) => ({ default: module.LoungePage })));
+const DdeokGamePage = lazy(() => import('../../pages/minigame/DdeokGamePage').then((module) => ({ default: module.DdeokGamePage })));
 const LoungeEventPage = lazy(() => import('../../pages/lounge/LoungeEventPage').then((module) => ({ default: module.LoungeEventPage })));
 const MazeMainPage = lazy(() => import('../../pages/maze/MazeMainPage').then((module) => ({ default: module.MazeMainPage })));
 const MyMazeCreatePage = lazy(() => import('../../pages/maze/MyMazeCreatePage').then((module) => ({ default: module.MyMazeCreatePage })));
@@ -188,6 +189,7 @@ export function AppRouter() {
       <Route path={ROUTES.register} element={<LazyRoute><RegisterPage /></LazyRoute>} />
       <Route path={ROUTES.about} element={<LazyRoute><AboutPage /></LazyRoute>} />
       <Route path={ROUTES.lounge} element={<LazyRoute><LoungePage /></LazyRoute>} />
+      <Route path={ROUTES.loungeDdeok} element={<ProtectedRoute><LazyRoute><DdeokGamePage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.loungeEvent} element={<ProtectedRoute><LazyRoute><LoungeEventPage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.loungeMaze} element={<ProtectedRoute><LazyRoute><MazeMainPage /></LazyRoute></ProtectedRoute>} />
       <Route path={ROUTES.loungeMazeMyNew} element={<ProtectedRoute><LazyRoute><MyMazeCreatePage /></LazyRoute></ProtectedRoute>} />

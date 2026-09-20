@@ -58,7 +58,13 @@ type LoungeNodeRow = {
 type LoungeActivityInput = {
   contentId?: string | null;
   anonymousId: string;
-  eventType: 'view_mode_change' | 'node_click' | 'locked_node_click' | 'coming_soon_click' | 'event_locked_click';
+  eventType:
+    | 'view_mode_change'
+    | 'node_click'
+    | 'locked_node_click'
+    | 'coming_soon_click'
+    | 'event_locked_click'
+    | 'unsupported_device_click';
   eventPayload?: Record<string, unknown>;
 };
 
