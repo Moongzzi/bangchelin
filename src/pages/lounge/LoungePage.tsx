@@ -7,10 +7,11 @@ import { getSession } from '../../shared/api/supabaseRest';
 import { PageShell } from '../../shared/components/layout/PageShell';
 import { Popup, type PopupAction } from '../../shared/components/popup';
 import { ROUTES } from '../../shared/constants/routes';
+import { isMobileDevice } from '../../shared/lib/device';
 import styles from './LoungePage.module.css';
 
 type PageStatus = 'loading' | 'ready' | 'error';
-type NoticeType = 'member' | 'comingSoon' | 'eventLocked' | null;
+type NoticeType = 'member' | 'comingSoon' | 'eventLocked' | 'mobileUnsupported' | null;
 
 type NodeStyle = CSSProperties & {
   '--node-x': string;
@@ -187,6 +188,21 @@ export function LoungePage() {
       return;
     }
 
+    if (node.content.metadata.feature === 'unity_webgl' && isMobileDevice()) {
+      openNotice('mobileUnsupported', node);
+      void recordLoungeActivity({
+        anonymousId,
+        contentId: node.content.id,
+        eventType: 'unsupported_device_click',
+        eventPayload: {
+          slug: node.content.slug,
+          device: 'mobile',
+          viewMode,
+        },
+      });
+      return;
+    }
+
     if (node.content.accessLevel === 'member' && !getSession()) {
       openNotice('member', node);
       void recordLoungeActivity({
@@ -256,11 +272,15 @@ export function LoungePage() {
   const eventOpenTime = selectedNode ? getEventOpenTime(selectedNode) : null;
   const noticeTitle = noticeType === 'member'
     ? '로그인이 필요합니다'
+    : noticeType === 'mobileUnsupported'
+      ? '모바일에서는 이용할 수 없습니다'
     : noticeType === 'eventLocked'
       ? '아직 오픈 전 이벤트입니다'
       : '준비 중인 콘텐츠입니다';
   const noticeDescription = noticeType === 'member'
     ? '이 콘텐츠는 로그인 후 이용할 수 있습니다.'
+    : noticeType === 'mobileUnsupported'
+      ? '보름달 합치기는 PC 환경에서만 실행할 수 있습니다. PC 브라우저로 접속해 주세요.'
     : noticeType === 'eventLocked' && eventOpenTime
       ? `${selectedNode?.content.title ?? '선택한 이벤트'}는 ${new Date(eventOpenTime).toLocaleString('ko-KR')}에 오픈됩니다.`
       : `${selectedNode?.content.title ?? '선택한 콘텐츠'}는 아직 시작 전입니다. 라운지 메인에서 위치와 이름을 확인해주세요.`;
