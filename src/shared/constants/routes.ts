@@ -5,6 +5,7 @@ export const ROUTES = {
   about: '/about',
   lounge: '/lounge',
   loungeDdeok: '/lounge/ddeok',
+  loungeThemeHanbut: '/lounge/theme-hanbut',
   loungeEvent: '/lounge/events/:eventSlug',
   loungeMaze: '/lounge/maze',
   loungeMazeMy: '/lounge/maze/my',
